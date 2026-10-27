@@ -1,18 +1,17 @@
-# ADR-0012: Parquet lake sink on SeaweedFS (S3 API), promoted to MLP
+# ADR-0012: Parquet lake on SeaweedFS (S3 API)
 
-- Status: Proposed (MC-01)
+- Status: Accepted
 - Date: 2026-10-26
-- Zone: Open (scope change from Nice-to-have, plus tool choice)
 
 ## Context
 
-Finance data-platform teams work in S3, Parquet, Iceberg, Glue, Athena. A Postgres-only pipeline undersells the "big data" signal. The brief listed "Parquet + DuckDB cold storage" as Nice-to-have.
+Finance data-platform teams work in S3, Parquet, Iceberg, Glue, Athena. A Postgres-only pipeline undersells the "big data" signal. Early plans treated Parquet storage as optional. The data pipeline ([ADR-0016](0016-real-public-data-sources.md)) now writes the full cleaned dataset to this lake as well.
 
 ## Decision
 
-1. Promote a **lake sink** to MLP: a consumer of `ledger.appended.v1` writes Parquet files partitioned by `event_date` and `event_type` to an S3-compatible bucket, with idempotent file naming by Kafka offset range.
+1. Add a **lake sink**: a consumer of `ledger.appended.v1` writes Parquet files partitioned by `event_date` and `event_type` to an S3-compatible bucket, with idempotent file naming by Kafka offset range.
 2. Extend **control totals** to the lake: counts and sums per batch must match across topic, ledger, and lake.
-3. Keep DuckDB batch analytics and Iceberg tables (pyiceberg SQL catalog) in Nice-to-have.
+3. Keep DuckDB batch analytics and Iceberg tables (pyiceberg SQL catalog) as later work.
 4. Local object store: **SeaweedFS** (Apache-2.0, S3 API, Object Lock support).
 
 ## Why not MinIO
@@ -25,4 +24,4 @@ SeaweedFS Object Lock completeness is only documented in secondary sources. It w
 
 ## Library pins
 
-PyArrow 26.x, DuckDB 1.5.x (2.0 LTS was released five days before this ADR; revisit at RP-2).
+PyArrow 26.x, DuckDB 1.5.x (2.0 LTS was released five days before this ADR; revisit later).

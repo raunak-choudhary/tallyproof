@@ -1,12 +1,11 @@
 # ADR-0002: Redpanda as the local Kafka-compatible broker
 
-- Status: Proposed (MC-01)
+- Status: Accepted
 - Date: 2026-10-26
-- Zone: Strong default (confirmed)
 
 ## Context
 
-The brief locks Kafka-compatible streaming. Reviewers must be able to run the full stack with one command and no cloud account.
+Ingestion runs on Kafka-compatible streaming. Anyone who clones the repository must be able to run the full stack with one command and no cloud account.
 
 ## Decision
 

@@ -1,8 +1,7 @@
 # ADR-0015: Verification trust model (what the green check actually proves)
 
-- Status: Proposed (MC-01)
+- Status: Accepted
 - Date: 2026-10-26
-- Zone: Open (corrects an overclaim in early drafts)
 
 ## Context
 

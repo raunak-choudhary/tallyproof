@@ -1,12 +1,11 @@
 # ADR-0008: Effectively-once ingestion with Bloom fast path
 
-- Status: Proposed (MC-01)
+- Status: Accepted
 - Date: 2026-10-26
-- Zone: Open (design of a locked requirement)
 
 ## Context
 
-The brief says ingestion deduplicates with a Bloom filter for "idempotent, effectively exactly-once processing". A Bloom filter alone cannot do that: false positives would silently drop real payments, which is a correctness bug in a ledger.
+Ingestion deduplicates with a Bloom filter to get idempotent, effectively-once processing. A Bloom filter alone cannot do that: false positives would silently drop real payments, which is a correctness bug in a ledger.
 
 ## Decision
 

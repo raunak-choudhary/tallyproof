@@ -1,12 +1,11 @@
 # ADR-0005: Replay mode for the public demo
 
-- Status: Proposed (MC-01)
+- Status: Accepted
 - Date: 2026-10-26
-- Zone: Locked requirement (REQ-OPS-02), design is ours
 
 ## Context
 
-Recruiters will open a link once, possibly weeks later. Free-tier backends sleep, expire, or rate-limit. The brief forbids the public demo from depending on any always-on free-tier service, and requires that nothing is faked.
+Most people will open the demo link once, possibly weeks after it was published. Free-tier backends sleep, expire, or hit rate limits. The public demo must not depend on any always-on service, and nothing in it may be faked.
 
 ## Decision
 
@@ -43,4 +42,4 @@ In the browser:
 
 ## Hosting
 
-Vercel static hosting (MC-06). GitHub Pages build kept as a fallback target, since a static export works on both.
+Vercel static hosting. GitHub Pages build kept as a fallback target, since a static export works on both.

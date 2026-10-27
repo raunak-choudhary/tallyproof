@@ -1,12 +1,11 @@
 # ADR-0009: Bound-claim answer format (the model never types a number)
 
-- Status: Proposed (MC-01)
+- Status: Accepted
 - Date: 2026-10-26
-- Zone: Open (design of locked AI requirement)
 
 ## Context
 
-The brief's differentiator 3 is "every number in an answer is checked against the ledger". Checking numbers after the model writes them is fragile (formatting, rounding, units). Research cited in the README shows numeric accuracy and citation faithfulness are weak even in frontier models.
+One of the project's core promises is that every number in an answer is checked against the ledger. Checking numbers after the model writes them is fragile (formatting, rounding, units). Research cited in the README shows numeric accuracy and citation faithfulness are weak even in frontier models.
 
 ## Decision
 

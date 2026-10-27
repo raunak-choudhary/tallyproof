@@ -1,6 +1,6 @@
 # ADR-0010: RFC 8785 canonical JSON for leaf bytes
 
-- Status: Proposed (MC-01)
+- Status: Accepted
 - Date: 2026-10-26
 
 ## Context

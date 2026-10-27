@@ -1,8 +1,7 @@
 # ADR-0017: PySpark 4.1 for batch processing, with Deequ data quality checks
 
-- Status: Accepted (owner approved Spark, 2026-10-27)
+- Status: Accepted
 - Date: 2026-10-27
-- Zone: New component (not in the original stack defaults)
 
 ## Context
 
@@ -23,7 +22,7 @@ The project now processes real public spending data at tens of gigabytes (ADR-00
 | Data quality | Silver tables | Deequ verification results and a metrics history table; the build fails on any error-level constraint |
 | Profiling report | Silver tables | `docs/data/profile-<dataset>.md`: row counts, null rates, distributions, dropped-row counts by reason, committed as evidence |
 | Gold events | Silver tables | Conformed event files in event-time order, ready for Kafka replay |
-| Batch reconciliation (Nice-to-have) | Silver tables | Full-population reconciliation for comparison with the streaming result |
+| Batch reconciliation (later) | Silver tables | Full-population reconciliation for comparison with the streaming result |
 
 ## Alternatives
 
