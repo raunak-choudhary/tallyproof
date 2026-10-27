@@ -14,7 +14,12 @@
 | Analyst database role | Data exfiltration or denial of service via SQL |
 | Eval integrity (manifest, thresholds) | Fake quality claims would undermine the project |
 
-All data is synthetic (REQ-SEC-09). The generator uses obviously fake names from a fixed word list, never Faker locales that could produce real-looking personal data, and never real company names.
+**No PII (REQ-SEC-09, amended 2026-10-27).** Data is real but public: official U.S. government spending and Treasury data (ADR-0016), plus a labeled synthetic anomaly overlay. Public does not mean free of personal data, so the silver layer enforces:
+
+- Dropped columns: names and compensation of company executives ("highly compensated officer" fields), contracting officer and point-of-contact names, phone and fax numbers, email addresses, and street address lines. City, state, and country are kept for aggregate analysis.
+- Dropped rows: awards whose recipient is an individual person or sole proprietor, identified by the business-type flags in the source.
+- Every drop is counted by reason in the profiling report. A test runs over the silver schema and fails if any column on the deny list exists, and a second test scans sample values for email and phone patterns.
+- Nothing upstream of silver (the raw zips) is ever served, published, or committed. Raw files stay in the gitignored `data/` directory.
 
 ## 2. Trust boundaries
 
@@ -136,7 +141,7 @@ A security-lens review of these docs found gaps. Each item below is now a requir
 - Replay tamper demo is labeled as an in-browser simulation of the attack.
 
 ### 5.7 Public endpoints (T-115, T-209, T-307)
-- All endpoints are public by design because all data is synthetic. The API refuses to start if `DATA_CLASSIFICATION` is anything other than `synthetic`.
+- All endpoints are public by design because all served data is public and PII-free. The API refuses to start if `DATA_CLASSIFICATION` is anything other than `public-no-pii`.
 - Trusted proxy configuration explicit (`TRUSTED_PROXY_COUNT`); throttles per IP plus a global in-flight cap on the analyst; per-IP daily token budget; circuit breaker to cached-only answers when the daily cap nears.
 - Proof and consistency endpoints cap ranges and pagination depth; results cached by checkpoint.
 - WebSocket: origin allowlist, per-IP connection cap, message size limit.

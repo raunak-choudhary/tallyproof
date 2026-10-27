@@ -2,7 +2,9 @@
 
 ## Scope
 
-This project uses synthetic data only. It contains no real customer, financial, or personal data. Security reports are still welcome, especially about:
+This project uses public U.S. government spending data with personal information removed, plus labeled synthetic anomalies. It contains no customer data and no personal data. Security reports are welcome, especially about:
+
+- Any personal data that survived the cleaning step (please report privately)
 
 - Ways to make a tampered ledger record pass verification
 - Escapes from the analyst's SQL guard or read-only database role

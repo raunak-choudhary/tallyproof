@@ -37,7 +37,7 @@ The browser verifies the chain trusting only a pinned public key and an external
 | Security-minded reviewer | Threat model, SQL guardrails, prompt-injection defenses | Tamper ladder, key handling, read-only role |
 | Hackathon judge | Wow moment, clarity, working demo | Novelty versus prior art (answerproof) |
 
-Persona used for in-product flows: **Maya, an AP/AR analyst** at a mid-size company who asks "Which customer payments this month have no matching invoice, and how much do they total?" and must be able to defend the answer to an auditor.
+Persona used for in-product flows: **Maya, a spend analyst** reviewing federal contract spending, who asks "Which awards in FY2025 had outlays exceeding their obligations, and by how much?" and must be able to defend the answer to an auditor. The data is real public U.S. federal spending with personal data removed (ADR-0016).
 
 ## 4. Goals and non-goals
 
@@ -50,7 +50,7 @@ Persona used for in-product flows: **Maya, an AP/AR analyst** at a mid-size comp
 - G6. A public demo that never sleeps, needs no backend, and still verifies real proofs.
 
 ### Non-goals
-- Real customer data, real PII, real money movement (REQ-SEC-09).
+- Any personal data (REQ-SEC-09, amended: data is real public government spending with PII removed), and any real money movement.
 - Multi-tenant SaaS, authentication flows, billing.
 - Being a general-purpose accounting system. Double-entry is used to make the ledger credible and queryable, not to replace an ERP.
 - Zero-knowledge proofs (future work, cited as VeriRAG if verified).
