@@ -4,7 +4,7 @@
 
 ## 1. System overview
 
-Ledgerline is a streaming pipeline with a verifiable ledger at its center and an AI analyst on top.
+Tallyproof is a streaming pipeline with a verifiable ledger at its center and an AI analyst on top.
 
 1. **Generator** produces seeded synthetic finance events and a separate ground-truth manifest.
 2. **Redpanda** (Kafka API) carries events, partitioned by account.
@@ -21,10 +21,10 @@ Ledgerline is a streaming pipeline with a verifiable ledger at its center and an
 
 ```mermaid
 C4Context
-title Ledgerline: System Context
+title Tallyproof: System Context
 Person(analyst, "Finance analyst / reviewer", "Asks questions, verifies citations")
 Person(dev, "Engineer cloning the repo", "Runs full stack locally")
-System(ll, "Ledgerline", "Streaming verifiable ledger with cited AI analyst")
+System(ll, "Tallyproof", "Streaming verifiable ledger with cited AI analyst")
 System_Ext(llm, "Claude API", "Routing and answer composition")
 System_Ext(witness, "Witness store", "Git-committed checkpoints, replay bundle, optional locked object store")
 System_Ext(ci, "CircleCI", "Lint, tests, eval gate, build")
@@ -39,7 +39,7 @@ Rel(ci, ll, "Builds and gates")
 
 ```mermaid
 C4Container
-title Ledgerline: Containers (local full stack)
+title Tallyproof: Containers (local full stack)
 Container(gen, "Generator", "Python CLI", "Seeded events + ground-truth manifest")
 ContainerQueue(rp, "Redpanda", "Kafka API", "fin.events.raw.v1, fin.events.dlq.v1, ledger.appended.v1, recon.breaks.v1, ledger.checkpoints.v1")
 Container(ing, "Ingestion workers", "Python, confluent-kafka", "Validate, dedupe, append, store offsets")

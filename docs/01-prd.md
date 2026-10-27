@@ -1,6 +1,6 @@
 # 01. Product Requirements Document
 
-> Working name: **Ledgerline** (final name pending MC-02, see `adr/0006-project-name.md`).
+> Project name: **Tallyproof** (ADR-0006).
 > Status: Draft for MC-01 approval. Owner: Raunak Choudhary. Last updated: 2026-10-26.
 
 ## 1. Problem
@@ -15,7 +15,7 @@ Regulators now treat this as a governance problem (see `README.md`, "Why this ex
 
 ## 2. Product thesis
 
-> An AI analyst is only as trustworthy as the weakest link between its sentence and the original record. Ledgerline makes every link checkable by the reader, not by the server.
+> An AI analyst is only as trustworthy as the weakest link between its sentence and the original record. Tallyproof makes every link checkable by the reader, not by the server.
 
 The chain:
 
@@ -77,7 +77,7 @@ Tiers follow the brief (Section 13). Changes from the brief are marked **(change
 - Motion landing page, live stream dashboard, citation proof visualization, polished tamper ladder demo, eval dashboard, replay-mode public demo on Vercel, README hero diagram and GIF.
 - **(changed)** Parquet lake sink plus control totals moved from Nice-to-have to MLP. Reason: it is the single strongest signal for a data-pipeline team, and it is cheap once the outbox exists.
 - **(changed)** Measured load-test report moved from Nice-to-have to MLP. Reason: honest numbers are required by Section 14 anyway.
-- Baseline comparison eval: naive RAG versus Ledgerline on the same golden set.
+- Baseline comparison eval: naive RAG versus Tallyproof on the same golden set.
 
 ### Nice-to-have (target `v1.0.0` if CI is green)
 - Count-Min Sketch heavy hitters (suspicious vendor patterns).

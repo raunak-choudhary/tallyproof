@@ -1,4 +1,4 @@
-# Ledgerline
+# Tallyproof
 
 A streaming financial ledger with an AI analyst whose every claim is cited to an exact source event, along with a cryptographic proof that the record hasn't been changed since ingestion. Answer quality is measured against exact ground truth.
 
@@ -21,7 +21,7 @@ Every source, with exact quotes and links, is in [`docs/research/verified-source
 
 ## What is different from existing work
 
-[answerproof](https://github.com/AgentPostmortem/Answerproof) issues signed receipts with a Merkle root over a RAG retrieval set. It's a good idea, and it shows that "Merkle-verified citations" alone isn't new. Ledgerline differs in three ways:
+[answerproof](https://github.com/AgentPostmortem/Answerproof) issues signed receipts with a Merkle root over a RAG retrieval set. It's a good idea, and it shows that "Merkle-verified citations" alone isn't new. Tallyproof differs in three ways:
 
 1. **Provenance from ingestion.** Proofs are anchored to streamed events as they arrive, in an append-only log with consistency proofs, so they show that the source record itself is unchanged, not just that it was retrieved.
 2. **Exact ground-truth evals.** Our generator injects labeled anomalies, so expected answers and expected citations are exact. They don't come from an LLM judge.

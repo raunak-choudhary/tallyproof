@@ -32,6 +32,7 @@
 | 2026-10-27 | Design review: payments post to unapplied cash first | Deterministic journal re-derivation | ADR-0013 |
 | 2026-10-27 | Design review: integrity checks separated from quality metrics; held-out question set | Several gates were true by construction | 08 |
 | 2026-10-27 | Design review: Phase 1 split into 1a (static proof page) and 1b (live pipeline) | Demo was last in an infra-first order | 06 |
+| 2026-10-27 | Final name `tallyproof`; repository renamed from `ledgerline` | Free on PyPI, npm, and GitHub; names the thesis | ADR-0006 |
 | 2026-10-27 | Design review: OpenTimestamps as the independent witness | The git witness is controlled by the operator | 11, ADR-0007 |
 
 ## 2. Risks
@@ -58,7 +59,6 @@
 
 | ID | Question | Needed by |
 |---|---|---|
-| Q-01 | Final project name (ADR-0006) | Before T-101, so package names are right from the first line of code |
 | Q-02 | Diagram skill choice: `diagram-design` (MIT, HTML/SVG, very popular) for the README hero; Mermaid in docs written directly or via a licensed Mermaid skill. `design-doc-mermaid` has **no license**, so we recommend not installing it | T-214 (MC-08) |
 | Q-03 | When to make the repo public (now private) | Recommended: now, so the planning history is visible; at the latest when T-122 publishes the proof page |
 | Q-04 | CircleCI plan: free tier acceptable? | T-103 (MC-04) |

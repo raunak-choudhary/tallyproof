@@ -1,11 +1,11 @@
 # 05. Backend Structure
 
-> Status: Draft for MC-01. Names use the working name `ledgerline`; renamed after MC-02.
+> Status: Draft for MC-01. Package, role, and topic names use the final project name `tallyproof` (ADR-0006).
 
 ## 1. Repository layout (monorepo)
 
 ```
-ledgerline/
+tallyproof/
   backend/
     manage.py
     pyproject.toml               ruff, mypy, pytest, coverage config
@@ -17,7 +17,7 @@ ledgerline/
       settings/                  base.py, local.py, test.py, ci.py (REQ-SEC-06)
       env.py                     pydantic-settings typed settings (REQ-SEC-02)
       urls.py, asgi.py, wsgi.py
-    ledgerline_core/             framework-free library, no Django imports
+    tallyproof_core/             framework-free library, no Django imports
       canonical.py               RFC 8785 serialization
       hashing.py                 leaf/node hashing with domain separation
       merkle/                    log, inclusion proof, consistency proof, verify
@@ -48,7 +48,7 @@ ledgerline/
   Makefile
 ```
 
-Why `ledgerline_core` is separate from Django apps: the cryptographic and data-structure code is the most reviewed code in the repo. Keeping it pure Python makes it trivially unit-testable, property-testable, and mirrorable in TypeScript, and it lets a reviewer read it without knowing Django.
+Why `tallyproof_core` is separate from Django apps: the cryptographic and data-structure code is the most reviewed code in the repo. Keeping it pure Python makes it trivially unit-testable, property-testable, and mirrorable in TypeScript, and it lets a reviewer read it without knowing Django.
 
 Event schemas are registered in Redpanda's Schema Registry with BACKWARD compatibility from Phase 2 (moved up from Nice-to-have: it is cheap and expected by data-platform reviewers).
 
@@ -251,9 +251,9 @@ Constraints worth calling out:
 - Every schema change ships as its own migration PR (brief Section 14).
 
 ### Database roles (`infra/postgres/init/roles.sql`)
-- `ledgerline_app`: INSERT/SELECT on ledger tables, no UPDATE/DELETE on append-only tables.
-- `ledgerline_analyst`: SELECT only on schema `analyst` (curated views), `default_transaction_read_only = on`, `statement_timeout` and `work_mem` set at role level (REQ-SEC-07).
-- `ledgerline_owner`: owns the schema and runs migrations through a separate `DB_OWNER_URL` and a dedicated `migrations` database alias.
+- `tallyproof_app`: INSERT/SELECT on ledger tables, no UPDATE/DELETE on append-only tables.
+- `tallyproof_analyst`: SELECT only on schema `analyst` (curated views), `default_transaction_read_only = on`, `statement_timeout` and `work_mem` set at role level (REQ-SEC-07).
+- `tallyproof_owner`: owns the schema and runs migrations through a separate `DB_OWNER_URL` and a dedicated `migrations` database alias.
 - Roles are created by `make db-roles` (a psql script run identically in compose and CI), not by container init scripts, because init scripts cannot run in CI service containers. Grants live in an idempotent RunSQL migration with `ALTER DEFAULT PRIVILEGES`, so they apply to tables created later. Tests connect as owner and use `SET ROLE` to assert grants.
 
 ### Analyst views (schema `analyst`)
@@ -296,7 +296,7 @@ Proof response shape:
   "audit_path_hex": ["...", "..."],
   "checkpoint": {
     "batch_id": "bat_01J...",
-    "origin": "ledgerline.dev/log/v1",
+    "origin": "tallyproof.dev/log/v1",
     "tree_size": 5000,
     "root_hash_b64": "...",
     "body": "...",
