@@ -1,6 +1,6 @@
 # 13. Configuration
 
-> Every environment variable. Loaded by `backend/config/env.py` (pydantic-settings). Required variables without defaults fail fast at startup with the variable name (REQ-SEC-02). `.env.example` mirrors this table (REQ-SEC-03). Values below are examples or defaults, never secrets.
+> Every environment variable. Loaded by `backend/config/env.py` (pydantic-settings). Required variables without defaults fail fast at startup with the variable name (REQ-SEC-02). Process-specific secrets are validated only by the process that needs them (per-command settings subclasses), so the API cannot start with, or require, the signing key. `.env.example` mirrors this table (REQ-SEC-03). Values below are examples or defaults, never secrets.
 
 ## Backend
 
@@ -12,6 +12,7 @@
 | `DJANGO_ALLOWED_HOSTS` | yes | none | Comma separated |
 | `CORS_ALLOWED_ORIGINS` | yes | none | Web origin(s) |
 | `DB_URL` | yes | none | App role connection |
+| `DB_OWNER_URL` | migrations only | none | Owner role for `make migrate`; never given to the API or workers |
 | `DB_ANALYST_URL` | yes | none | Read-only analyst role (REQ-SEC-07) |
 | `DB_ANALYST_STATEMENT_TIMEOUT_MS` | no | `3000` | |
 | `DB_ANALYST_MAX_ROWS` | no | `1000` | |
@@ -31,8 +32,9 @@
 | `MERKLE_BATCH_MAX_SIZE` | no | `256` | ADR-0003 |
 | `MERKLE_BATCH_MAX_AGE_MS` | no | `2000` | ADR-0003 |
 | `CHECKPOINT_SIGNING_KEY_FILE` | checkpointer only | none | Path to Ed25519 private key file (mounted, gitignored). Never an env var value. Only the checkpointer process gets it (threat model 5.2) |
+| `CHECKPOINT_PUBLIC_KEY` | yes | none | Public key served at `/api/v1/log-key`; the API never holds the private key |
 | `CHECKPOINT_KEY_ID` | yes | none | Published key identifier with class prefix `dev-`, `ci-`, `rel-` |
-| `WITNESS_EXPORT_PATH` | no | `witness/checkpoints.jsonl` | |
+| `WITNESS_EXPORT_PATH` | no | `var/witness/checkpoints.jsonl` | Local runs write to a gitignored path; only the published replay log's witness is committed, under `replay/witness/` |
 | `WITNESS_INTERVAL_SECONDS` | no | `3600` | Max time before a checkpoint is externally timestamped; equals level 5 exposure window |
 | `WITNESS_OTS_ENABLED` | no | `true` | OpenTimestamps anchoring of checkpoint hashes |
 | `DATA_CLASSIFICATION` | yes | none | Must be `synthetic`; API refuses to start otherwise |
