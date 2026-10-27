@@ -1,36 +1,40 @@
-# 09. Testing Strategy
+# Testing
 
-> Covers REQ-QA-04 to REQ-QA-10 and the eval layer (`evaluation.md`).
+Tests are layered so the fast ones run constantly and the slow ones run only where they earn their time. Answer quality is measured separately, as described in [evaluation.md](evaluation.md).
 
-## 1. Pyramid
+## Layers
 
-| Layer | Scope | Tools | Speed budget | Runs |
+| Layer | What it covers | Tools | Time budget | When it runs |
 |---|---|---|---|---|
-| Unit | Pure logic: Merkle, Bloom, canonical JSON, money, reconciliation rules, SQL guard, verifier, journal derivation | pytest, Hypothesis | < 30 s total | Pre-commit (changed), every PR (parallel) |
-| Module | One Django app with collaborators faked (fake broker, fake LLM, in-memory repositories) plus test Postgres | pytest-django | < 2 min | Every PR |
-| Integration | Real Redpanda + Postgres/pgvector (+ SeaweedFS later) | Testcontainers, machine executor | < 6 min | Every PR after unit |
-| E2E backend | Generator to verified answer with recorded LLM responses | pytest | < 4 min | Every PR (smoke), nightly (full) |
-| Frontend unit | Verify library, components | Vitest | < 1 min | Every PR |
-| Cross-language | Same vectors in pytest and Vitest | shared `testdata/vectors` | seconds | Every PR |
-| UI E2E | Landing, verify, tamper, analyst, evals | Playwright + axe | < 5 min | Every PR touching `frontend/` (MLP) |
-| Evals | Quality metrics | eval runner | smoke < 3 min | PR smoke, nightly full |
+| Unit | Pure logic: Merkle log, Bloom filter, canonical JSON, money, reconciliation rules, query compiler, verifier, journal | pytest, Hypothesis | Under 30 seconds | Pre-commit for changed code, every pull request |
+| Module | One Django app with its collaborators faked, against a test Postgres | pytest-django | Under 2 minutes | Every pull request |
+| Data pipeline | Spark jobs and Deequ checks on the committed sample of about 50k real rows | pytest, PySpark local mode | Under 3 minutes | Pull requests that touch the pipeline |
+| Integration | Real Redpanda and Postgres with pgvector, and object storage later | Testcontainers | Under 6 minutes | Pull requests that touch ingestion, the ledger, or infrastructure |
+| End to end | From gold events to a verified answer, with recorded LLM responses | pytest | Under 4 minutes | Every pull request on the smoke set, nightly on the full set |
+| Frontend unit | Verification library and components | Vitest | Under 1 minute | Every pull request |
+| Cross-language | The same test vectors checked by Python and TypeScript | Shared files in `testdata/vectors` | Seconds | Every pull request |
+| Browser | Landing page, verify, tamper, analyst, and evaluation dashboard flows, with accessibility checks | Playwright, axe | Under 5 minutes | Pull requests that touch the frontend |
 
-## 2. Property-based tests (Hypothesis)
+## Property-based tests
 
-- Merkle: for any list of leaves and any index, the inclusion proof verifies; flipping any bit in leaf, path, or root makes it fail; consistency proofs verify for all m <= n and fail after rewriting any of the first m leaves.
-- Bloom: no false negatives for any inserted set; measured FPR within 1.5x of target at fixed seeds over large samples.
-- Journal: every derived entry balances; trial balance is zero.
-- Canonical JSON: round trip parse then canonicalize is idempotent.
-- SQL guard: generated statements containing any banned node are rejected.
+Hypothesis generates inputs for the code where a single wrong edge case would undermine the project:
 
-## 3. Rules
+- **Merkle log.** For any set of leaves and any index, the inclusion proof verifies, and flipping any bit of the leaf, path, or root makes it fail. Consistency proofs verify between any two sizes and fail if any earlier leaf is rewritten.
+- **Bloom filter.** No inserted key is ever reported missing, and the measured false-positive rate stays within 1.5 times the target over large seeded samples.
+- **Leaf allocation.** Random rollbacks never leave a gap in leaf indexes.
+- **Journal.** Every derived entry balances, and the trial balance is zero.
+- **Canonical JSON.** Parsing and re-canonicalizing gives the same bytes.
+- **Query guard.** Generated statements containing any banned construct are rejected.
 
-- Unit and module tests never call a real LLM (REQ-QA-09). A pytest fixture blocks outbound sockets for those layers; any attempt fails the test.
-- No sleeps in tests; use events and timeouts.
-- Fixed seeds everywhere; failures print the seed.
-- Coverage: >= 85% on `core`, `ledger`, `reconciliation`, `ingestion` dedupe (REQ-QA-08), enforced from E-401; `core` targets >= 95%.
-- Tests are named for behavior: `test_tampered_leaf_fails_inclusion_verification`.
+## Rules
 
-## 4. Fakes
+- Unit and module tests never call a real LLM. A fixture blocks outbound network access in those layers, and any attempt fails the test.
+- No `sleep` in tests. They wait on events with timeouts.
+- Seeds are fixed, and a failing test prints its seed.
+- Coverage must stay at or above 85% for `tallyproof_core`, the ledger, reconciliation, and ingestion deduplication. `tallyproof_core` aims for 95%.
+- Test names describe behavior, for example `test_tampered_leaf_fails_inclusion_verification`.
+- A test proves that no deny-listed personal data column survives cleaning, and another scans sample values for email and phone patterns.
 
-`FakeBroker`, `FakeLLMClient` (scripted responses keyed by prompt fingerprint), `FrozenClock`, `InMemoryWitness`. Fakes live in `tests/fakes/` and have their own contract tests against the real implementations (run in the integration layer) so fakes cannot drift.
+## Fakes
+
+The fakes are `FakeBroker`, `FakeLLMClient` (scripted responses keyed by prompt fingerprint), `FrozenClock`, and `InMemoryWitness`. They live in `tests/fakes/`, and each one has contract tests that also run against the real implementation in the integration layer, so a fake can't quietly drift from the thing it stands in for.
