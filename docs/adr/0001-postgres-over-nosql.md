@@ -30,4 +30,4 @@ Use PostgreSQL 16 with pgvector as the system of record. Add tamper evidence our
 ## Consequences
 
 - We own the correctness of the Merkle log and signing. Mitigated by property tests and RFC test vectors.
-- A single log writer per Postgres instance limits throughput (measured, see `07-architecture.md` section 9).
+- A single log writer per Postgres instance limits throughput (measured, see `architecture.md` section 9).
