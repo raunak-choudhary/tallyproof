@@ -1,6 +1,6 @@
 # ADR-0006: Project name
 
-- Status: **Proposed, awaiting Raunak's choice (MC-02).** Repository created on 2026-10-27 under the working name at the owner's request; a rename later is cheap because GitHub redirects renamed repositories, but it must happen before T-101 so package names are right from the start.
+- Status: **Accepted 2026-10-27: `tallyproof`.** The repository was first created under the working name `ledgerline` and renamed the same day; GitHub redirects the old URL.
 - Date: 2026-10-26
 
 ## Criteria (brief Section 4)
@@ -50,4 +50,4 @@ Checked on 2026-10-26: PyPI JSON API (404 = free), npm registry (404 = free), Gi
 
 ## Decision
 
-Pending. After approval: rename the GitHub repository, local folder, Python package (`<name>_core`), npm package, docs, and CLAUDE.md in one `refactor` commit.
+**`tallyproof`.** In accounting, figures *tally* when they reconcile, and a *proof* is both an accounting check and a cryptographic one. The name states the thesis: proof that the numbers tally. Applied to the GitHub repository, docs, Python package (`tallyproof_core`), database roles, npm package, and log origin. The TallyPrime association is accepted as a minor risk: "tally" is a common English word and the compound is unique.

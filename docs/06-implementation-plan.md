@@ -38,7 +38,7 @@ Goal: a public page anyone can open with no install: a real event, a real proof 
 
 | ID | Branch | PR / issue title | REQs | Exit |
 |---|---|---|---|---|
-| T-101 | `build/t101-python-project` | `build(backend): scaffold Python project with venv and pip-tools` | ENV-01, ENV-02 | `backend/` with `pyproject.toml`, `requirements*.in/.txt` (hashes), `ledgerline_core` package skeleton |
+| T-101 | `build/t101-python-project` | `build(backend): scaffold Python project with venv and pip-tools` | ENV-01, ENV-02 | `backend/` with `pyproject.toml`, `requirements*.in/.txt` (hashes), `tallyproof_core` package skeleton |
 | T-102 | `build/t102-quality-tooling` | `build: add ruff, mypy strict, pytest, pre-commit, and Makefile` | QA-01..03, GIT-07, SEC-04, CI-04 | `make lint typecheck test` pass; pre-commit runs ruff, ruff-format, mypy, gitleaks (custom rule for key files), conventional-pre-commit; Makefile refuses to run outside `.venv` |
 | T-103 | `ci/t103-circleci-pipeline` | `ci: add CircleCI pipeline with a single required gate` | CI-01 (partial), CI-03, CI-04, SEC-04, SEC-05, GIT-01 | Jobs: lint, typecheck, unit (parallelism 1 until the suite exceeds 2 minutes), commit-message lint over every commit in the PR, gitleaks, literal check for hardcoded URLs and model IDs; one always-running `ci-gate` job is the only required status check. **MC-04** here (confirm plan credits and that forked-PR secrets are off) |
 | T-105 | `feat/t105-canonical-ids-money` | `feat(core): add canonical JSON, seeded prefixed IDs, and money type` | URL-02, QA-04 | RFC 8785 via `rfc8785`; `new_id(prefix, clock, rng)`; Decimal money; vectors at repo-root `testdata/vectors/` |

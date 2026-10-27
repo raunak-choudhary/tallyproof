@@ -1,4 +1,4 @@
-# CLAUDE.md: Ledgerline (working name)
+# CLAUDE.md: Tallyproof
 
 Project-level source of truth for coding agents and contributors. Where it conflicts with any shared or global agent rules, this file wins for this repo.
 
@@ -8,7 +8,7 @@ Streaming financial ledger plus AI analyst. Every claim cites a source event wit
 
 ## 2. Current phase
 
-**Phase 0: planning docs merged and revised after design review. Awaiting MC-01 (plan approval) and MC-02 (final name).** No application code until approved. Next task after approval: T-004, then Phase 1a (T-101).
+**Phase 0: planning docs merged and revised after design review. Name decided: Tallyproof (ADR-0006). Awaiting MC-01 (plan approval) after the data-source discussion.** No application code until approved. Next task after approval: T-004, then Phase 1a (T-101).
 
 ## 3. Docs map
 

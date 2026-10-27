@@ -29,5 +29,5 @@ Use Django 5.2.x (latest patch, pinned via pip-tools) with Python 3.12, DRF 3.18
 
 ## Notes
 
-- Django is used for the API, admin (local only), migrations, and Channels. Workers are management commands that import framework-free `ledgerline_core` for the critical logic.
+- Django is used for the API, admin (local only), migrations, and Channels. Workers are management commands that import framework-free `tallyproof_core` for the critical logic.
 - Channels has had no release in 11 months. Acceptable for this scope; flagged in the risk log.
