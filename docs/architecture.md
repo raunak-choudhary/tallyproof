@@ -202,4 +202,4 @@ We publish only measured numbers, with hardware and configuration stated (Sectio
 - **Local full stack (REQ-OPS-01):** `docker compose` brings up Redpanda, Redpanda Console, Postgres+pgvector, Redis, object store, API, workers, web.
 - **Public replay demo (REQ-OPS-02):** static Next.js export plus a replay bundle (events, checkpoints, proofs, precomputed answers, eval results, public key). Verification runs in the browser. Hosted on Vercel; also buildable for GitHub Pages as a fallback.
 - **Optional live backend (REQ-OPS-03):** documented, never required.
-- **AWS reference (not deployed):** `15-aws-reference-architecture.md`.
+- **AWS reference (not deployed):** `aws-reference-architecture.md`.

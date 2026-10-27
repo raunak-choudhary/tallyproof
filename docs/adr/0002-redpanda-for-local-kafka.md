@@ -15,7 +15,7 @@ Use Redpanda `v26.2.6` (pinned by tag and digest) and Redpanda Console `v3.13.1`
 ## Reasons
 
 - Single binary, no ZooKeeper or KRaft controller quorum to configure, fast startup: good for laptops and CI.
-- Kafka API compatible, so the same client code runs against Amazon MSK (`15-aws-reference-architecture.md`).
+- Kafka API compatible, so the same client code runs against Amazon MSK (`aws-reference-architecture.md`).
 - Built-in Schema Registry and Console give a visible, inspectable pipeline for reviewers.
 - `testcontainers` ships a `RedpandaContainer` (import from `testcontainers.community.kafka`).
 

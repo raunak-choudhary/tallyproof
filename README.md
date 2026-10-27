@@ -39,7 +39,7 @@ make seed SCENARIO=demo
 
 ## Architecture
 
-See [`docs/07-architecture.md`](docs/07-architecture.md). In short: generator, then Redpanda, then ingestion (schema validation, Bloom-filter fast path, and a UNIQUE constraint, with consumer offsets stored in the same transaction), then the append-only ledger and Merkle log, then signed checkpoints, then an outbox feeding reconciliation, the journal, the lake sink, and the UI. The analyst sits on top and uses a read-only database role.
+See [`docs/architecture.md`](docs/architecture.md). In short: generator, then Redpanda, then ingestion (schema validation, Bloom-filter fast path, and a UNIQUE constraint, with consumer offsets stored in the same transaction), then the append-only ledger and Merkle log, then signed checkpoints, then an outbox feeding reconciliation, the journal, the lake sink, and the UI. The analyst sits on top and uses a read-only database role.
 
 ## Eval results
 

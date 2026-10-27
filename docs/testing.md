@@ -1,6 +1,6 @@
 # 09. Testing Strategy
 
-> Covers REQ-QA-04 to REQ-QA-10 and the eval layer (`08-eval-spec.md`).
+> Covers REQ-QA-04 to REQ-QA-10 and the eval layer (`evaluation.md`).
 
 ## 1. Pyramid
 

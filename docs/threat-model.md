@@ -1,6 +1,6 @@
 # 11. Security and Threat Model
 
-> Status: Draft for MC-01. Covers REQ-SEC-01 to REQ-SEC-11. Method: STRIDE per trust boundary, plus the tamper ladder in `07-architecture.md` section 7.
+> Status: Draft for MC-01. Covers REQ-SEC-01 to REQ-SEC-11. Method: STRIDE per trust boundary, plus the tamper ladder in `architecture.md` section 7.
 
 ## 1. Assets
 
@@ -66,7 +66,7 @@ See the tamper ladder. Additional controls:
 - Witness export is committed through the normal PR flow, so GitHub history acts as an independent timestamped witness.
 
 ### 3.4 Secrets (REQ-SEC-01 to 06)
-- One typed settings module (`config/env.py`, pydantic-settings). Missing required variables fail fast with the variable name and a pointer to `13-configuration.md`.
+- One typed settings module (`config/env.py`, pydantic-settings). Missing required variables fail fast with the variable name and a pointer to `configuration.md`.
 - `.env` is gitignored; `.env.example` lists every variable with a comment (REQ-SEC-03).
 - gitleaks in pre-commit and in CI (REQ-SEC-04).
 - CI secrets only in a CircleCI context restricted to the `main` branch and to scheduled pipelines; fork PRs get no secrets (REQ-SEC-05).
@@ -90,7 +90,7 @@ See the tamper ladder. Additional controls:
 ## 4. Residual risks (accepted, documented)
 
 - Level 4 tampering (key holder acting before the next external timestamp) is not detectable; exposure equals `WITNESS_INTERVAL_SECONDS`.
-- Single signing key, no HSM locally. AWS mapping uses KMS (see `15-aws-reference-architecture.md`).
+- Single signing key, no HSM locally. AWS mapping uses KMS (see `aws-reference-architecture.md`).
 - LLM-judge narrative faithfulness is probabilistic.
 - The generator could be biased toward anomalies the system already handles; mitigated by adding anomaly types blind (written before the detector) where possible.
 
@@ -126,10 +126,10 @@ A security-lens review of these docs found gaps. Each item below is now a requir
 ### 5.4 Prompt injection beyond numbers (T-305, T-306, T-308)
 - Number-free injected claims ("approved by the CFO") pass a numbers-only verifier. Therefore: free-text fields (`memo`, `reason`) are excluded from analyst views by default and exposed only through an explicit `memo` column the router must request; untrusted strings are length-capped and wrapped as data; model-authored prose is capped in length and each sentence must carry at least one bound slot or citation, otherwise it is dropped.
 - Policy documents enter the corpus only through a reviewed PR to `policies/` (signed commits). No runtime upload path exists.
-- `injection` eval category is a CI gate with threshold (see `08-eval-spec.md` section 6).
+- `injection` eval category is a CI gate with threshold (see `evaluation.md` section 6).
 
 ### 5.5 CI secrets (T-103, T-310)
-- **PR pipelines never receive the Anthropic key.** On cache miss, PR evals run in `fake` mode and the smoke gate reports `harness-check`; only `main` and scheduled pipelines run `live` (supersedes the earlier fallback wording in `08-eval-spec.md`).
+- **PR pipelines never receive the Anthropic key.** On cache miss, PR evals run in `fake` mode and the smoke gate reports `harness-check`; only `main` and scheduled pipelines run `live` (supersedes the earlier fallback wording in `evaluation.md`).
 - Separate contexts: `llm-eval` (Anthropic key, spend-capped dedicated workspace key), `bot` (GitHub App or fine-grained token limited to `contents:write` on `bot/*` branches and `pull_requests:write`), `signing-ci`. Contexts restricted to `main` and scheduled triggers via CircleCI security groups. "Pass secrets to forked PRs" verified off at MC-04.
 - LLM response cache is written only by `main` and scheduled runs; PR runs may read but not save, so a PR cannot poison nightly results.
 - The README eval table is rendered from a fixed schema of numbers and model IDs; no free text from model output.

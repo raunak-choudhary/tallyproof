@@ -29,7 +29,7 @@ Hashing per RFC 9162 section 2.1: leaf = `SHA-256(0x00 || canonical_bytes)`, nod
 ## Consequences
 
 - Proof generation needs interior hashes. Initially computed from stored leaf hashes with a cache of complete subtrees; at scale, persist tiles (transparency.dev tile layout). Measured in the load test.
-- Global order is ingestion order, not event time (`07-architecture.md` section 6.2).
+- Global order is ingestion order, not event time (`architecture.md` section 6.2).
 - One log writer at a time (advisory lock). Scale-out path: per-partition logs plus a top-level log of shard heads.
 
 ## Benchmark reference

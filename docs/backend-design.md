@@ -37,7 +37,7 @@ tallyproof/
       realtime/        Channels consumers
       health/          /healthz, /readyz
     tests/             unit/, module/, integration/, e2e/ (mirrors apps)
-  frontend/            Next.js app (see 04-frontend-guidelines.md)
+  frontend/            Next.js app (see frontend-guidelines.md)
   infra/
     compose.yaml
     postgres/init/     roles.sql (app role, analyst read-only role), extensions
