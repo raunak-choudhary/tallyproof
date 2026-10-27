@@ -1,12 +1,12 @@
 name: Task
-description: A planned unit of work from docs/06-implementation-plan.md
+description: A planned unit of work
 labels: []
 body:
   - type: input
     id: task_id
     attributes:
       label: Task ID
-      description: For example T-106 or E-501
+      description: The task's identifier in the project plan
     validations:
       required: true
   - type: textarea
@@ -26,5 +26,5 @@ body:
   - type: input
     id: reqs
     attributes:
-      label: Requirements covered
-      description: REQ-IDs from docs/traceability-matrix.md
+      label: Related documents
+      description: Decision records or docs this task affects, for example docs/adr/0014-constrained-query-ir.md
