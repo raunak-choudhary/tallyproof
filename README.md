@@ -1,63 +1,84 @@
 # Tallyproof
 
-A streaming financial ledger with an AI analyst whose every claim is cited to an exact source event, along with a cryptographic proof that the record hasn't been changed since ingestion. Answer quality is measured against exact ground truth.
+Tallyproof is a streaming ledger for public spending data with an AI analyst on top. Every number the analyst gives you is pulled from the ledger by a query, and every claim links to the exact source record, along with a cryptographic proof that the record hasn't changed since it arrived. You can check that proof in your own browser.
 
-> **Status: planning (Phase 0).** Nothing runs yet. The design, the decisions, and the day-by-day plan are in [`docs/`](docs/). This banner will always say exactly what works.
+> **Status:** design complete, implementation starting. Nothing runs yet. This note will always say exactly what works.
 
-<!-- Hero diagram and tamper-demo GIF land in Phase 5 (E-510). -->
+## Why I built it
 
-## The idea in one paragraph
+AI assistants are starting to show up in finance work, and they have two habits that finance can't live with. They get numbers wrong, and they cite sources they didn't actually use. In one study, up to 57% of citations in AI answers weren't faithful to the source. On a 150-question financial benchmark, GPT-4-Turbo with retrieval answered wrong or refused 81% of the time.
 
-Events (invoices, payments, refunds) stream through Kafka into an append-only Postgres ledger. Each accepted event becomes a leaf in an [RFC 9162](https://www.rfc-editor.org/rfc/rfc9162.html) Merkle log. Checkpoints of that log are signed with Ed25519 and copied somewhere outside the database. When the analyst answers a question, it never types a number itself. Values are bound from executed SQL, and every claim cites the events behind it. Your browser fetches the proofs and checks them itself. It trusts only a public key pinned in the web build and a checkpoint timestamped by a third party; everything else is checked. Change one cent in a cited record and verification fails, and the demo shows you which mechanism caught it.
+There's a quieter problem too. Even an honest citation points at a database row, and rows can be edited after the fact. When AWS retired its ledger database, QLDB, in 2025, it pointed customers to Aurora PostgreSQL and noted that Postgres doesn't keep an immutable history on its own. You have to build that yourself.
 
-## Why this exists
+Tallyproof is my attempt to build it, and to make the AI's answers checkable rather than just plausible. Sources for every claim above are in [docs/references.md](docs/references.md).
 
-- **LLM citations are often unfaithful.** Wallat et al. (ICTIR 2025) found that up to 57% of citations in attributed RAG answers were not faithful: the model had not actually relied on the cited source. Gao et al. (ALCE, EMNLP 2023) report that even the best models lacked complete citation support 50% of the time on ELI5.
-- **Finance QA is hard, numbers especially.** On a 150-question sample of FinanceBench (Islam et al., 2023), GPT-4-Turbo with retrieval answered incorrectly or refused 81% of questions.
-- **Regulators are paying attention.** FINRA's 2026 Annual Regulatory Oversight Report added a generative AI section. It names accuracy (including hallucinations) and bias as risks, and lists storing prompt and output logs as an effective practice. The EU AI Act's Articles 12 and 14 describe automatic event logging and human oversight for high-risk AI systems. After the 2026 Digital Omnibus amendments, those obligations apply from December 2027 or August 2028 depending on the category. This project is motivated by those expectations. It does not claim compliance with any of them.
-- **The AWS gap.** Amazon QLDB reached end of support on July 31, 2025, and AWS recommends Aurora PostgreSQL instead. AWS's migration guidance notes that Aurora PostgreSQL does not keep a permanent, immutable record of changes, so that history has to be generated separately. This project is a working example of that pattern on Postgres.
+## How it works
 
-Every source, with exact quotes and links, is in [`docs/research/verified-sources.md`](docs/research/verified-sources.md).
-
-## What is different from existing work
-
-[answerproof](https://github.com/AgentPostmortem/Answerproof) issues signed receipts with a Merkle root over a RAG retrieval set. It's a good idea, and it shows that "Merkle-verified citations" alone isn't new. Tallyproof differs in three ways:
-
-1. **Provenance from ingestion.** Proofs are anchored to streamed events as they arrive, in an append-only log with consistency proofs, so they show that the source record itself is unchanged, not just that it was retrieved.
-2. **Exact ground-truth evals.** Our generator injects labeled anomalies, so expected answers and expected citations are exact. They don't come from an LLM judge.
-3. **Numeric claims are bound, not checked after the fact.** The model writes slots, the ledger fills them, and a verifier rejects any number the model typed itself.
-
-## Quickstart
-
-Coming in Phase 1. The target is three commands:
-
-```bash
-cp .env.example .env && make keygen   # fill secrets
-make up
-make seed SCENARIO=demo
+```
+USAspending.gov bulk files ──► Spark (clean, remove personal data, quality checks)
+                                   │
+                                   ▼
+                             Parquet / Iceberg lake  (everything, ~27 GB raw)
+                                   │  replay in event-time order
+                                   ▼
+                         Kafka ──► ingestion ──► append-only Postgres ledger
+                                                   │
+                                                   ▼
+                                       Merkle log ──► signed checkpoints ──► external timestamp
+                                                   │
+                                                   ▼
+                             AI analyst ──► answer with bound numbers and citations
+                                                   │
+                                                   ▼
+                                     your browser verifies every citation
 ```
 
-## Architecture
+A few design choices do most of the work:
 
-See [`docs/architecture.md`](docs/architecture.md). In short: generator, then Redpanda, then ingestion (schema validation, Bloom-filter fast path, and a UNIQUE constraint, with consumer offsets stored in the same transaction), then the append-only ledger and Merkle log, then signed checkpoints, then an outbox feeding reconciliation, the journal, the lake sink, and the UI. The analyst sits on top and uses a read-only database role.
+- The model never writes a number. It fills in a typed query spec, the server turns that into SQL, and the results are dropped into slots in the answer. Any digit the model types on its own gets rejected.
+- Each event is hashed into an [RFC 9162](https://www.rfc-editor.org/rfc/rfc9162.html) Merkle log, the same structure Certificate Transparency uses. Checkpoints are signed with Ed25519 and timestamped by a third party (OpenTimestamps), so even the operator can't quietly rewrite history.
+- Your browser trusts two things: a public key compiled into the page, and a checkpoint someone else timestamped. It recomputes the rest itself. Change one cent in a cited record and verification fails, and the page tells you which check caught it.
+- Answer quality is measured against exact ground truth, not an AI judge. Labeled anomalies are injected into the real data stream, so the right answers are known in advance.
 
-## Eval results
+## The data
 
-None yet. Results will be published here by CI, along with model IDs, date, set size, and the git SHA.
+All of it is real and public, and none of it is personal.
 
-## Design decisions
+| Source | What it gives us | Size |
+|---|---|---|
+| [USAspending.gov](https://api.usaspending.gov/docs/endpoints) contract transactions | Federal obligations by agency, award, and vendor | About 13 GB of CSV per fiscal year; FY2024 and FY2025 together come to about 27 GB |
+| USAspending account-level data | Payments (outlays) per award, for reconciliation | About 6 million rows per quarter |
+| [Treasury Fiscal Data](https://fiscaldata.treasury.gov/api-documentation/) | The government's daily deposits and withdrawals, as a live feed | Small, updated each business day |
+| Federal Acquisition Regulation | Policy text the analyst can quote | Small |
 
-Architecture Decision Records are in [`docs/adr/`](docs/adr/).
+Public doesn't automatically mean free of personal data. The cleaning step drops executive names and pay, contact details, and any award made to an individual person, and tests fail the build if any of it gets through.
 
-## Related work
+The full dataset lives in the lake. The verifiable ledger takes a replayed slice of it, a million events by default. That's the usual split between an analytics lake and a transactional store, and I'd rather say so here than let a bigger number imply something that isn't true.
 
-- RFC 9162, Certificate Transparency 2.0 (Merkle log hashing, inclusion and consistency proofs)
-- RFC 8785, JSON Canonicalization Scheme
-- Crosby and Wallach, *Efficient Data Structures for Tamper-Evident Logging*, USENIX Security 2009
-- C2SP `tlog-checkpoint` and transparency.dev
-- answerproof (see above)
-- VeriRAG (IACR ePrint 2026/637), zero-knowledge proofs for verifiable RAG, a direction for future work
+## How it differs from existing work
+
+[answerproof](https://github.com/AgentPostmortem/Answerproof) already signs receipts over the documents a RAG system retrieved, so "Merkle-verified citations" alone isn't new. Tallyproof goes further in three ways. Its proofs reach back to when each record was ingested, not just when it was retrieved. Its evaluation uses exact labels instead of a judge model. And numbers in answers are bound to query results, not checked after the model writes them.
+
+## Running it locally
+
+Coming with the first milestone. The goal is three commands on a laptop with 8 GB of RAM, using the command line only, with no Docker Desktop. The [runbook](docs/runbook.md) already lists the prerequisites, the resource limits, and how to remove everything afterwards.
+
+## Documentation
+
+| Topic | Document |
+|---|---|
+| System architecture and the tamper-detection model | [architecture.md](docs/architecture.md) |
+| Schemas, Kafka topics, database, and API | [backend-design.md](docs/backend-design.md) |
+| How answer quality is measured | [evaluation.md](docs/evaluation.md) |
+| Threat model and security controls | [threat-model.md](docs/threat-model.md) |
+| Testing approach | [testing.md](docs/testing.md) |
+| Running, resetting, and debugging | [runbook.md](docs/runbook.md) |
+| Configuration reference | [configuration.md](docs/configuration.md) |
+| Technology choices and versions | [tech-stack.md](docs/tech-stack.md) |
+| How this maps to AWS services | [aws-reference-architecture.md](docs/aws-reference-architecture.md) |
+| Architecture decision records | [docs/adr](docs/adr/) |
+| Sources | [references.md](docs/references.md) |
 
 ## License
 
-MIT
+MIT. See [LICENSE](LICENSE).
