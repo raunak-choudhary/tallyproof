@@ -1,0 +1,42 @@
+# Secrets
+.env
+.env.*
+!.env.example
+secrets/
+*.key
+
+# Local-only planning input (superseded by docs/)
+PROJECT_BRIEF.md
+
+# Agent local files
+.claude/
+AGENTS.md
+
+# Knowledge graph output
+graphify-out/
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Caches and local runtime state
+.cache/
+var/
+
+# Node
+node_modules/
+dist/
+build/
+.next/
+out/
+
+# OS and editors
+.DS_Store
+.idea/
