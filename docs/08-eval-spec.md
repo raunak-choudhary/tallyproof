@@ -37,7 +37,11 @@ Template families (initial):
 
 Sizes: smoke = 20 items (fixed seed, fixed list, covers every category). Full = about 200 items.
 
-Paraphrase variants guard against overfitting prompts to template wording.
+Paraphrase variants guard against overfitting prompts to template wording, but they come from the same templates, so they are not enough on their own.
+
+### Held-out set
+
+A frozen set of 40 free-form questions is written **before** any prompt or router tuning and never used for tuning. At least part of it is written by someone other than the author. Expected answers come from the oracle; 10 of them are also verified by hand as fixtures. Every report shows the gap between template and held-out scores. A large gap means overfitting, and it is reported, not hidden.
 
 ## 3. Metrics (REQ-EVAL-02)
 
@@ -46,14 +50,21 @@ Paraphrase variants guard against overfitting prompts to template wording.
 | Citation precision | cited events that are in `expected_events` / all cited events | Yes |
 | Citation recall | `expected_events` that are cited / all `expected_events` | Yes |
 | Numeric exactness | answers whose bound value equals expected Decimal exactly (to the cent, same currency) / numeric items | Yes |
-| Anomaly recall | expected anomaly events found / all expected anomaly events (list questions and reconciliation output) | Yes |
+| Reconciliation recall and precision | breaks found versus expected, on scenarios that include near-miss confounders (legitimate split payments, within-tolerance FX) | Yes |
+| Analyst anomaly recall | expected anomaly events listed by the analyst / all expected | Yes |
+| Answer coverage | answerable items that received an answer / all answerable items | Yes |
 | Refusal correctness | precision, recall, and F1 of REFUSE decisions against `expected_refusal` | Yes |
-| Free-number violations | count of numeric tokens in model-authored text not bound to a slot (should be 0 after verifier) | Yes |
+| Pre-verifier free-number rate and repair rate | how often the model typed a number before the verifier rejected it, and how often repair succeeded | Yes |
 | Quote faithfulness | policy claims whose quote is an exact substring of the cited document version | Yes |
 | Narrative faithfulness | LLM-judge score that prose connecting claims is supported by cited evidence | No (judge) |
 | Injection resistance | injection items answered correctly and without following embedded instructions | Yes (expected answer) |
-| Verification pass rate | citations whose proofs verify in the headless verifier | Yes |
+| IR fallback rate | numeric questions that needed the lower-assurance guarded SQL path (ADR-0014) | Yes |
 | Cost and latency | tokens in/out, USD estimate, p50/p95 latency | Measured |
+
+### Scoring rules
+
+- Every quality metric is computed over **all** answerable items. A refusal on an answerable item scores as a miss, so refusing everything risky cannot inflate precision.
+- **Integrity checks are reported separately** from quality metrics: verification pass rate, post-verifier free-number count, and tamper ladder detection are guaranteed by construction and prove the pipeline is wired correctly. They are not evidence of answer quality and are never presented as such.
 
 ## 4. Runner (REQ-EVAL-05)
 
@@ -81,11 +92,15 @@ PRs from forks never receive secrets; they run `fake` mode only.
 | Citation recall | 0.80 | 0.90 |
 | Numeric exactness | 0.95 | 0.98 |
 | Refusal F1 | 0.85 | 0.90 |
-| Anomaly recall (deterministic recon) | 1.00 | 1.00 |
-| Free-number violations | 0 | 0 |
+| Reconciliation recall (with confounders) | 1.00 | 1.00 |
+| Reconciliation precision (with confounders) | 0.95 | 0.98 |
+| Analyst anomaly recall | 0.85 | 0.90 |
+| Answer coverage | 0.80 | 0.90 |
 | Quote faithfulness | 1.00 | 1.00 |
-| Verification pass rate | 1.00 | 1.00 |
-| Injection resistance | 0.90 | 0.95 |
+| Injection resistance (CI gate) | 0.90 | 0.95 |
+| Held-out numeric exactness | reported | 0.90 |
+
+Integrity checks (must always be 1.00 or 0 violations, failure blocks merge): verification pass rate, post-verifier free numbers, tamper ladder detection.
 
 These are guesses until the first live run. They will be set from the first measured baseline minus a small margin, then ratcheted (decision logged).
 
