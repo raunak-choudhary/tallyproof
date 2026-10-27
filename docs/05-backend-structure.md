@@ -50,6 +50,8 @@ ledgerline/
 
 Why `ledgerline_core` is separate from Django apps: the cryptographic and data-structure code is the most reviewed code in the repo. Keeping it pure Python makes it trivially unit-testable, property-testable, and mirrorable in TypeScript, and it lets a reviewer read it without knowing Django.
 
+Event schemas are registered in Redpanda's Schema Registry with BACKWARD compatibility from Phase 2 (moved up from Nice-to-have: it is cheap and expected by data-platform reviewers).
+
 Every app has a `README.md` (REQ-DOC-02) with: responsibilities, public interfaces, events consumed, events produced.
 
 ## 2. Public IDs (REQ-URL-02)
@@ -107,6 +109,14 @@ Payload examples:
 - `refund.issued`: `refund_ref`, `original_payment_ref`, `amount`, `currency`, `reason`.
 - `adjustment.posted`: `adjustment_ref`, `target_ref`, `amount`, `reason`.
 
+### Leaf document contract (what is hashed)
+
+The hashed `LeafDocument` contains exactly: `event_id`, `idempotency_key`, `event_type`, `schema_version`, `occurred_at`, `emitted_at`, `account_id`, `payload`. Transport and tracing fields (`scenario_id`, `correlation_id`, Kafka coordinates) are excluded so they can never affect a proof. Validation rules that make cross-language hashing safe (events failing them go to the DLQ):
+
+- No JSON numbers except integers in `[0, 2^53)`. Money, rates, and quantities are decimal strings.
+- All strings must be valid Unicode scalar values (no lone surrogates). The generator's `injection_memo` cases include zero-width and right-to-left characters on purpose, and they are part of the cross-language test vectors.
+- IDs are ULIDs minted from an injectable clock and seeded RNG (`new_id(prefix, clock, rng)`), so a seed reproduces the same IDs.
+
 **Ground-truth labels are never in the event.** They are written by the generator to `manifest.jsonl` keyed by `event_id`, read only by the eval harness. If labels were in events, the analyst could read the answer key and evals would be meaningless.
 
 `memo` and `reason` are free text and are where prompt-injection payloads are planted by the generator (anomaly type `injection_memo`).
@@ -124,7 +134,7 @@ Each type has a stable label used in the manifest and evals. All are determinist
 | `split_payment` | Several payments sum to invoice | Reconciliation | Matched set, no break |
 | `overpayment` | Payment > invoice | Reconciliation | `overpayment` |
 | `orphan_payment` | Payment referencing no invoice | Reconciliation | `orphan_payment` |
-| `late_arrival` | `emitted_at` far after `occurred_at`, possibly after period close | Reconciliation (watermark) | `late_after_close` |
+| `late_arrival` | `emitted_at` far after `occurred_at`, possibly after period close | Reconciliation (watermark) | `late_after_close`. Periods are calendar months; a period closes when the watermark (max `occurred_at` seen minus `RECON_LATE_ARRIVAL_WATERMARK_HOURS`) passes month end. Late events post to the open period with a reference to the closed one, never by editing it |
 | `fx_rounding` | Converted amount off by rounding beyond policy | Reconciliation | `fx_rounding_variance` |
 | `refund_exceeds_payment` | Refund total > original payment | Reconciliation | `refund_exceeds_original` |
 | `vendor_burst` | Many small invoices from one vendor in a window | Heavy hitters (Nice-to-have) and analyst | Flag only |
@@ -157,9 +167,9 @@ erDiagram
     text account_id
     timestamptz occurred_at
     timestamptz ingested_at
-    bytea canonical_bytes
+    bytea canonical_bytes "single source of truth"
     bytea leaf_hash
-    jsonb payload
+    jsonb payload "STORED generated from canonical_bytes"
     text kafka_topic
     int kafka_partition
     bigint kafka_offset
@@ -229,19 +239,22 @@ erDiagram
   }
 ```
 
-Supporting tables: `consumer_offset`, `dedupe_rejection`, `outbox`, `doc_chunk` (with `embedding vector(N)`), `merkle_subtree_cache`.
+Supporting tables: `merkle_log_head` (single row, next leaf index), `consumer_offset`, `dedupe_rejection`, `outbox`, `doc_chunk` (with `embedding vector(384)`). A subtree cache is deferred until the load test shows proof latency needs it.
+
+`payload` is a STORED generated column computed from `canonical_bytes` (ADR-0015), so analyst views cannot read anything the proof does not cover.
 
 Constraints worth calling out:
 - `NUMERIC(19,4)` for money; `CHECK (debit >= 0 AND credit >= 0 AND (debit = 0) <> (credit = 0))`.
 - Deferred constraint trigger: sum of debits equals sum of credits per `entry_id`.
 - `UNIQUE (idempotency_key)`, `UNIQUE (leaf_index)`.
-- Append-only triggers on `ledger_event`, `ledger_batch`, `journal_line`, `policy_document`.
+- Append-only triggers on `ledger_event`, `ledger_batch`, `journal_line`, `policy_document`; TRUNCATE revoked from the app role (the owner role can still truncate, which tamper ladder level 1 already covers).
 - Every schema change ships as its own migration PR (brief Section 14).
 
 ### Database roles (`infra/postgres/init/roles.sql`)
 - `ledgerline_app`: INSERT/SELECT on ledger tables, no UPDATE/DELETE on append-only tables.
 - `ledgerline_analyst`: SELECT only on schema `analyst` (curated views), `default_transaction_read_only = on`, `statement_timeout` and `work_mem` set at role level (REQ-SEC-07).
-- Migrations run as a separate owner role.
+- `ledgerline_owner`: owns the schema and runs migrations through a separate `DB_OWNER_URL` and a dedicated `migrations` database alias.
+- Roles are created by `make db-roles` (a psql script run identically in compose and CI), not by container init scripts, because init scripts cannot run in CI service containers. Grants live in an idempotent RunSQL migration with `ALTER DEFAULT PRIVILEGES`, so they apply to tables created later. Tests connect as owner and use `SET ROLE` to assert grants.
 
 ### Analyst views (schema `analyst`)
 `analyst.events`, `analyst.invoices`, `analyst.payments`, `analyst.refunds`, `analyst.open_items`, `analyst.breaks`, `analyst.journal`. Every view exposes `event_id` so provenance can be derived. Views hide `canonical_bytes`, offsets, and internal IDs.
