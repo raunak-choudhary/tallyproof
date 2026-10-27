@@ -12,17 +12,21 @@ The brief's differentiator 3 is "every number in an answer is checked against th
 
 The model writes **templates**, not numbers:
 
-- Values appear only as slots, `{{v1}}`, bound to cells of an executed query result.
+- Values appear only as typed slots bound to the executed query result: `{{v1}}` (money), `{{d1}}` (date), `{{n1}}` (count), `{{id1}}` (identifier). Derived values such as differences are computed server-side as declared expressions (`{{v3 = v1 - v2}}`) and the expression is shown in the UI.
 - Citations appear only as `[[c1]]`, bound to event IDs or document IDs present in the evidence set for this question.
 - Quotes from policy documents are claims of kind `quote` and must be exact substrings of the cited document version.
 
 The **verifier** rejects an answer if:
-1. Model-authored text contains numeric tokens outside slots (dates in ISO form that appear verbatim in evidence are allowed by rule).
+1. Model-authored text contains numeric tokens outside slots. Tokens are matched against typed entities, so identifiers like `INV-1042` or `acct_...` that appear in the evidence or the question are allowed, and so are period names ("Q3", "September") that appear in the question.
 2. A slot is unbound or a citation references an ID outside the evidence set.
 3. A value claim has no provenance. Provenance is defined per query shape by the constrained query IR (ADR-0014), not derived from arbitrary SQL.
 4. A quote is not an exact substring.
 
 On rejection, one repair attempt with the verifier's error; then a typed refusal (`unverifiable_claim`, `no_evidence`, `out_of_scope`, `unsafe_query`, `budget_exceeded`).
+
+## Measurement
+
+First-pass and post-repair rejection rates are reported per question category, so an over-strict verifier shows up as a high refusal rate rather than hiding as "safe".
 
 ## Consequences
 
