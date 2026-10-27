@@ -11,13 +11,16 @@ The brief says ingestion deduplicates with a Bloom filter for "idempotent, effec
 ## Decision
 
 1. **The database is the authority.** `UNIQUE (idempotency_key)` on `ledger_event`.
-2. **The Bloom filter is a fast path, used only for its guarantee.** A Bloom filter has no false negatives. "Definitely not seen" records are bulk-inserted without conflict handling. "Maybe seen" records take the slow path: `INSERT ... ON CONFLICT DO NOTHING`, conflicts logged to `dedupe_rejection`.
-3. **Offsets in the same transaction.** `consumer_offset` is updated in the same Postgres transaction as the ledger rows and outbox rows. On restart, the consumer seeks to the stored offset. Kafka delivery is at-least-once; the idempotent, transactional sink makes processing effectively-once.
-4. **Bloom state** is per partition (events are keyed by `account_id`, so duplicates share a partition), sized from `DEDUPE_EXPECTED_ITEMS` and `DEDUPE_TARGET_FPR`, and rebuilt from the database on startup. If the fast path ever hits a unique violation, the batch falls back to the slow path and a counter is incremented.
+2. **Staged insert, never an aborted transaction.** Each batch is copied into a temporary table and moved with `INSERT ... SELECT ... ON CONFLICT DO NOTHING RETURNING`. Conflicts are logged to `dedupe_rejection`.
+3. **Contiguous leaf indexes.** Assigned after the insert set is final, from a single-row counter in the same transaction. Rollbacks restore it. No sequences.
+4. **Offsets in the same transaction, fenced.** `consumer_offset` is updated in the same transaction with `GREATEST` plus a generation check. On (re)assignment the consumer seeks to the stored offset.
+5. **Bloom filter, honestly scoped.** Per partition, rebuilt in `on_assign`, updated as each key is processed (catches duplicates within one poll). Its measurable jobs:
+   - Skip the conflict-logging and duplicate-handling path for keys that are definitely new, and report the false-positive rate live as a pipeline metric.
+   - Dedupe in the **lake sink**, where S3 objects have no unique constraint and replays would otherwise write duplicate rows.
 
-## Why keep the Bloom filter at all?
+## Why keep the Bloom filter in ingestion?
 
-It decides which records can skip conflict handling. At high duplicate-free volume, most records go through a bulk path; only the "maybe" fraction (true duplicates plus FPR) pays for conflict checks. The load test reports fast-path share and the throughput difference against an always-slow-path baseline. If the difference is negligible at our scale, we will say so.
+Review rightly pointed out that `ON CONFLICT DO NOTHING` costs about the same unique-index probe as a plain insert, so the database-side saving is small. We keep the filter because it is cheap and observable, and we report the measured difference in the load test. If it is negligible, the README says so. Its strongest use is in the lake sink, where nothing else prevents duplicates.
 
 ## Alternatives
 

@@ -69,12 +69,11 @@ Rel(web, api, "REST + WebSocket")
 
 1. Consumer polls a batch of up to `INGEST_MAX_BATCH` records from `fin.events.raw.v1`.
 2. Each record is parsed and validated against the Pydantic schema for its `event_type` and `schema_version`. Failures go to `fin.events.dlq.v1` with an error envelope; the offset still advances (poison messages must not block a partition).
-3. Dedupe: the per-partition Bloom filter is checked by `idempotency_key`.
-   - "Definitely new" records go to the fast path (bulk insert without conflict handling).
-   - "Maybe seen" records go to the slow path: `INSERT ... ON CONFLICT (idempotency_key) DO NOTHING`, and conflicts are recorded in `dedupe_rejection`.
-   - If the fast-path bulk insert ever hits a unique violation (should be impossible unless the Bloom state is stale), the batch falls back to the slow path. This is logged and counted as a metric.
-4. Leaves are assigned contiguous `leaf_index` values from a sequence held under a transaction-scoped advisory lock (single writer per log, see 6.2).
-5. The same transaction upserts `consumer_offset(group, topic, partition, next_offset)` and inserts outbox rows.
+3. Dedupe. Each key is checked against the per-partition Bloom filter and then added to it immediately, so two copies inside one poll are caught.
+   - The batch is staged with `COPY` into a temporary table, then moved with `INSERT ... SELECT ... ON CONFLICT (idempotency_key) DO NOTHING RETURNING`. The database UNIQUE constraint is always the authority; nothing aborts the transaction on a duplicate.
+   - Keys the Bloom filter reports as "maybe seen" are recorded in `dedupe_rejection` when the insert confirms the conflict, and counted as Bloom false positives when it does not.
+4. Leaf indexes are assigned **after** the insert set is final, from a single-row counter (`UPDATE merkle_log_head SET next_index = next_index + $n RETURNING ...`) in the same transaction. The row lock serializes writers, and a rollback restores the counter, so the log can never have gaps. Sequences are not used because `nextval` is not transactional. A checkpointer assertion checks `max(leaf_index) + 1 = count(*)`.
+5. The same transaction upserts `consumer_offset(group, topic, partition, next_offset)` with `next_offset = GREATEST(existing, new)` plus a consumer generation check, so a zombie consumer after a rebalance cannot move offsets backwards. Outbox rows are inserted in the same transaction.
 6. Commit. Only then is the Kafka offset committed (for monitoring). On restart, the consumer seeks to offsets stored in Postgres, not in Kafka. This is why processing is effectively-once even though delivery is at-least-once.
 
 ### 4.2 Checkpointing
@@ -147,7 +146,7 @@ Every leaf is `SHA-256(0x00 || canonical_bytes)` where `canonical_bytes` is the 
 ### 6.2 Ordering
 - Kafka guarantees order per partition only. Partition key is `account_id`, so all events for one customer or vendor are ordered relative to each other, which reconciliation needs.
 - The Merkle log has a single global order (`leaf_index`), assigned at commit time. This is **ingestion order**, not event time. Late-arriving events get a later `leaf_index` but keep their original `occurred_at`. Reconciliation and analytics use `occurred_at`; proofs use `leaf_index`.
-- One log writer at a time (advisory lock). With N partitions and N consumers this is the throughput ceiling of the design and is measured in the load test. Sharding the log per partition is the documented scale-out path (section 9).
+- One log writer at a time (row lock on `merkle_log_head`). With N partitions and N consumers this is the throughput ceiling of the design and is measured in the load test. Sharding the log per partition is the documented scale-out path (section 9).
 
 ### 6.3 Immutability
 - `ledger_event`, `ledger_batch`, `journal_line` have no UPDATE or DELETE grant for the application role, and a trigger raises on UPDATE or DELETE as defense in depth.
@@ -189,7 +188,7 @@ We publish only measured numbers, with hardware and configuration stated (Sectio
 | Failure | Effect | Recovery |
 |---|---|---|
 | Consumer crash mid-batch | Transaction rolled back | Restart seeks to Postgres-stored offset; at-least-once delivery plus idempotent append |
-| Bloom filter lost on restart | False "definitely new" impossible only if state is rebuilt | Rebuild from `ledger_event.idempotency_key` for the dedupe window before consuming; fast-path conflict fallback covers bugs |
+| Bloom filter lost on restart or partition reassigned | Higher false-positive work only; correctness unaffected because the UNIQUE constraint is the authority | Rebuild the filter in `on_assign` from `ledger_event` rows for that partition before the first poll (index on `kafka_partition`) |
 | Poison message | Would block partition | DLQ with error envelope; replay tool after fix |
 | Signing key missing | Cannot close batches | Fail fast at startup (REQ-SEC-02); ingestion continues, checkpoint lag alarm |
 | Redpanda down | No ingestion | `/readyz` fails; producers retry with backoff; no data loss once acked |
