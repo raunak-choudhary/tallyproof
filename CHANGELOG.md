@@ -4,4 +4,4 @@ This file is maintained by [release-please](https://github.com/googleapis/releas
 
 ## Unreleased
 
-- Planning documents, ADRs, and traceability matrix (Phase 0).
+- Initial documentation: architecture, backend and data pipeline design, threat model, evaluation approach, runbook, and architecture decision records.
