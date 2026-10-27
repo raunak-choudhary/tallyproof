@@ -1,158 +1,161 @@
-# 05. Backend Structure
+# Backend design
 
-> Status: Draft for MC-01. Package, role, and topic names use the final project name `tallyproof` (ADR-0006).
+This document describes the repository layout, the events and their schemas, the Kafka topics, the database, and the API. The overall system is described in [architecture.md](architecture.md).
 
-## 1. Repository layout (monorepo)
+## Repository layout
 
 ```
 tallyproof/
   backend/
+    pyproject.toml            ruff, mypy, pytest, and coverage settings
+    requirements.in           direct runtime dependencies
+    requirements-dev.in       direct development dependencies
+    requirements.txt          pinned with hashes by pip-tools
+    requirements-dev.txt      pinned with hashes by pip-tools
     manage.py
-    pyproject.toml               ruff, mypy, pytest, coverage config
-    requirements.in              direct runtime deps
-    requirements-dev.in          direct dev deps (-c requirements.txt)
-    requirements.txt             pinned, compiled by pip-tools
-    requirements-dev.txt         pinned, compiled by pip-tools
-    config/                      Django project
-      settings/                  base.py, local.py, test.py, ci.py (REQ-SEC-06)
-      env.py                     pydantic-settings typed settings (REQ-SEC-02)
-      urls.py, asgi.py, wsgi.py
-    tallyproof_core/             framework-free library, no Django imports
-      canonical.py               RFC 8785 serialization
-      hashing.py                 leaf/node hashing with domain separation
-      merkle/                    log, inclusion proof, consistency proof, verify
-      bloom.py                   Bloom filter (+ sizing math)
-      checkpoint.py              C2SP checkpoint format, Ed25519 sign/verify
-      ids.py                     prefixed public IDs (ULID based)
-      money.py                   Decimal money with currency exponent
-    apps/
-      events/          schemas (Pydantic), JSON Schema export, topic registry
-      generator/       scenarios, anomaly injectors, manifest writer, CLI
-      ingestion/       consumer loop, validation, dedupe, DLQ, offsets
-      ledger/          models, append service, batches, checkpoints, proofs, outbox, journal
-      reconciliation/  matching rules, breaks
-      analyst/         router, sql_guard, retrieval, composer, verifier, llm/
-      evals/           golden set builder, oracle, runner, metrics, thresholds
-      lake/            parquet sink, control totals (MLP)
-      realtime/        Channels consumers
-      health/          /healthz, /readyz
-    tests/             unit/, module/, integration/, e2e/ (mirrors apps)
-  frontend/            Next.js app (see frontend-guidelines.md)
-  infra/
-    compose.yaml
-    postgres/init/     roles.sql (app role, analyst read-only role), extensions
-    redpanda/          topic bootstrap script
-  scripts/             replay export, tamper tool, load test
+    config/                   Django project
+      settings/               base, local, test, and ci settings
+      env.py                  typed settings loaded from .env
+    tallyproof_core/          plain Python, no Django
+      canonical.py            RFC 8785 serialization
+      hashing.py              leaf and node hashing with domain separation
+      merkle/                 log, inclusion proofs, consistency proofs
+      checkpoint.py           C2SP signed checkpoints, Ed25519
+      bloom.py                Bloom filter and its sizing math
+      ids.py                  prefixed public IDs
+      money.py                Decimal money
+    tallyproof_pipeline/      Spark jobs, also free of Django
+      acquire/                downloads with a source manifest
+      bronze_to_silver/       typing, cleaning, personal data removal, quarantine
+      quality/                Deequ constraints and metrics history
+      gold/                   conformed events and the anomaly overlay
+      replay/                 Kafka producer for gold events
+      live/                   Treasury daily statement connector
+    apps/                     Django apps
+      events/                 event schemas, JSON Schema export, topic registry
+      ingestion/              consumer loop, validation, deduplication, dead letters
+      ledger/                 event store, Merkle log, checkpoints, proofs, outbox, journal
+      reconciliation/         matching rules and breaks
+      analyst/                query compiler, retrieval, composer, verifier, LLM client
+      evals/                  question sets, oracle, runner, metrics
+      realtime/               WebSocket fan-out
+      health/                 /healthz and /readyz
+    tests/                    unit, module, integration, and end-to-end tests
+  frontend/                   Next.js app
+  infra/                      compose file, database role script, topic setup
+  testdata/                   shared cross-language vectors and the CI data sample
   docs/
-  .circleci/config.yml
+  .circleci/
   Makefile
 ```
 
-Why `tallyproof_core` is separate from Django apps: the cryptographic and data-structure code is the most reviewed code in the repo. Keeping it pure Python makes it trivially unit-testable, property-testable, and mirrorable in TypeScript, and it lets a reviewer read it without knowing Django.
+`tallyproof_core` and `tallyproof_pipeline` are kept free of Django on purpose. The hashing and Merkle code is what a careful reader will scrutinize most, and in plain Python it's easier to read, to test with property-based tests, and to mirror in TypeScript. The Spark jobs don't need a web framework either.
 
-Event schemas are registered in Redpanda's Schema Registry with BACKWARD compatibility from Phase 2 (moved up from Nice-to-have: it is cheap and expected by data-platform reviewers).
+Downloaded data lives in `data/`, which git ignores. Every app has its own README covering what it does, its public interface, and the events it consumes and produces.
 
-Every app has a `README.md` (REQ-DOC-02) with: responsibilities, public interfaces, events consumed, events produced.
+## Public IDs
 
-## 2. Public IDs (REQ-URL-02)
-
-Format `<prefix>_<26-char ULID>` (sortable, URL-safe). Database primary keys are internal `bigint` and never appear in URLs (REQ-URL-01).
+Public IDs look like `<prefix>_<ULID>`: sortable and safe in URLs. Internal integer keys never leave the service.
 
 | Prefix | Entity |
 |---|---|
 | `evt_` | Ledger event |
-| `bat_` | Merkle batch (closed by a checkpoint) |
-| `acct_` | Synthetic account (customer or vendor) |
-| `inv_` | Invoice reference (business key inside payload) |
+| `bat_` | Merkle batch, closed by a checkpoint |
+| `src_` | Registered source file (a downloaded archive and its hash) |
 | `brk_` | Reconciliation break |
 | `doc_` | Policy document version |
-| `qry_` | Submitted query |
+| `qry_` | Submitted question |
 | `ans_` | Answer |
 | `clm_` | Claim within an answer |
-| `run_` | Eval run |
-| `scn_` | Generator scenario |
+| `run_` | Evaluation run |
 
-## 3. Kafka topics (Redpanda)
+Business identifiers from the source data, such as award keys and recipient UEIs, are kept as they are inside the event payload. A UEI identifies a registered business entity. Awards to individual people are removed during cleaning, so no personal identifier reaches the ledger.
 
-Naming: `<domain>.<entity>.<stage>.v<major>`.
+## Events
 
-| Topic | Key | Partitions (local) | Retention | Producer | Consumers |
-|---|---|---|---|---|---|
-| `fin.events.raw.v1` | `account_id` | 6 | 7 days | generator | ingestion |
-| `fin.events.dlq.v1` | `account_id` | 1 | 30 days | ingestion | replay tool, ops |
-| `ledger.appended.v1` | `account_id` | 6 | 7 days | outbox relay | reconciliation, journal, lake, realtime |
-| `ledger.checkpoints.v1` | log origin | 1, compacted plus retention | forever (compact) | checkpointer | realtime, witness exporter |
-| `recon.breaks.v1` | `account_id` | 3 | 7 days | reconciliation | realtime |
-
-Why key by `account_id`: reconciliation matches payments to invoices for the same account, so per-account ordering matters; the idempotency key of duplicates shares the account, so duplicates land on the same partition and the per-partition Bloom filter sees both. Hot-account skew is a known risk, measured by the Count-Min Sketch in Nice-to-have.
-
-## 4. Event envelope (Pydantic, exported to JSON Schema)
+### Envelope
 
 ```text
 EventEnvelope
-  event_id          str   evt_...            unique per emission; a re-delivered duplicate gets a new event_id
-  (the logical identity of an event is idempotency_key, which duplicates share)
-  idempotency_key   str                      producer-level key; duplicates share it
-  event_type        enum  invoice.issued | payment.received | refund.issued | adjustment.posted | credit_note.issued
-  schema_version    int   1
-  occurred_at       datetime (UTC, RFC 3339)  event time
-  emitted_at        datetime (UTC)            producer time (late arrivals: emitted_at >> occurred_at)
-  account_id        str   acct_...
-  scenario_id       str   scn_...
-  correlation_id    str                       traces one event end to end (Section 14)
-  payload           discriminated union by event_type
+  event_id          evt_...   unique per emission; a re-delivered duplicate gets a new one
+  idempotency_key   str       the logical identity of the event; duplicates share it
+  event_type        enum      see the table below
+  schema_version    int       starts at 1
+  occurred_at       datetime  when it happened (UTC, RFC 3339)
+  emitted_at        datetime  when it was produced; a large gap marks a late arrival
+  account_id        str       the recipient UEI, or a Treasury account for cash events
+  correlation_id    str       traces one event from ingestion to the answer that cites it
+  payload           one schema per event type
 ```
 
-Payload examples:
-- `invoice.issued`: `invoice_ref`, `amount` (decimal string), `currency` (ISO 4217), `due_date`, `line_items[]`, `memo`.
-- `payment.received`: `payment_ref`, `amount`, `currency`, `fx_rate_to_base` (decimal string, optional), `applies_to_invoice_ref` (optional), `method`, `memo`.
-- `refund.issued`: `refund_ref`, `original_payment_ref`, `amount`, `currency`, `reason`.
-- `adjustment.posted`: `adjustment_ref`, `target_ref`, `amount`, `reason`.
+| Event type | Source | Key payload fields |
+|---|---|---|
+| `obligation.recorded` | USAspending contract transaction with a positive amount | award key, PIID, awarding and funding agency, amount, action date, action type, NAICS and PSC codes, description |
+| `obligation.adjusted` | Modification, including de-obligations (negative amounts) | award key, modification number, amount, reason |
+| `outlay.reported` | Account-level award financial data | award key, Treasury account, fiscal period, cumulative outlay, period outlay (derived) |
+| `cash.movement` | Treasury Daily Treasury Statement | record date, account, deposit or withdrawal, category, amount and its unit |
+| `source.registered` | The acquisition step | file name, URL, size, SHA-256, fetch time |
 
-### Leaf document contract (what is hashed)
+Outlays in the source are cumulative from the start of the fiscal year. The cleaning step derives each period's outlay as the difference from the previous period for the same award and account, and quarantines rows where that goes negative without a matching correction.
 
-The hashed `LeafDocument` contains exactly: `event_id`, `idempotency_key`, `event_type`, `schema_version`, `occurred_at`, `emitted_at`, `account_id`, `payload`. Transport and tracing fields (`scenario_id`, `correlation_id`, Kafka coordinates) are excluded so they can never affect a proof. Validation rules that make cross-language hashing safe (events failing them go to the DLQ):
+Event schemas are Pydantic models exported as JSON Schema draft-07 with internal references only, so they work in both Redpanda's Schema Registry and AWS Glue Schema Registry. Schemas are registered with backward compatibility enforced.
 
-- No JSON numbers except integers in `[0, 2^53)`. Money, rates, and quantities are decimal strings.
-- All strings must be valid Unicode scalar values (no lone surrogates). The generator's `injection_memo` cases include zero-width and right-to-left characters on purpose, and they are part of the cross-language test vectors.
-- IDs are ULIDs minted from an injectable clock and seeded RNG (`new_id(prefix, clock, rng)`), so a seed reproduces the same IDs.
+### What gets hashed
 
-**Ground-truth labels are never in the event.** They are written by the generator to `manifest.jsonl` keyed by `event_id`, read only by the eval harness. If labels were in events, the analyst could read the answer key and evals would be meaningless.
+The hashed leaf document contains exactly these fields: `event_id`, `idempotency_key`, `event_type`, `schema_version`, `occurred_at`, `emitted_at`, `account_id`, and `payload`. Tracing fields and Kafka coordinates are left out so they can never change a proof.
 
-`memo` and `reason` are free text and are where prompt-injection payloads are planted by the generator (anomaly type `injection_memo`).
+Three validation rules keep Python and the browser producing identical bytes. Events that break them go to the dead-letter topic.
 
-## 5. Anomaly catalog (v1)
+- The only JSON numbers allowed are integers from 0 up to 2^53. Money, rates, and quantities are decimal strings.
+- Every string must be valid Unicode with no lone surrogates. The injected prompt-injection cases deliberately include zero-width and right-to-left characters, and they're part of the shared test vectors.
+- IDs are minted from an injectable clock and a seeded random generator, so a seed reproduces the same IDs.
 
-Each type has a stable label used in the manifest and evals. All are deterministic given the seed.
+### Labels stay out of events
 
-| Label | Injection | Detected by | Expected break / behavior |
+Anomaly labels are written to a separate manifest keyed by `event_id`, and only the evaluation harness reads it. If labels were in the events, the analyst could read the answer key and evaluation would mean nothing.
+
+## Anomaly catalog
+
+Injected anomalies are seeded and deterministic. Anomalies that occur naturally in the government data are found by documented rules and reported separately, so the two are never mixed.
+
+| Label | What's injected | Caught by | Expected result |
 |---|---|---|---|
-| `duplicate_delivery` | Same idempotency key re-sent (same or different partition timing) | Ingestion dedupe | Rejected, logged in `dedupe_rejection` |
-| `duplicate_invoice_semantic` | Same vendor, amount, date, different ref | Reconciliation | `brk_` type `possible_duplicate_invoice` |
-| `amount_mismatch` | Payment differs from invoice beyond tolerance | Reconciliation | `amount_mismatch` |
-| `partial_payment` | Payment < invoice, remainder open | Reconciliation | `partial_open` (not an error, tracked) |
-| `split_payment` | Several payments sum to invoice | Reconciliation | Matched set, no break |
-| `overpayment` | Payment > invoice | Reconciliation | `overpayment` |
-| `orphan_payment` | Payment referencing no invoice | Reconciliation | `orphan_payment` |
-| `late_arrival` | `emitted_at` far after `occurred_at`, possibly after period close | Reconciliation (watermark) | `late_after_close`. Periods are calendar months; a period closes when the watermark (max `occurred_at` seen minus `RECON_LATE_ARRIVAL_WATERMARK_HOURS`) passes month end. Late events post to the open period with a reference to the closed one, never by editing it |
-| `fx_rounding` | Converted amount off by rounding beyond policy | Reconciliation | `fx_rounding_variance` |
-| `refund_exceeds_payment` | Refund total > original payment | Reconciliation | `refund_exceeds_original` |
-| `vendor_burst` | Many small invoices from one vendor in a window | Heavy hitters (Nice-to-have) and analyst | Flag only |
-| `injection_memo` | Memo contains instructions aimed at the LLM | Analyst defenses | Answer unaffected; eval measures it |
-| `schema_invalid` | Malformed event | Ingestion validation | DLQ |
+| `duplicate_delivery` | The same event re-sent | Ingestion deduplication | Rejected and logged |
+| `duplicate_award_semantic` | Same recipient, amount, and date under a different award number | Reconciliation | `possible_duplicate_award` break |
+| `outlay_exceeds_obligation` | Outlays pushed above the award's total obligations | Reconciliation | `outlay_exceeds_obligation` break |
+| `orphan_outlay` | An outlay for an award that was never obligated | Reconciliation | `orphan_outlay` break |
+| `deobligation_exceeds_award` | A de-obligation larger than the amount obligated | Reconciliation | `deobligation_exceeds_award` break |
+| `late_arrival` | An event emitted long after it occurred, possibly after its period closed | Reconciliation watermark | `late_after_close` break, posted to the open period |
+| `injection_description` | Instructions aimed at the LLM inside a description field | Analyst defenses | Answer unaffected; measured in evaluation |
+| `schema_invalid` | A malformed event | Ingestion validation | Dead-letter topic |
+| `recipient_burst` | Many small obligations to one recipient in a short window | Heavy-hitter detection (later) | Flagged |
 
-Scenario sizes: `smoke` (about 500 events), `demo` (about 5,000), `full` (about 50,000), `volume` (1M+ for lake and load tests).
+Periods are fiscal months. A period closes when the watermark, the latest event time seen minus `RECON_LATE_ARRIVAL_WATERMARK_HOURS`, passes its end. Late events post to the open period with a reference to the closed one; closed periods are never edited.
 
-## 6. Database schema (initial, Django models)
+## Kafka topics
 
-ER draft:
+Topics are named `<domain>.<entity>.<stage>.v<major>`.
+
+| Topic | Key | Local partitions | Retention | Producer | Consumers |
+|---|---|---|---|---|---|
+| `fin.events.raw.v1` | `account_id` | 6 | 7 days | replay producer, live connector | ingestion |
+| `fin.events.dlq.v1` | `account_id` | 1 | 30 days | ingestion | replay tool |
+| `ledger.appended.v1` | `account_id` | 6 | 7 days | outbox relay | reconciliation, journal, lake sink, realtime |
+| `ledger.checkpoints.v1` | log origin | 1 | compacted | checkpointer | realtime, witness export |
+| `recon.breaks.v1` | `account_id` | 3 | 7 days | reconciliation | realtime |
+
+Events are keyed by recipient because reconciliation works per award and recipient, so ordering matters there. Duplicates share a key, which puts them on the same partition, where the per-partition Bloom filter can see both. A recipient with a very large share of events can skew partitions. The load test reports partition balance.
+
+## Database
+
+PostgreSQL 16 with pgvector.
 
 ```mermaid
 erDiagram
   LEDGER_EVENT ||--o{ JOURNAL_LINE : "derives"
   LEDGER_EVENT }o--|| LEDGER_BATCH : "sealed by"
-  LEDGER_EVENT ||--o{ BREAK_EVENT : "involved in"
   RECON_BREAK ||--o{ BREAK_EVENT : "lists"
+  LEDGER_EVENT ||--o{ BREAK_EVENT : "involved in"
   ANSWER ||--o{ CLAIM : "contains"
   CLAIM ||--o{ CITATION : "cites"
   CITATION }o--o| LEDGER_EVENT : "event"
@@ -160,16 +163,16 @@ erDiagram
   EVAL_RUN ||--o{ EVAL_RESULT : "has"
   LEDGER_EVENT {
     bigint id PK
-    text public_id UK "evt_"
+    text public_id UK
     bigint leaf_index UK
     text idempotency_key UK
     text event_type
     text account_id
     timestamptz occurred_at
     timestamptz ingested_at
-    bytea canonical_bytes "single source of truth"
+    bytea canonical_bytes "source of truth"
     bytea leaf_hash
-    jsonb payload "STORED generated from canonical_bytes"
+    jsonb payload "generated from canonical_bytes"
     text kafka_topic
     int kafka_partition
     bigint kafka_offset
@@ -177,12 +180,13 @@ erDiagram
   }
   LEDGER_BATCH {
     bigint id PK
-    text public_id UK "bat_"
+    text public_id UK
     bigint start_index
     bigint tree_size
     bytea root_hash
     text checkpoint_body
     bytea signature
+    text key_id
     timestamptz closed_at
   }
   JOURNAL_LINE {
@@ -192,34 +196,32 @@ erDiagram
     text account_code
     numeric debit
     numeric credit
-    text currency
   }
   RECON_BREAK {
     bigint id PK
-    text public_id UK "brk_"
+    text public_id UK
     text break_type
     numeric amount_delta
     timestamptz detected_at
   }
   POLICY_DOCUMENT {
     bigint id PK
-    text public_id UK "doc_"
+    text public_id UK
     int version
     bigint leaf_index UK
-    text body
   }
   ANSWER {
     bigint id PK
-    text public_id UK "ans_"
+    text public_id UK
     text question
-    text status "answered|refused"
+    text status
     text refusal_reason
   }
   CLAIM {
     bigint id PK
-    text public_id UK "clm_"
-    text kind "value|record|quote"
-    text sql_text
+    text public_id UK
+    text kind
+    jsonb query_spec
     jsonb bound_values
   }
   CITATION {
@@ -228,7 +230,7 @@ erDiagram
   }
   EVAL_RUN {
     bigint id PK
-    text public_id UK "run_"
+    text public_id UK
     jsonb metrics
     text git_sha
   }
@@ -239,60 +241,66 @@ erDiagram
   }
 ```
 
-Supporting tables: `merkle_log_head` (single row, next leaf index), `consumer_offset`, `dedupe_rejection`, `outbox`, `doc_chunk` (with `embedding vector(384)`). A subtree cache is deferred until the load test shows proof latency needs it.
+Supporting tables: `merkle_log_head` (a single row holding the next leaf index), `consumer_offset`, `dedupe_rejection`, `outbox`, and `doc_chunk` with a 384-dimension embedding column.
 
-`payload` is a STORED generated column computed from `canonical_bytes` (ADR-0015), so analyst views cannot read anything the proof does not cover.
+Constraints worth knowing about:
 
-Constraints worth calling out:
-- `NUMERIC(19,4)` for money; `CHECK (debit >= 0 AND credit >= 0 AND (debit = 0) <> (credit = 0))`.
-- Deferred constraint trigger: sum of debits equals sum of credits per `entry_id`.
-- `UNIQUE (idempotency_key)`, `UNIQUE (leaf_index)`.
-- Append-only triggers on `ledger_event`, `ledger_batch`, `journal_line`, `policy_document`; TRUNCATE revoked from the app role (the owner role can still truncate, which tamper ladder level 1 already covers).
-- Every schema change ships as its own migration PR (brief Section 14).
+- `payload` is a stored generated column computed from `canonical_bytes`. Analyst views read `payload`, so changing what the analyst sees means changing the bytes the proof covers.
+- Money is `NUMERIC(19,4)`. A journal line has either a debit or a credit, never both, and a deferred trigger makes every entry balance.
+- `idempotency_key` and `leaf_index` are unique, and leaf indexes are contiguous.
+- The application role can't update, delete from, or truncate the append-only tables, and triggers reject updates and deletes as a second layer.
+- Each schema change is its own migration, reviewed on its own.
 
-### Database roles (`infra/postgres/init/roles.sql`)
-- `tallyproof_app`: INSERT/SELECT on ledger tables, no UPDATE/DELETE on append-only tables.
-- `tallyproof_analyst`: SELECT only on schema `analyst` (curated views), `default_transaction_read_only = on`, `statement_timeout` and `work_mem` set at role level (REQ-SEC-07).
-- `tallyproof_owner`: owns the schema and runs migrations through a separate `DB_OWNER_URL` and a dedicated `migrations` database alias.
-- Roles are created by `make db-roles` (a psql script run identically in compose and CI), not by container init scripts, because init scripts cannot run in CI service containers. Grants live in an idempotent RunSQL migration with `ALTER DEFAULT PRIVILEGES`, so they apply to tables created later. Tests connect as owner and use `SET ROLE` to assert grants.
+The journal uses simplified budgetary accounting: an obligation moves funds from available authority to obligated, an outlay moves them from obligated to disbursed, and a de-obligation reverses the first step. It's derived from events in log order, so it can always be rebuilt ([ADR-0013](adr/0013-double-entry-journal.md)).
 
-### Analyst views (schema `analyst`)
-`analyst.events`, `analyst.invoices`, `analyst.payments`, `analyst.refunds`, `analyst.open_items`, `analyst.breaks`, `analyst.journal`. Every view exposes `event_id` so provenance can be derived. Views hide `canonical_bytes`, offsets, and internal IDs.
+### Roles
 
-## 7. API (REQ-URL-01..05)
+| Role | Can do |
+|---|---|
+| `tallyproof_owner` | Owns the schema and runs migrations, through its own connection string |
+| `tallyproof_app` | Insert and select on ledger tables; no update, delete, or truncate on append-only tables |
+| `tallyproof_analyst` | Select on the `analyst` views only, read-only transactions, tight timeouts |
 
-Versioned under `/api/v1/`. JSON. OpenAPI via drf-spectacular at `/api/v1/schema/` with docs at `/api/v1/docs/`.
+Roles are created by a script that runs the same way locally and in CI. Grants live in an idempotent migration with default privileges, so tables created later inherit them.
+
+### Analyst views
+
+`analyst.obligations`, `analyst.outlays`, `analyst.awards` (one row per award with totals), `analyst.cash_movements`, `analyst.breaks`, and `analyst.journal`. Every view exposes `event_id`, so each answer can cite the records behind it. Raw bytes, Kafka coordinates, and internal IDs stay hidden, and free-text description columns appear only in a separate view the query compiler must request explicitly.
+
+## API
+
+All endpoints are under `/api/v1/` and return JSON. The OpenAPI schema is at `/api/v1/schema/`, with browsable docs at `/api/v1/docs/`. Errors use RFC 9457 problem details.
 
 | Method | Path | Purpose |
 |---|---|---|
-| GET | `/api/v1/events` | Paginated list (cursor), filters `account_id`, `event_type`, `occurred_after` |
-| GET | `/api/v1/events/{event_id}` | Event with canonical bytes (base64) and leaf index |
-| GET | `/api/v1/events/{event_id}/proof` | Inclusion proof against latest or `?checkpoint={batch_id}` |
-| GET | `/api/v1/batches` | Batches with checkpoints |
-| GET | `/api/v1/batches/{batch_id}` | One batch, its checkpoint and signature |
-| GET | `/api/v1/batches/{batch_id}/consistency?from={batch_id}` | Consistency proof between checkpoints |
-| GET | `/api/v1/checkpoints/latest` | Latest signed checkpoint |
+| GET | `/api/v1/events` | Events, cursor-paginated, filterable by account, type, and date |
+| GET | `/api/v1/events/{event_id}` | One event with its canonical bytes and leaf index |
+| GET | `/api/v1/events/{event_id}/proof` | Inclusion proof against the latest or a chosen checkpoint |
+| GET | `/api/v1/batches` | Batches and their checkpoints |
+| GET | `/api/v1/batches/{batch_id}` | One batch with its signed checkpoint |
+| GET | `/api/v1/batches/{batch_id}/consistency?from={batch_id}` | Consistency proof between two checkpoints |
+| GET | `/api/v1/checkpoints/latest` | The latest signed checkpoint |
 | GET | `/api/v1/log-key` | Public key and log origin |
-| POST | `/api/v1/queries` | Ask a question; returns `ans_` (rate limited, REQ-SEC-10) |
-| GET | `/api/v1/answers/{answer_id}` | Answer with claims, bound values, citations |
-| GET | `/api/v1/reconciliation/breaks` | Breaks, filter by type and account |
-| GET | `/api/v1/reconciliation/breaks/{break_id}` | One break with involved events |
-| GET | `/api/v1/policy-documents/{document_id}` | Document version with leaf index |
-| GET | `/api/v1/eval-runs` | Runs list |
-| GET | `/api/v1/eval-runs/{run_id}` | Metrics and per-question results |
+| GET | `/api/v1/sources` | Registered source files with their hashes |
+| POST | `/api/v1/queries` | Ask a question. Rate limited |
+| GET | `/api/v1/answers/{answer_id}` | An answer with its claims, bound values, and citations |
+| GET | `/api/v1/reconciliation/breaks` | Breaks, filterable by type and account |
+| GET | `/api/v1/reconciliation/breaks/{break_id}` | One break and the events involved |
+| GET | `/api/v1/policy-documents/{document_id}` | A policy document version and its leaf index |
+| GET | `/api/v1/eval-runs` | Evaluation runs |
+| GET | `/api/v1/eval-runs/{run_id}` | Metrics and per-question results for one run |
 | GET | `/healthz` | Liveness, no dependencies |
-| GET | `/readyz` | Checks broker, database, cache (REQ-URL-05) |
+| GET | `/readyz` | Checks the broker, database, and cache |
 
-WebSocket: `/ws/v1/stream` (ledger appended, checkpoints, breaks).
+Live updates stream over the WebSocket at `/ws/v1/stream`: appended events, checkpoints, and breaks.
 
-Proof response shape:
+A proof response looks like this:
 
 ```json
 {
   "event_id": "evt_01J...",
   "leaf_index": 4211,
   "canonical_event_b64": "...",
-  "leaf_hash_hex": "...",
   "audit_path_hex": ["...", "..."],
   "checkpoint": {
     "batch_id": "bat_01J...",
@@ -301,15 +309,15 @@ Proof response shape:
     "root_hash_b64": "...",
     "body": "...",
     "signature_b64": "...",
-    "key_id": "..."
+    "key_id": "rel-..."
   }
 }
 ```
 
-The API never returns `"verified": true`. Verification is the client's job (REQ-URL-04).
+The API returns proofs, never verdicts. There's no `"verified": true` anywhere. The client computes the leaf hash itself and does the checking.
 
-Errors follow RFC 9457 (`application/problem+json`).
+## Commands
 
-## 8. Workers (management commands)
+Workers run as Django management commands: `run_ingestion`, `run_checkpointer`, `run_outbox_relay`, `run_reconciliation`, `run_lake_sink`, `export_replay_bundle`, `export_witness`, and `tamper`. The last one is a demo tool and refuses to run outside a local setup.
 
-`run_ingestion`, `run_checkpointer`, `run_outbox_relay`, `run_reconciliation`, `run_lake_sink`, `generate_scenario`, `export_replay_bundle`, `export_witness`, `tamper` (local demo only, refuses to run unless `DEMO_TAMPER_ENABLED=true`).
+The data pipeline runs through `make`: `data-fetch` downloads archives and records the manifest, `data-build` runs the Spark jobs, and `data-replay` streams gold events into Kafka.
