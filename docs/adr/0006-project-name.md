@@ -1,6 +1,6 @@
 # ADR-0006: Project name
 
-- Status: **Proposed, awaiting Raunak's choice (MC-02)**
+- Status: **Proposed, awaiting Raunak's choice (MC-02).** Repository created on 2026-10-27 under the working name at the owner's request; a rename later is cheap because GitHub redirects renamed repositories, but it must happen before T-101 so package names are right from the start.
 - Date: 2026-10-26
 
 ## Criteria (brief Section 4)
@@ -50,4 +50,4 @@ Checked on 2026-10-26: PyPI JSON API (404 = free), npm registry (404 = free), Gi
 
 ## Decision
 
-Pending. After approval: rename folder, Python package (`<name>_core`), npm package, docs, CLAUDE.md, then create the GitHub repo.
+Pending. After approval: rename the GitHub repository, local folder, Python package (`<name>_core`), npm package, docs, and CLAUDE.md in one `refactor` commit.

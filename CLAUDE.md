@@ -8,7 +8,7 @@ Streaming financial ledger plus AI analyst. Every claim cites a source event wit
 
 ## 2. Current phase
 
-**Phase 0: planning, awaiting MC-01 (plan approval) and MC-02 (name).** No application code until approved.
+**Phase 0: planning docs merged and revised after design review. Awaiting MC-01 (plan approval) and MC-02 (final name).** No application code until approved. Next task after approval: T-004, then Phase 1a (T-101).
 
 ## 3. Docs map
 
