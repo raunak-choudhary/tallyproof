@@ -8,7 +8,7 @@
 |---|---|
 | Ledger integrity (events, leaves, checkpoints) | The entire thesis |
 | Checkpoint signing key (Ed25519 private key) | Whoever holds it can sign a rewritten history |
-| Witnessed checkpoints | Last line of defense against level 4 tampering |
+| Witnessed checkpoints | Last line of defense against level 3 tampering (stolen signing key) |
 | Anthropic API key | Cost exposure |
 | CircleCI context secrets, GitHub token | Supply chain |
 | Analyst database role | Data exfiltration or denial of service via SQL |
@@ -84,7 +84,7 @@ See the tamper ladder. Additional controls:
 
 ## 4. Residual risks (accepted, documented)
 
-- Level 5 tampering (key holder acting before witnessing) is not detectable; exposure equals witness interval.
+- Level 4 tampering (key holder acting before the next external timestamp) is not detectable; exposure equals `WITNESS_INTERVAL_SECONDS`.
 - Single signing key, no HSM locally. AWS mapping uses KMS (see `15-aws-reference-architecture.md`).
 - LLM-judge narrative faithfulness is probabilistic.
 - The generator could be biased toward anomalies the system already handles; mitigated by adding anomaly types blind (written before the detector) where possible.
@@ -96,8 +96,8 @@ A security-lens review of these docs found gaps. Each item below is now a requir
 ### 5.1 Independent witness (T-114, T-207)
 - A git file in our own repo is **not** an independent witness: the owner, CI, and the bot can all write to it. Therefore every checkpoint hash is also timestamped by a third party the operator does not control: **OpenTimestamps** (Bitcoin-anchored, free, no account) and optionally an **RFC 3161** timestamp authority. Proof files are stored next to the checkpoint.
 - `witness/` is protected by CODEOWNERS and branch protection (no force push, admins included). `make verify-witness` fails if witness history is not fast-forward (rewrites are detected).
-- `WITNESS_INTERVAL_SECONDS` makes the level 5 exposure window explicit and configurable.
-- Tamper ladder level 4 is claimed as caught **only** for checkpoints with an external timestamp. README wording follows this.
+- `WITNESS_INTERVAL_SECONDS` makes the level 4 exposure window explicit and configurable.
+- Tamper ladder level 3 is claimed as caught **only** for checkpoints with an external timestamp. README wording follows this.
 
 ### 5.2 Key classes and trust anchors (T-109, T-114, E-506)
 | Key class | `key_id` prefix | Where it lives | Signs |

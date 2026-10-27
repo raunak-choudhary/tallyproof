@@ -20,11 +20,11 @@ If the Merkle root is stored only in the same Postgres database as the events, a
 
 ## Reasons
 
-Closes tamper ladder levels 3 and 4 (`07-architecture.md` section 7). Mirrors how Certificate Transparency and the Go checksum database work. Maps directly to AWS KMS (`ECC_NIST_EDWARDS25519`, `ED25519_SHA_512` with RAW messages) plus S3 Object Lock in production.
+Closes tamper ladder levels 2 and 3 (numbering per ADR-0015). Mirrors how Certificate Transparency and the Go checksum database work. Maps directly to AWS KMS (`ECC_NIST_EDWARDS25519`, `ED25519_SHA_512` with RAW messages) plus S3 Object Lock in production.
 
 ## Residual risk
 
-Level 5: a key holder who rewrites history before any witness sees the checkpoint is not detectable. Exposure equals the witness interval. Documented in README and threat model.
+Level 4: a key holder who rewrites history before the next external timestamp is not detectable. Exposure equals the witness interval. Documented in README and threat model.
 
 ## Browser verification
 
