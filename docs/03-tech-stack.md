@@ -21,8 +21,11 @@
 | Vectors | pgvector (ext 0.8.7, py 0.5) | | Django integration |
 | Embeddings | sentence-transformers + BAAI/bge-small-en-v1.5 | 6.2 | 384 dims, CPU friendly, MIT |
 | LLM SDK | anthropic | 2.x | Model IDs from env only |
-| Lake (MLP) | pyarrow | 26.x | Parquet |
-| Analytics (Nice) | duckdb | 1.5.x (not 2.0 yet) | 2.0 LTS is five days old; revisit at RP-2 |
+| Batch processing | pyspark | **4.1.x** (4.1.3) | ADR-0017; pinned below 4.2 because PyDeequ supports Spark 3.5 and 4.1 only |
+| Data quality | pydeequ (Amazon Deequ) | 1.7.0 | ADR-0017; Deequ constraints and metrics history |
+| Java runtime | OpenJDK 17 (Homebrew `openjdk@17`, keg-only) | 17.0.21 | Spark 4.x requires Java 17 or newer; scoped to project commands via `JAVA_HOME` |
+| Lake | pyarrow | 26.x | Parquet; Iceberg tables in MLP (E-508) |
+| Analytics (Nice) | duckdb | 1.5.x (not 2.0 yet) | 2.0 LTS is days old; revisit at RP-2 |
 
 ## Testing and quality (Python)
 
@@ -37,6 +40,7 @@ pytest 9, pytest-django 4.14, hypothesis 6.x, testcontainers 4.15 (Redpanda imag
 | Postgres + pgvector | `pgvector/pgvector:0.8.7-pg16-trixie` |
 | Redis | `redis:7.4` line (pin at T-104) |
 | Object store (MLP) | SeaweedFS 4.x (ADR-0012) |
+| Container runtime | Colima (CLI only, dedicated `tallyproof` profile: 2 CPUs, 3 GiB, 25 GiB disk). No Docker Desktop (owner decision) |
 
 PostgreSQL 16 kept (strong default). It is supported to November 2028, matches Django 5.2's window, and is available on Aurora PostgreSQL.
 
