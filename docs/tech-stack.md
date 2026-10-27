@@ -1,78 +1,82 @@
-# 03. Tech Stack
+# Technology choices
 
-> Versions verified live on 2026-10-26 against PyPI, npm, Docker Hub, and official docs. Full evidence: `docs/research/stack-versions-2026-10.md`. Exact pins live in `requirements*.txt` and `pnpm-lock.yaml`; this table records intent. Patch versions move; majors here are decisions.
+Versions were checked against PyPI, npm, Docker Hub, and the official documentation in October 2026. Exact pins live in `requirements*.txt` and the frontend lockfile. This page records the version line chosen and why.
 
 ## Backend
 
-| Area | Choice | Version line | Why |
+| Area | Choice | Version | Why |
 |---|---|---|---|
-| Language | Python | 3.12 | Strong default; all libraries support it |
-| Framework | Django LTS | 5.2.x | ADR-0004; supported to April 2028 |
-| API | Django REST Framework + drf-spectacular | 3.18 / 0.30 | OpenAPI from code |
-| Realtime | Channels + channels-redis + Daphne | 4.3 / 4.3 / 4.2 | WebSockets (shared rule: no polling) |
-| Kafka client | confluent-kafka | 2.16 | librdkafka bundled, arm64 wheels |
-| DB driver | psycopg | 3.3 | Async capable, COPY support for fast path |
-| Config | pydantic-settings | 2.16 | Typed, fail fast |
-| Schemas | pydantic | 2.14 | JSON Schema export (draft-07 target, ADR-0002) |
-| Logging | structlog | 26.1 | JSON logs, correlation IDs |
-| Canonical JSON | rfc8785 | 0.1.x | ADR-0010 |
-| Crypto | cryptography | 50.x | Ed25519 |
-| SQL parsing | sqlglot | 30.x (pin exact, releases often) | AST guard |
-| Vectors | pgvector (ext 0.8.7, py 0.5) | | Django integration |
-| Embeddings | sentence-transformers + BAAI/bge-small-en-v1.5 | 6.2 | 384 dims, CPU friendly, MIT |
-| LLM SDK | anthropic | 2.x | Model IDs from env only |
-| Batch processing | pyspark | **4.1.x** (4.1.3) | ADR-0017; pinned below 4.2 because PyDeequ supports Spark 3.5 and 4.1 only |
-| Data quality | pydeequ (Amazon Deequ) | 1.7.0 | ADR-0017; Deequ constraints and metrics history |
-| Java runtime | OpenJDK 17 (Homebrew `openjdk@17`, keg-only) | 17.0.21 | Spark 4.x requires Java 17 or newer; scoped to project commands via `JAVA_HOME` |
-| Lake | pyarrow | 26.x | Parquet; Iceberg tables in MLP (E-508) |
-| Analytics (Nice) | duckdb | 1.5.x (not 2.0 yet) | 2.0 LTS is days old; revisit at RP-2 |
+| Language | Python | 3.12 | Supported by every library used here |
+| Web framework | Django LTS | 5.2 | Security support until April 2028, longer than any newer release ([ADR-0004](adr/0004-django-5-2-lts.md)) |
+| API | Django REST Framework, drf-spectacular | 3.18, 0.30 | OpenAPI generated from code |
+| WebSockets | Channels, channels-redis, Daphne | 4.3, 4.3, 4.2 | Live updates without polling |
+| Kafka client | confluent-kafka | 2.16 | Bundles librdkafka and ships Apple Silicon wheels |
+| Postgres driver | psycopg | 3.3 | Supports `COPY` for staged inserts |
+| Settings | pydantic-settings | 2.16 | Typed, and fails fast on missing values |
+| Schemas | pydantic | 2.14 | Exports JSON Schema draft-07 |
+| Logging | structlog | 26.1 | JSON logs with correlation IDs |
+| Canonical JSON | rfc8785 | 0.1 | RFC 8785, used by Sigstore ([ADR-0010](adr/0010-canonical-json-rfc8785.md)) |
+| Cryptography | cryptography | 50 | Ed25519 |
+| SQL parsing | sqlglot | 30 (pinned exactly, since it releases often) | Guards the fallback query path |
+| Vector search | pgvector | extension 0.8.7, Python 0.5 | Policy retrieval inside Postgres |
+| Embeddings | sentence-transformers with BAAI/bge-small-en-v1.5 | 6.2 | 384 dimensions, fast on a CPU, MIT licensed |
+| LLM SDK | anthropic | 2 | Model IDs come from configuration |
 
-## Testing and quality (Python)
+## Data pipeline
 
-pytest 9, pytest-django 4.14, hypothesis 6.x, testcontainers 4.15 (Redpanda image pinned explicitly, import from `testcontainers.community.kafka`), coverage, ruff 0.17 (pinned exact), mypy 2.4 strict + django-stubs 6.1, pip-tools 7.6, pre-commit 4.7, conventional-pre-commit 4.4 (commit message lint without Node), gitleaks 8.30, pip-audit.
+| Area | Choice | Version | Why |
+|---|---|---|---|
+| Batch processing | PySpark | 4.1 | The engine AWS Glue and EMR run. Held at 4.1 because PyDeequ supports Spark 3.5 and 4.1, not 4.2 ([ADR-0017](adr/0017-spark-batch-processing-and-deequ.md)) |
+| Data quality | PyDeequ (Amazon Deequ) | 1.7.0 | Constraint checks and metric history inside Spark |
+| Java | OpenJDK 17 from Homebrew, keg-only | 17 | Spark 4 needs Java 17 or newer. It's scoped to project commands through `JAVA_HOME` and never added to the system path |
+| Columnar files | pyarrow | 26 | Parquet, with Iceberg tables added later |
+| Ad hoc queries | DuckDB | 1.5 | Optional, for exploring the lake. 2.0 is too new to rely on yet |
 
-## Infrastructure (local)
+## Testing and quality
 
-| Component | Image |
+pytest 9, pytest-django 4.14, Hypothesis 6, testcontainers 4.15 (with the Redpanda image pinned, since its default is far older), coverage, ruff 0.17 pinned exactly, mypy 2.4 in strict mode with django-stubs 6.1, pip-tools 7.6, pre-commit 4.7, conventional-pre-commit 4.4 for commit messages, gitleaks 8.30, and pip-audit.
+
+## Local infrastructure
+
+| Component | Image or tool |
 |---|---|
-| Redpanda | `docker.redpanda.com/redpandadata/redpanda:v26.2.6` |
-| Redpanda Console | `docker.redpanda.com/redpandadata/console:v3.13.1` |
-| Postgres + pgvector | `pgvector/pgvector:0.8.7-pg16-trixie` |
-| Redis | `redis:7.4` line (pin at T-104) |
-| Object store (MLP) | SeaweedFS 4.x (ADR-0012) |
-| Container runtime | Colima (CLI only, dedicated `tallyproof` profile: 2 CPUs, 3 GiB, 25 GiB disk). No Docker Desktop (owner decision) |
+| Container runtime | Colima, command line only, with its own `tallyproof` profile capped at 2 CPUs, 3 GiB of memory, and 25 GiB of disk |
+| Kafka-compatible broker | `docker.redpanda.com/redpandadata/redpanda:v26.2.6` |
+| Broker console | `docker.redpanda.com/redpandadata/console:v3.13.1` |
+| Postgres with pgvector | `pgvector/pgvector:0.8.7-pg16-trixie` |
+| Redis | 7.4 line |
+| S3-compatible storage | SeaweedFS 4, since the MinIO community edition is no longer maintained ([ADR-0012](adr/0012-lake-sink-and-object-store.md)) |
 
-PostgreSQL 16 kept (strong default). It is supported to November 2028, matches Django 5.2's window, and is available on Aurora PostgreSQL.
+PostgreSQL 16 is supported until November 2028, which covers Django 5.2's support window, and it's available on Aurora PostgreSQL.
 
 ## Frontend
 
-| Area | Choice | Version line | Note |
+| Area | Choice | Version | Note |
 |---|---|---|---|
-| Framework | Next.js App Router | 16.4 | Static export for replay (ADR-0005) |
-| UI runtime | React | 19.3 | |
-| Language | TypeScript | **6.0.x pinned** | TS 7.0 (Go compiler) is `latest` but typescript-eslint 8 only supports < 6.1 |
-| Styling | Tailwind CSS v4 | 4.3 | CSS-first config, tokens as CSS variables |
-| Components | shadcn/ui CLI | 4.x | Copy-in components, Radix primitives |
-| Motion | `motion` (import `motion/react`) + GSAP | 14.6 / 3.15 | GSAP is free incl. plugins under its own no-charge license (not OSI); acceptable for this use |
-| Data | TanStack Query | 5.x | |
-| Crypto | @noble/ed25519, @noble/hashes | 3.2 / 2.4 | Identical behavior across browsers (ADR-0007) |
-| Canonical JSON | canonicalize | 5.1 | ADR-0010 |
-| Tests | Vitest 5, Playwright 1.64 | | |
-| Lint/format | ESLint **10** (9 is EOL since 2026-08-06), typescript-eslint 8.72, Prettier 3.9 | | |
-| Package manager | pnpm 10 | | Lockfile committed (REQ-ENV-03) |
+| Framework | Next.js App Router | 16.4 | Static export for the public demo ([ADR-0005](adr/0005-replay-mode-public-demo.md)) |
+| UI | React | 19.3 | |
+| Language | TypeScript | 6.0 | Version 7 is out, but typescript-eslint doesn't support it yet |
+| Styling | Tailwind CSS | 4.3 | Design tokens as CSS variables |
+| Components | shadcn/ui | 4 | |
+| Motion | Motion and GSAP | 14.6, 3.15 | GSAP is free, including plugins, under its own license |
+| Data fetching | TanStack Query | 5 | |
+| Verification | @noble/ed25519, @noble/hashes, canonicalize | 3.2, 2.4, 5.1 | Identical behavior in every browser ([ADR-0007](adr/0007-signed-checkpoints-and-witnessing.md)) |
+| Tests | Vitest, Playwright | 5, 1.64 | |
+| Lint and format | ESLint, typescript-eslint, Prettier | 10, 8.72, 3.9 | ESLint 9 reached end of life in August 2026 |
+| Package manager | pnpm | 10 | Lockfile committed |
 
-## CI, docs, release
+## CI, documentation, and releases
 
 | Area | Choice | Note |
 |---|---|---|
-| CI | CircleCI `version: 2.1` | Machine executor for Testcontainers; schedule triggers for nightly; `pipeline.trigger.type` not `trigger_source` |
-| Releases | release-please via minimal GitHub Action | ADR-0011 |
-| Dependencies | Dependabot (pip, npm, docker, github-actions) | CI check recompiles pip-tools and diffs to catch churn |
-| Docs site | MkDocs Material 9.8 + mkdocstrings | Material is in maintenance mode; config kept Zensical-compatible (plain `mkdocs.yml`, no Material-only plugins) so we can switch without rework. Decision logged, no ADR needed because the default is kept |
+| CI | CircleCI | Machine executor for container-based tests, scheduled triggers for nightly runs |
+| Releases | release-please in a minimal GitHub Action | All building and testing stays on CircleCI ([ADR-0011](adr/0011-release-automation-on-github-actions.md)) |
+| Dependency updates | Dependabot | A CI check recompiles the pinned requirements to catch drift |
+| Documentation site | MkDocs Material with mkdocstrings | Material is in maintenance mode, so the configuration avoids features that would block a later move to Zensical |
 
-## Watch list (decisions to revisit at RP-2)
+## Worth revisiting later
 
-- DuckDB 2.0 adoption.
-- TypeScript 7 once typescript-eslint supports it.
-- gitleaks maintenance status (successor Betterleaks); gitleaks remains the brief's named tool.
-- Channels release cadence.
+- Spark 4.2, once PyDeequ supports it.
+- DuckDB 2.0, once it has had time to settle.
+- TypeScript 7, once typescript-eslint supports it.
+- gitleaks, whose original author has started a successor project.
