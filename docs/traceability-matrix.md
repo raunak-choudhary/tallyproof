@@ -99,7 +99,7 @@ Total brief IDs: 64. Derived IDs: 21. GAPs: **0**. Remapped 2026-10-27 after the
 | REQ-DOC-04 | C4 context, container, sequence, ER diagrams via diagram skill | 0, 2 | T-002 (Mermaid drafts), T-214 (skill, after MC-08) | Planned (blocked on MC-08) |
 | REQ-DOC-05 | ADRs for decisions and deviations | 0, continuous | T-002 | Planned |
 | REQ-DOC-06 | MkDocs site | 4 | E-403 | Epic |
-| REQ-DOC-07 | CLAUDE.md current | 0, continuous | T-002, E-405 | Planned |
+| REQ-DOC-07 | Agent guide kept current. **Amended 2026-10-27:** kept locally and not published; contributors use CONTRIBUTING.md | 0, continuous | T-002, E-405 | Planned |
 
 ## URL and API
 

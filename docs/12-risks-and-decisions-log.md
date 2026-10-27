@@ -25,13 +25,14 @@
 | 2026-10-26 | T-002 docs PR exceeds 400-line target | Planning docs are one reviewable unit | 06 |
 | 2026-10-27 | Repository created under the working name `ledgerline`, private until the owner makes it public | Owner wanted version control from the start; the name can still change (GitHub redirects renamed repos) | ADR-0006 |
 | 2026-10-27 | Rebase-merge instead of squash; every commit must be a Conventional Commit | Keeps every commit visible on `main`; refines REQ-GIT-03 | 10 |
-| 2026-10-27 | Original brief kept out of the public repo | It is addressed to an agent and names target reviewers; the docs supersede it | CLAUDE.md |
+| 2026-10-27 | Original brief kept out of the public repo | It is addressed to an agent and names target reviewers; the docs supersede it | n/a |
 | 2026-10-27 | Design review: verification trust model narrowed to a pinned key plus an externally timestamped checkpoint | Same-origin key and proof proved nothing | ADR-0015 |
 | 2026-10-27 | Design review: constrained query IR replaces provenance from free-form SQL | Provenance undefined for most query shapes | ADR-0014 |
 | 2026-10-27 | Design review: leaf indexes from a counter row, staged inserts, fenced offsets | Sequence gaps and zombie consumers | ADR-0008 |
 | 2026-10-27 | Design review: payments post to unapplied cash first | Deterministic journal re-derivation | ADR-0013 |
 | 2026-10-27 | Design review: integrity checks separated from quality metrics; held-out question set | Several gates were true by construction | 08 |
 | 2026-10-27 | Design review: Phase 1 split into 1a (static proof page) and 1b (live pipeline) | Demo was last in an infra-first order | 06 |
+| 2026-10-27 | Agent guide (CLAUDE.md) kept local and untracked | Public repository shows only documentation written for people | 10 |
 | 2026-10-27 | Final name `tallyproof`; repository renamed from `ledgerline` | Free on PyPI, npm, and GitHub; names the thesis | ADR-0006 |
 | 2026-10-27 | Design review: OpenTimestamps as the independent witness | The git witness is controlled by the operator | 11, ADR-0007 |
 

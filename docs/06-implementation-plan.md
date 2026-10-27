@@ -10,7 +10,7 @@
 - **Dependencies between workstreams use stacked branches.** If workstream B needs code from A before A is merged, B branches from A and its PR targets A. After A merges, B is rebased onto `main` with `git rebase --onto main A B`. Sibling branches are never merged into each other, because rebase-merge rewrites commit IDs and would duplicate commits on `main`.
 - **Issues stay one per task** (REQ-GIT-05). A workstream PR closes all of its task issues.
 - **PR size:** REQ-GIT-04's 400-line target now applies to individual commits. Workstream PRs are larger by design, so each PR description walks the reviewer through its commits in order.
-- **Definition of done for a task:** tests written and passing, docs touched where behavior changed, CLAUDE.md updated if a convention changed. A review pass with comments happens on every workstream PR (REQ-GIT-06).
+- **Definition of done for a task:** tests written and passing, docs touched where behavior changed, conventions documented where they changed. A review pass with comments happens on every workstream PR (REQ-GIT-06).
 - TDD for `core`, `ledger`, `ingestion`, `reconciliation`, the analyst query compiler and verifier, and the data quality checks.
 - Schema changes are their own commits, never mixed with feature code (brief Section 14).
 
@@ -162,7 +162,7 @@ Goal: ask a question, get bound numbers and verifiable citations or a justified 
 | E-402 | release-please wired (CHANGELOG from commits); tag `v0.1.0` | GIT-08 |
 | E-403 | MkDocs site with mkdocstrings published to GitHub Pages | DOC-06 |
 | E-404 | Threat model review against the built system; security review pass with compound-engineering security reviewers | SEC-11 |
-| E-405 | Docs refresh: architecture, runbook, configuration, CLAUDE.md | DOC-03, DOC-07 |
+| E-405 | Docs refresh: architecture, runbook, configuration, contributor guide | DOC-03, DOC-07 |
 | E-406 | Module test audit: every Django app has module tests with faked dependencies | QA-05 |
 
 Rule from the brief: if MVP is not green by end of Week 3, MLP pauses.
