@@ -15,11 +15,13 @@ Derive a small, deterministic double-entry journal from accepted events:
 | Event | Debit | Credit |
 |---|---|---|
 | `invoice.issued` | Accounts Receivable | Revenue |
-| `payment.received` (matched) | Cash | Accounts Receivable |
-| `payment.received` (unapplied) | Cash | Unapplied Cash |
+| `payment.received` | Cash | Unapplied Cash |
+| `payment.applied` (emitted by reconciliation on match) | Unapplied Cash | Accounts Receivable |
 | `refund.issued` | Refunds / Contra Revenue | Cash |
 | `adjustment.posted` | per adjustment type | per adjustment type |
 | FX difference | FX Loss or Cash | Cash or FX Gain |
+
+Every payment posts to Unapplied Cash first. When reconciliation matches it to an invoice, it emits an application entry. This makes the journal a pure function of the ordered log (events plus reconciliation application records by `leaf_index`), so re-derivation is deterministic regardless of arrival order. An earlier draft posted matched payments directly to AR, which depended on reconciliation timing and broke determinism when a payment arrived before its invoice.
 
 Enforced by a deferred constraint trigger: debits equal credits per entry. Journal lines are append-only; corrections are reversing entries.
 
