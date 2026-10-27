@@ -41,3 +41,6 @@ out/
 # OS and editors
 .DS_Store
 .idea/
+
+# Internal planning documents (local only: plan, traceability, decisions, research notes)
+internal/
