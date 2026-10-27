@@ -1,38 +1,40 @@
-# 10. Code Standards
+# Coding standards
 
 ## Python
 
-- Python 3.12, always inside `backend/.venv` (REQ-ENV-01). The Makefile refuses to run Python targets outside the venv.
-- ruff for lint and format, zero warnings on `main` (REQ-QA-03). Rule sets: `E, F, W, I, B, UP, SIM, N, D (google convention), S (bandit subset), DJ, PT, RUF, ANN`.
-- mypy `strict = true` with django-stubs (REQ-QA-02). No `Any` in `core`. `# type: ignore` requires an error code and a reason comment.
-- Google-style docstrings on every public module, class, and function (REQ-QA-01). Inline comments explain **why**; a comment that restates the code is a review finding.
-- Money is `Decimal` via `core.money.Money`; floats for money are a review blocker.
-- Time is timezone-aware UTC (`datetime.now(tz=UTC)` via an injectable clock).
-- No configuration literals: thresholds, URLs, model IDs, sizes come from `config.env.Settings` (REQ-SEC-01).
-- Errors: domain exceptions in each app's `errors.py`; API maps them to RFC 9457 responses.
-- Dependencies: add to `requirements.in` or `requirements-dev.in`, then `make deps` (pip-compile with hashes). Never `pip install` ad hoc (REQ-ENV-02).
+- Python 3.12, always inside `backend/.venv`. The Makefile refuses to run Python targets outside it.
+- Dependencies go in `requirements.in` or `requirements-dev.in`. `make deps` compiles them into pinned files with hashes, and both the `.in` and `.txt` files are committed. Nothing is installed with a bare `pip install`.
+- ruff handles linting and formatting, and `main` has zero warnings. Enabled rule sets: `E`, `F`, `W`, `I`, `B`, `UP`, `SIM`, `N`, `D` with the Google convention, a subset of `S`, `DJ`, `PT`, `RUF`, and `ANN`.
+- mypy runs in strict mode with django-stubs. `tallyproof_core` has no `Any`. A `# type: ignore` needs an error code and a comment explaining why.
+- Every public module, class, and function has a Google-style docstring. Inline comments explain why something is done. A comment that only restates the code gets removed in review.
+- Money is always `Decimal` through the `Money` type. Floats for money are a review blocker.
+- Times are timezone-aware UTC and come from an injectable clock, so tests can control them.
+- Thresholds, URLs, model IDs, and sizes come from the typed settings, never from literals in code.
+- Each app defines its own exceptions, and the API maps them to RFC 9457 problem responses.
 
 ## TypeScript
 
-- `strict: true`, `noUncheckedIndexedAccess: true`, `exactOptionalPropertyTypes: true`.
-- ESLint 10 flat config + typescript-eslint, Prettier, `tsc --noEmit` (REQ-QA-10).
-- No `any`; `unknown` plus narrowing at boundaries; API types generated from OpenAPI.
-- Components: server components by default; client components only where interaction requires it.
+- `strict`, `noUncheckedIndexedAccess`, and `exactOptionalPropertyTypes` are all on.
+- ESLint with a flat config and typescript-eslint, Prettier, and `tsc --noEmit` run in CI.
+- No `any`. Data crossing a boundary is typed `unknown` and narrowed. API types are generated from the OpenAPI schema.
+- Components are server components unless they need interaction.
 
-## Git (REQ-GIT-01 to 06)
+## Git
 
-- Conventional Commits: `<type>(<scope>): <imperative summary>`, types `feat, fix, docs, test, refactor, perf, build, ci, chore, revert`. Scopes: `core, events, generator, ingestion, ledger, recon, analyst, evals, lake, realtime, api, web, infra, ci, docs`.
-- Body explains what and why. No AI co-author trailers (owner preference).
-- Branches are workstreams (`<type>/<area>`), one PR per completed workstream, closing all of its task issues (see `06-implementation-plan.md` section 0). PRs are **rebase-merged**, so every commit lands on `main` and every commit must pass the Conventional Commit check, not just the PR title. A fix to earlier work in the same PR is its own `fix:` or `refactor:` commit, never folded silently into an unrelated one.
-- Review pass: at least one round of review comments on every PR before merge, covering correctness, tests, docs, security.
+- Commits follow [Conventional Commits](https://www.conventionalcommits.org/): `<type>(<scope>): <imperative summary>`, where the type is one of `feat`, `fix`, `docs`, `test`, `refactor`, `perf`, `build`, `ci`, `chore`, or `revert`. The body explains what changed and why.
+- Each commit does one thing. A documentation commit contains documentation. A correction to earlier work is its own `fix` or `refactor` commit, so the history shows how the code got where it is.
+- Work happens on one branch per major area, named `<type>/<area>`, for example `feat/data-pipeline` or `feat/web-app`. A branch is merged once its area of work is finished, its tests pass, CI is green, and it's rebased on `main` with no conflicts.
+- Pull requests are rebase-merged, so every commit lands on `main` and every commit has to pass the commit message check, not just the pull request title.
+- When one branch needs code from another that isn't merged yet, it's stacked on top of that branch and rebased onto `main` after the first one merges. Sibling branches are never merged into each other.
+- Every pull request gets a review pass with written comments before it merges.
 
 ## Naming
 
-- Public IDs prefixed (REQ-URL-02). Internal integer keys never leave the service.
-- Kafka topics `<domain>.<entity>.<stage>.v<major>`.
-- Env vars `UPPER_SNAKE`, grouped by prefix (`DB_`, `KAFKA_`, `MERKLE_`, `LLM_`, `EVAL_`).
+- Public IDs carry a type prefix, such as `evt_` or `ans_`. Internal integer keys never leave the service.
+- Kafka topics are named `<domain>.<entity>.<stage>.v<major>`.
+- Environment variables are upper snake case and grouped by prefix: `DB_`, `KAFKA_`, `MERKLE_`, `LLM_`, `EVAL_`, `DATA_`, `SPARK_`.
 
 ## Writing
 
-- No em dashes in docs, comments, commit messages, or PR text (owner preference). **One required exception:** the C2SP signed-note format starts every signature line with U+2014, so `core/checkpoint.py` and `frontend/src/lib/verify/` must emit and parse that exact byte. A unit test asserts it, so no cleanup pass can silently break signatures.
-- Public-facing text reads as written by a person: no emoji headers, no audit-speak.
+- Documentation is written for people. It uses plain sentences, specific numbers with sources, and no marketing language.
+- No em dashes in documentation, comments, commit messages, or pull request text. There's one exception the code depends on: the C2SP signed-note format starts each signature line with U+2014, so the checkpoint code in Python and TypeScript must produce and parse that exact character. A unit test checks it, so a style cleanup can't break signatures by accident.
