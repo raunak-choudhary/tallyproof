@@ -1,0 +1,11 @@
+# Default owner for everything
+*                        @raunak-choudhary
+
+# Integrity-critical paths: changes here need deliberate review
+/.circleci/              @raunak-choudhary
+/.github/                @raunak-choudhary
+/Makefile                @raunak-choudhary
+/witness/                @raunak-choudhary
+/policies/               @raunak-choudhary
+/evals/thresholds.toml   @raunak-choudhary
+/docs/adr/               @raunak-choudhary
