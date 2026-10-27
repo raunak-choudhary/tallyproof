@@ -1,6 +1,6 @@
 # 14. Runbook
 
-> Commands become real as tasks land; each section notes the task that delivers it. Everything is done from the command line. No Docker Desktop and no GUI tools.
+How to set up, run, reset, and debug Tallyproof on one machine, entirely from the command line. Commands appear here as they're built, and the README's status note says what works today.
 
 ## Machine setup (macOS, Apple Silicon, CLI only)
 
@@ -43,56 +43,69 @@ rm -rf backend/.venv frontend/node_modules var/ data/   # local environments and
 
 Colima, Docker CLI, Python, Node, and their dependencies were already present before the project and are not removed. Any further system tool added later must be added to this table and this teardown list in the same commit.
 
-## Run (T-104 onward)
+## First run
 
 ```bash
-cp .env.example .env           # then fill secrets; never commit .env
-make keygen                    # prints an Ed25519 key pair; paste into .env
-make up                        # Redpanda, Console, Postgres, Redis, API, workers, web
-make seed SCENARIO=demo        # generate and produce a seeded scenario
-open http://localhost:3000     # web; Console at :8080; API docs at :8000/api/v1/docs/
+cp .env.example .env                 # fill in the secrets; .env is never committed
+make venv                            # create backend/.venv and install pinned dependencies
+make keygen                          # writes a local signing key to secrets/ (ignored by git)
+make data-fetch                      # download the archives and record their hashes (~2 GB per fiscal year)
+make data-build                      # Spark: clean, remove personal data, check quality, write Parquet
+colima start tallyproof              # start the container VM (see Machine setup above)
+make up                              # Redpanda, Postgres, Redis, object storage, API, workers, web
+make data-replay                     # stream a slice of gold events into Kafka
+open http://localhost:3000           # web app; broker console on :8080; API docs on :8000/api/v1/docs/
 ```
 
-## Health
+`make data-build` refuses to start while the container stack is running, because the laptop can't hold both comfortably. The download only happens once; later builds reuse the archives in `data/`.
 
-- `GET /healthz`: process is alive.
-- `GET /readyz`: broker, database, cache reachable. Use before running seeds.
+## Health checks
 
-## Reset
+- `GET /healthz` answers as long as the process is up.
+- `GET /readyz` also checks the broker, the database, and the cache. Wait for it before replaying data.
+
+## Stop and reset
 
 ```bash
-make down          # stop
-make reset         # stop, drop volumes, recreate topics and schema (destructive, asks to confirm)
+make down                    # stop the stack, keep data
+colima stop tallyproof       # free the VM's memory
+make reset                   # stop, delete volumes, recreate topics and schema (asks for confirmation)
 ```
 
-## Replay bundle (E-506)
+## Build the public demo bundle
 
 ```bash
-make seed SCENARIO=demo && make eval SET=full MODE=cached && make replay
-# writes frontend/public/replay/ with manifest.json listing SHA-256 of every file
+make replay
 ```
 
-## Verify the witness (T-207)
+This writes a signed bundle to `frontend/public/replay/`, with a manifest listing the SHA-256 of every file.
+
+## Verify the witness data
 
 ```bash
-make verify-witness    # every committed checkpoint must be consistent with the live log
+make verify-witness
 ```
 
-## Tamper demo (T-208, local only)
+Checks that every witnessed checkpoint is consistent with the current log, that each external timestamp proof is valid, and that witness history hasn't been rewritten.
+
+## Run the tamper demo locally
 
 ```bash
 DEMO_TAMPER_ENABLED=true make tamper LEVEL=1 EVENT=evt_...
 ```
 
-## Debug
+The tool refuses to run unless the settings are local and the database is on loopback.
 
-| Symptom | Check |
+## Troubleshooting
+
+| Symptom | Where to look |
 |---|---|
-| Consumer lag growing | Redpanda Console group lag; `make logs SVC=ingestion`; DLQ rate |
-| Checkpoints not closing | `CHECKPOINT_SIGNING_KEY` set? checkpointer logs; batch age config |
-| Verify fails in browser for untampered event | Run `make vectors-check` (cross-language canonical JSON) |
-| Fast-path unique violations > 0 | Bloom state stale; check rebuild logs on startup |
-| Analyst refuses everything | `LLM_PROVIDER`, budget cap, guard rejections in logs |
-| Control totals mismatch | `make check-totals` output names the stage and batch |
+| Consumer lag keeps growing | Consumer group lag in the broker console, `make logs SVC=ingestion`, and the dead-letter rate |
+| Checkpoints aren't closing | That the checkpointer can read its key file, its logs, and the batch age setting |
+| Verify fails in the browser for an untouched event | `make vectors-check` compares canonical JSON between Python and TypeScript |
+| Many duplicate checks after a restart | The Bloom filter rebuild logged at partition assignment |
+| The analyst refuses everything | `LLM_PROVIDER`, the daily spend cap, and query guard rejections in the logs |
+| `make data-build` is slow or swapping | Stop the container stack and lower `SPARK_DRIVER_MEMORY` or `SPARK_MASTER` |
+| Control totals don't match | `make check-totals` names the stage and batch that disagree |
 
-Tracing one event: search logs for its `correlation_id`.
+To follow one event through the system, search the logs for its `correlation_id`.
