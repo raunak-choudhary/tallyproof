@@ -18,3 +18,4 @@ Format: context, decision, reasons, alternatives, consequences. Status moves Pro
 | 0012 | Parquet lake sink on SeaweedFS, promoted to MLP | Proposed |
 | 0013 | Derive a double-entry journal from events | Proposed |
 | 0014 | Constrained query IR compiled to SQL | Proposed |
+| 0015 | Verification trust model | Proposed |

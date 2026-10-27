@@ -116,7 +116,8 @@ A-->>W: answer (ans_ ID) with claims, values, citations
 U->>W: Click Verify on citation
 W->>A: GET /api/v1/events/{event_id}/proof
 A-->>W: canonical event bytes, leaf index, audit path, checkpoint, signature
-W->>W: hash leaf, walk path, compare root, verify signature, recompute aggregate
+W->>W: hash leaf locally, walk path, verify signature with pinned key
+    W->>W: consistency proof to externally witnessed checkpoint, bound-value check
 W-->>U: Verified (or failed at level N)
 ```
 
@@ -154,15 +155,16 @@ Every leaf is `SHA-256(0x00 || canonical_bytes)` where `canonical_bytes` is the 
 
 ## 7. Tamper ladder (what each mechanism catches)
 
-| Level | Attacker capability | What they change | What catches it |
-|---|---|---|---|
-| 1 | Edits a row with DB superuser | Event payload only | Leaf hash recomputed from canonical bytes no longer matches stored `leaf_hash` / proof |
-| 2 | Edits payload and recomputes leaf hash | Payload + leaf hash | Audit path no longer reproduces the signed root |
-| 3 | Rebuilds the whole tree | Payload + all hashes + root | Checkpoint signature fails (no key), or new root is inconsistent with an already-witnessed checkpoint (consistency proof fails) |
-| 4 | Has the signing key and rewrites history | Everything, re-signed | Consistency proof against the **witnessed** checkpoint fails for any checkpoint the witness saw before the attack |
-| 5 | Has the key and acts before any witness sees the checkpoint | Events newer than last witnessed checkpoint | **Not detectable.** Exposure window equals witness interval. Stated honestly in the README. Real deployments shorten it with independent witnesses or S3 Object Lock in compliance mode |
+Superseded in detail by ADR-0015, which corrected an earlier draft that relied on a server-supplied leaf hash and a same-origin key.
 
-The tamper demo walks levels 1 to 4 in the browser.
+| Level | Attacker | Fails at |
+|---|---|---|
+| 1 | Edits a stored event (any column) | Bound-value check against verified canonical bytes, or leaf recomputed in the browser no longer reproduces the root |
+| 2 | Edits the event and rebuilds the tree, cannot sign | Checkpoint signature against the key pinned in the web build |
+| 3 | Edits, rebuilds, and re-signs with a stolen key | Consistency proof against the externally timestamped checkpoint |
+| 4 | As 3, before the next external timestamp | **Not detectable.** Window equals `WITNESS_INTERVAL_SECONDS`. Stated in the README |
+
+The public demo walks levels 1 to 3 in the browser using a separate, published demo key in a labeled demo log. Level 4 is explained, not demonstrated.
 
 ## 8. Known limits of the verification model
 

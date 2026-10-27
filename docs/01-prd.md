@@ -25,7 +25,7 @@ source event --(Kafka)--> ingestion --(canonical bytes, SHA-256 leaf)--> append-
 answer sentence --> claim --> bound value + cited event IDs --> inclusion proof --> checkpoint
 ```
 
-The browser verifies the whole chain with no trust in the server.
+The browser verifies the chain trusting only a pinned public key and an externally timestamped checkpoint (ADR-0015).
 
 ## 3. Users and audiences
 
@@ -97,7 +97,7 @@ Tiers follow the brief (Section 13). Changes from the brief are marked **(change
 | Numeric exactness to the cent | >= 0.95 | >= 0.98 | same |
 | Refusal correctness (F1) | >= 0.85 | >= 0.90 | same |
 | Anomaly recall (reconciliation, deterministic) | 1.00 on catalog types in scope | 1.00 | same |
-| Tamper detection rate across tamper ladder levels 1 to 3 | 100% | 100% | property tests plus demo |
+| Tamper detection rate across tamper ladder levels 1 to 3 (ADR-0015 numbering) | 100% | 100% | property tests plus demo |
 | Core module coverage | >= 85% | >= 90% | REQ-QA-08 |
 | Ingest throughput (laptop, measured) | report only | report with p50/p95/p99 | `docs/reports/load-test.md` |
 | Public demo first meaningful paint | n/a | < 2.5 s on 4G profile | Lighthouse |
