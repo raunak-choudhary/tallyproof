@@ -19,7 +19,7 @@ The model writes **templates**, not numbers:
 The **verifier** rejects an answer if:
 1. Model-authored text contains numeric tokens outside slots (dates in ISO form that appear verbatim in evidence are allowed by rule).
 2. A slot is unbound or a citation references an ID outside the evidence set.
-3. A value claim has no provenance (the SQL guard could not derive contributing event IDs).
+3. A value claim has no provenance. Provenance is defined per query shape by the constrained query IR (ADR-0014), not derived from arbitrary SQL.
 4. A quote is not an exact substring.
 
 On rejection, one repair attempt with the verifier's error; then a typed refusal (`unverifiable_claim`, `no_evidence`, `out_of_scope`, `unsafe_query`, `budget_exceeded`).
