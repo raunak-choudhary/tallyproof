@@ -1,8 +1,7 @@
 # ADR-0007: Signed checkpoints and external witnessing
 
-- Status: Proposed (MC-01)
+- Status: Accepted
 - Date: 2026-10-26
-- Zone: Open (improvement over the brief)
 
 ## Context
 
@@ -15,7 +14,7 @@ If the Merkle root is stored only in the same Postgres database as the events, a
    - **Independent anchor:** each checkpoint hash is timestamped with OpenTimestamps (Bitcoin-anchored, no account, operator cannot rewrite) and optionally an RFC 3161 timestamp authority. This is the only witness the operator cannot forge; level 4 detection is claimed only for externally timestamped checkpoints.
    - `witness/checkpoints.jsonl` committed to the repo through normal PRs, protected by CODEOWNERS and no-force-push. This is a convenience copy, **not** an independent witness, because the operator controls the repo. Verification fails on non-fast-forward witness history.
    - Included in the replay bundle.
-   - MLP: written to a bucket with Object Lock enabled on the local S3-compatible store (SeaweedFS), as a behavioral stand-in for S3 Object Lock compliance mode.
+   - Later: written to a bucket with Object Lock enabled on the local S3-compatible store (SeaweedFS), as a behavioral stand-in for S3 Object Lock compliance mode.
 3. `make verify-witness` checks that every witnessed checkpoint is consistent with the current log (consistency proofs).
 
 ## Reasons

@@ -1,12 +1,11 @@
 # ADR-0004: Django 5.2 LTS
 
-- Status: Proposed (MC-01)
+- Status: Accepted
 - Date: 2026-10-26
-- Zone: Strong default (confirmed with corrected facts)
 
 ## Context
 
-The brief locks Django and recommends 5.2 LTS. Research on 2026-10-26 (see `docs/research/stack-versions-2026-10.md`):
+The backend uses Django. Support windows, checked in October 2026:
 
 | Series | Latest | Security support ends |
 |---|---|---|
@@ -15,7 +14,7 @@ The brief locks Django and recommends 5.2 LTS. Research on 2026-10-26 (see `docs
 | 6.1 | 6.1.2 | December 2027 (not LTS) |
 | 6.2 LTS | not released, planned April 2027 | April 2030 |
 
-The brief described 6.1 as "ends extended support December 2027". The date is right, but 6.1 is not an extended-support release. 5.2 LTS outlives it.
+Django 6.1 is newer, but it isn't a long-term support release, and its security support ends in December 2027, four months before 5.2's.
 
 ## Decision
 

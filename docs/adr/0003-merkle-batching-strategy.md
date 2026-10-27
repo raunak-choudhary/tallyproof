@@ -1,12 +1,11 @@
 # ADR-0003: Merkle log structure and batching policy
 
-- Status: Proposed (MC-01)
+- Status: Accepted
 - Date: 2026-10-26
-- Zone: Open (our call)
 
 ## Context
 
-The brief says events are grouped into Merkle trees, roots are committed, and any event can return an inclusion proof. There are two common shapes:
+Events are grouped into Merkle trees, roots are committed, and any event can return an inclusion proof. There are two common shapes:
 
 - **A. Independent per-batch trees, roots hash-chained** (block-header style).
 - **B. One append-only log, batches are checkpoints of its growing size** (Certificate Transparency style, RFC 9162).
@@ -34,4 +33,4 @@ Hashing per RFC 9162 section 2.1: leaf = `SHA-256(0x00 || canonical_bytes)`, nod
 
 ## Benchmark reference
 
-A single-author 2026 preprint reports Merkle construction over 50,000 events in 47 ms with 320 to 512 byte proofs (`docs/research/verified-sources.md`, item 10). We will report our own measured numbers side by side and treat the preprint only as a loose reference.
+A single-author 2026 preprint reports Merkle construction over 50,000 events in 47 ms with 320 to 512 byte proofs ([references](../references.md)). We will report our own measured numbers side by side and treat the preprint only as a loose reference.

@@ -1,12 +1,11 @@
 # ADR-0001: PostgreSQL over NoSQL for the ledger
 
-- Status: Proposed (MC-01)
+- Status: Accepted
 - Date: 2026-10-26
-- Zone: Strong default (confirmed, no deviation)
 
 ## Context
 
-The ledger stores money movements, must enforce integrity, supports reconciliation, and is the target of LLM-generated queries. AWS retired Amazon QLDB (end of support 2025-07-31) and points customers to Aurora PostgreSQL. AWS's own migration guidance states: "Amazon Aurora PostgreSQL does not keep a permanent, immutable record of changes. Instead, that history must be generated as audit data and stored outside of the database." (AWS Database Blog, 2024-07-18; see `docs/research/verified-sources.md` for archived URLs.)
+The ledger stores money movements, must enforce integrity, supports reconciliation, and is the target of LLM-generated queries. AWS retired Amazon QLDB (end of support 2025-07-31) and points customers to Aurora PostgreSQL. AWS's own migration guidance states: "Amazon Aurora PostgreSQL does not keep a permanent, immutable record of changes. Instead, that history must be generated as audit data and stored outside of the database." (AWS Database Blog, 18 July 2024; archived links in [references](../references.md).)
 
 ## Decision
 

@@ -3,7 +3,7 @@
 - Status: **Accepted 2026-10-27: `tallyproof`.** The repository was first created under the working name `ledgerline` and renamed the same day; GitHub redirects the old URL.
 - Date: 2026-10-26
 
-## Criteria (brief Section 4)
+## Criteria
 
 Hints at what the system does; credible to a finance audience; short; valid as repo name, Python package, npm package, URL slug; no collision with a well-known product on GitHub, PyPI, npm.
 

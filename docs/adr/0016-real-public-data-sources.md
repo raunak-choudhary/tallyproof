@@ -1,12 +1,11 @@
 # ADR-0016: Real public spending data with a labeled synthetic overlay
 
-- Status: Accepted (owner approved real data, no PII, federal spending domain, 2026-10-27)
+- Status: Accepted
 - Date: 2026-10-27
-- Zone: Changes a locked requirement (REQ-SEC-09 amended by the owner) and the problem domain
 
 ## Context
 
-The first plan used only a synthetic generator. For reviewers who build data pipelines, all-synthetic data is the weakest part of the project: it says nothing about acquiring, cleaning, profiling, and validating messy real data at volume. The owner asked for real finance data at gigabyte scale (10 to 100 GB, not terabytes), from official APIs and bulk files, never scraped, with no personal data.
+The first plan used only a synthetic generator. For reviewers who build data pipelines, all-synthetic data is the weakest part of the project: it says nothing about acquiring, cleaning, profiling, and validating messy real data at volume. The goal is real finance data at gigabyte scale (10 to 100 GB, not terabytes), taken from official APIs and bulk files rather than scraped, with no personal data.
 
 ## Decision
 
@@ -20,7 +19,7 @@ The first plan used only a synthetic generator. For reviewers who build data pip
 | Policy corpus | Federal Acquisition Regulation (FAR) | Public U.S. government text | Small |
 | Ground truth for anomaly evals | Seeded synthetic overlay injected into the real event stream | n/a | n/a |
 
-**Volume target:** FY2025 first (about 13 GB of CSV), then FY2024 for about 27 GB in total, inside the owner's 10 to 100 GB range and within the reference laptop's 45 GB of free disk (ADR-0017 explains the out-of-core processing).
+**Volume target:** FY2025 first (about 13 GB of CSV), then FY2024 for about 27 GB in total, inside the project's 10 to 100 GB target and within the reference laptop's 45 GB of free disk (ADR-0017 explains the out-of-core processing).
 
 ### Outlay data (verified 2026-10-27)
 
@@ -29,9 +28,9 @@ A real FY2025 Q1 download was generated and its header read. Each row carries `t
 ### Medallion layers
 
 1. **Bronze:** original zips, untouched, with a manifest (URL, size, SHA-256, fetch time). The file hashes are appended to the Merkle log as source-file leaves, so provenance reaches back to the exact file the government published.
-2. **Silver:** Spark job, one CSV member at a time: types, deduplication, normalization, PII removal (threat model, REQ-SEC-09), and a quarantine table with reason codes. Deequ constraints gate the build.
+2. **Silver:** Spark job, one CSV member at a time: types, deduplication, normalization, personal data removal (see the [threat model](../threat-model.md)), and a quarantine table with reason codes. Deequ constraints gate the build.
 3. **Gold:** conformed ledger events in event-time order.
-4. **Lake:** silver and gold as Parquet (Iceberg in MLP). This holds everything.
+4. **Lake:** silver and gold as Parquet (Iceberg tables later). This holds everything.
 5. **Ledger:** a replayed slice of gold events (default 1M, configurable) streams through Kafka into the verifiable ledger. The README states plainly that the lake holds the full dataset and the Merkle ledger holds the replayed stream, which is how lakes and transactional stores divide work in practice.
 
 ### Domain mapping
@@ -53,7 +52,7 @@ Reconciliation compares outlays with obligations per award (outlays exceeding ob
 
 ## Consequences
 
-- REQ-SEC-09 now reads: no PII; real data only from public official sources plus a labeled synthetic overlay.
-- The synthetic generator becomes an overlay injector (T-111).
+- The project's data rule is now: no personal data, and real data only from public official sources, plus a labeled synthetic overlay.
+- The synthetic generator becomes an overlay injector.
 - CI uses a committed sample of about 50k PII-free real rows; full-size builds are local and their profiling reports are committed as evidence.
 - Source data quality is the government's. The profiling report documents known issues rather than hiding them.

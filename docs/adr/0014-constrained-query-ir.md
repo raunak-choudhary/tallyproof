@@ -1,9 +1,8 @@
 # ADR-0014: Constrained query IR compiled to SQL (guarded text-to-SQL, done safely)
 
-- Status: Proposed (MC-01)
+- Status: Accepted
 - Date: 2026-10-26
-- Zone: Design of a locked requirement ("numeric questions go to guarded text-to-SQL")
-- Supersedes: the "derive provenance from arbitrary SQL with sqlglot" idea in ADR-0009 rule 3 and T-302
+- Supersedes: the rule in ADR-0009 that derived provenance from free-form SQL
 
 ## Context
 
@@ -35,7 +34,7 @@ Provenance per shape:
 
 Every value chip in the UI shows the compiled filter in plain words ("invoices for acct_X with occurred_at on or before 2026-09-30"). The badge reads **"integrity verified, filter shown"**, never just "verified". A wrong filter is then visible to the reader, and caught by evals.
 
-### Escape hatch (keeps the brief's text-to-SQL literally true)
+### Fallback for questions the spec can't express
 Questions the IR cannot express may fall back to **guarded free SQL** (sqlglot AST allowlist plus read-only role, threat model 5.3). Those answers are labeled **"lower assurance: integrity of cited rows only, completeness and filter not checked"**. Fallback rate is a reported eval metric. If it is high, the IR grows.
 
 ## Reasons

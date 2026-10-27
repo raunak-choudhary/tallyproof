@@ -1,8 +1,7 @@
 # ADR-0011: release-please runs on a minimal GitHub Actions workflow
 
-- Status: Proposed (MC-01)
+- Status: Accepted
 - Date: 2026-10-26
-- Zone: Clarification of locked items (CircleCI for CI, release-please for CHANGELOG)
 
 ## Context
 
@@ -14,7 +13,7 @@ A single GitHub Actions workflow, `.github/workflows/release-please.yml`, runs o
 
 ## Reasons
 
-- No long-lived personal access token to store in CircleCI (smaller secret surface, REQ-SEC-05).
+- No long-lived personal access token to store in CircleCI (a smaller set of secrets to protect).
 - The release PR flow is native to GitHub.
 
 ## Alternative
