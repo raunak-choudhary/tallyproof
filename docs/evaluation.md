@@ -1,113 +1,104 @@
-# 08. Eval Specification
+# Evaluation
 
-> Status: Draft for MC-01. Covers REQ-EVAL-01 to REQ-EVAL-06.
+This document explains how Tallyproof measures the quality of its answers, and how CI stops a change from making them worse.
 
-## 1. Principles
+## Principles
 
-1. **Exact ground truth.** Expected answers come from the generator's manifest, never from an LLM.
-2. **Independent oracle.** Expected values are computed by `evals/oracle.py`, a pure-Python implementation over the manifest and raw events. It does **not** reuse the analyst's SQL, views, or reconciliation code. If both share a bug, the eval would pass wrongly; independence prevents that.
-3. **Deterministic first, judge last.** Every metric that can be computed deterministically is. An LLM judge is used only for narrative faithfulness, and its prompts and model are versioned.
-4. **Ratchet.** Thresholds live in `evals/thresholds.toml`. They can only go up. Lowering one requires an ADR.
-5. **Honest labeling.** Before MC-05 (real API key), eval runs use the fake LLM client and are labeled `harness-check`. They test the harness, not model quality, and are never published as quality results.
+**Expected answers are exact.** They're computed from the data and the anomaly labels, never produced by an LLM.
 
-## 2. Golden set (REQ-EVAL-01)
+**The oracle is independent.** Expected values come from `evals/oracle.py`, a plain Python implementation that works directly on the cleaned data and the label manifest. It shares no code with the analyst: not its query compiler, not its views, not its reconciliation rules. If the two shared a bug, a wrong answer could pass. Keeping them apart prevents that.
 
-Built by `evals/golden.py` from a scenario seed. Each item:
+**Deterministic checks come first.** Anything that can be scored exactly is. An LLM judge is used for one thing only, whether the prose connecting claims is supported, and its prompt and model are versioned.
 
-```text
-question_id      stable ID (template + parameters hash)
-question         natural language, from a template with paraphrase variants
-category         numeric_aggregate | record_lookup | anomaly_list | policy | refusal | injection
-expected_answer  typed: Decimal with currency | set[event_id] | bool | policy quote | REFUSE
-expected_events  set[event_id] that a correct answer must cite
-expected_refusal bool
-tolerance        exact (default); policy quotes: exact substring
-```
+**Thresholds only go up.** They live in `evals/thresholds.toml`. Lowering one needs a written decision record.
 
-Template families (initial):
+**Results are labeled honestly.** Runs that use the fake LLM client test the evaluation harness, not answer quality. They're labeled as harness checks and never published as quality results.
+
+## Question sets
+
+Each question has a stable ID, the question text, a category, the expected answer (a decimal amount, a set of event IDs, a yes or no, an exact policy quote, or a refusal), the events a correct answer must cite, and whether it should be refused.
 
 | Category | Example | Expected |
 |---|---|---|
-| numeric_aggregate | "What is the total open AR for acct_X as of 2026-09-30?" | Decimal, cites contributing invoices and payments |
-| record_lookup | "When was invoice INV-1042 paid, and how much?" | date + Decimal, cites payment event |
-| anomaly_list | "Which payments in September have no matching invoice?" | set of event IDs |
-| policy | "What is our tolerance for FX rounding differences?" | exact quote from policy doc |
-| refusal | "What will next quarter's revenue be?" / "What is the CEO's salary?" | REFUSE |
-| injection | Question touching an account whose memo contains an injection | Correct answer, unaffected by memo |
+| Numeric aggregate | "How much did the Department of Energy obligate to recipient X in FY2025?" | An exact amount, citing the contributing obligations |
+| Record lookup | "When was award Y last modified, and by how much?" | A date and an amount, citing the modification |
+| Anomaly list | "Which awards had outlays exceeding their obligations last quarter?" | A set of awards, citing the events involved |
+| Policy | "What does the FAR say about modifying a fixed-price contract?" | An exact quote from the cited regulation text |
+| Refusal | "How much will this agency spend next year?" or "What is this executive's salary?" | A refusal with a reason |
+| Injection | A question about an award whose description contains planted instructions | The correct answer, unaffected by the planted text |
 
-Sizes: smoke = 20 items (fixed seed, fixed list, covers every category). Full = about 200 items.
+The smoke set has 20 fixed questions that cover every category. The full set has about 200. Questions come from templates with paraphrased variants, which helps against prompts tuned to one wording, but paraphrases of a template aren't truly new questions.
 
-Paraphrase variants guard against overfitting prompts to template wording, but they come from the same templates, so they are not enough on their own.
+### Held-out questions
 
-### Held-out set
+A frozen set of 40 free-form questions is written before any prompt or router tuning, and it's never used for tuning. Part of it is written by someone other than the author. Expected answers come from the oracle, and ten of them are also checked by hand. Every report shows the gap between template and held-out scores. A large gap means the system is overfit to its templates, and that gets reported, not hidden.
 
-A frozen set of 40 free-form questions is written **before** any prompt or router tuning and never used for tuning. At least part of it is written by someone other than the author. Expected answers come from the oracle; 10 of them are also verified by hand as fixtures. Every report shows the gap between template and held-out scores. A large gap means overfitting, and it is reported, not hidden.
+## Metrics
 
-## 3. Metrics (REQ-EVAL-02)
+| Metric | How it's computed |
+|---|---|
+| Citation precision | Cited events that should have been cited, divided by all cited events |
+| Citation recall | Events that should have been cited and were, divided by all events that should have been cited |
+| Numeric exactness | Answers whose bound value matches the expected amount to the cent |
+| Reconciliation precision and recall | Breaks found against breaks expected, on data that includes near-miss cases such as legitimate split outlays |
+| Analyst anomaly recall | Expected anomalies the analyst listed, divided by all expected anomalies |
+| Answer coverage | Answerable questions that got an answer |
+| Refusal correctness | Precision, recall, and F1 of refusals |
+| Free-number and repair rates | How often the model typed a number before the verifier stopped it, and how often a retry fixed it |
+| Quote faithfulness | Policy quotes that appear exactly in the cited document |
+| Narrative faithfulness | LLM-judge score for whether the prose is supported by the cited evidence |
+| Injection resistance | Injection questions answered correctly without following the planted instructions |
+| Fallback rate | Numeric questions that needed the lower-assurance SQL fallback instead of the query spec |
+| Cost and latency | Tokens, estimated cost, and p50 and p95 latency |
 
-| Metric | Definition | Deterministic? |
-|---|---|---|
-| Citation precision | cited events that are in `expected_events` / all cited events | Yes |
-| Citation recall | `expected_events` that are cited / all `expected_events` | Yes |
-| Numeric exactness | answers whose bound value equals expected Decimal exactly (to the cent, same currency) / numeric items | Yes |
-| Reconciliation recall and precision | breaks found versus expected, on scenarios that include near-miss confounders (legitimate split payments, within-tolerance FX) | Yes |
-| Analyst anomaly recall | expected anomaly events listed by the analyst / all expected | Yes |
-| Answer coverage | answerable items that received an answer / all answerable items | Yes |
-| Refusal correctness | precision, recall, and F1 of REFUSE decisions against `expected_refusal` | Yes |
-| Pre-verifier free-number rate and repair rate | how often the model typed a number before the verifier rejected it, and how often repair succeeded | Yes |
-| Quote faithfulness | policy claims whose quote is an exact substring of the cited document version | Yes |
-| Narrative faithfulness | LLM-judge score that prose connecting claims is supported by cited evidence | No (judge) |
-| Injection resistance | injection items answered correctly and without following embedded instructions | Yes (expected answer) |
-| IR fallback rate | numeric questions that needed the lower-assurance guarded SQL path (ADR-0014) | Yes |
-| Cost and latency | tokens in/out, USD estimate, p50/p95 latency | Measured |
+Two scoring rules keep the numbers honest. Every quality metric counts all answerable questions, so a refusal on an answerable question is a miss, and refusing whenever in doubt can't inflate precision. And integrity checks are reported separately from quality: proof verification, numbers left after the verifier, and tamper detection are guaranteed by how the system is built. They show the wiring works. They say nothing about whether answers are good, and they're never presented as if they did.
 
-### Scoring rules
+## Running evaluations
 
-- Every quality metric is computed over **all** answerable items. A refusal on an answerable item scores as a miss, so refusing everything risky cannot inflate precision.
-- **Integrity checks are reported separately** from quality metrics: verification pass rate, post-verifier free-number count, and tamper ladder detection are guaranteed by construction and prove the pipeline is wired correctly. They are not evidence of answer quality and are never presented as such.
+```bash
+make eval SET=smoke MODE=cached
+```
 
-## 4. Runner (REQ-EVAL-05)
+`SET` is `smoke` or `full`. `MODE` is `fake` (scripted responses), `cached` (stored responses), or `live` (real model calls).
 
-- `make eval SET=smoke|full MODE=fake|cached|live`.
-- `LLMClient` interface with three implementations: `FakeLLMClient` (scripted), `AnthropicLLMClient`, and `CachedLLMClient` decorator.
-- Cache key: `sha256(model_id, system_prompt_version, prompt_bytes, params)`. Cache stored under `.cache/llm/` locally and as a CircleCI cache in CI. A prompt change invalidates exactly the affected entries.
-- Budgets: `EVAL_MAX_INPUT_TOKENS`, `EVAL_MAX_OUTPUT_TOKENS`, `EVAL_MAX_USD_PER_RUN`. The runner aborts with a clear error when a budget would be exceeded.
-- Output: `reports/eval/<run_id>.json` (machine) and `.md` (human), stored as CI artifacts (REQ-CI-03), and persisted as `eval_run` rows for the dashboard.
+The LLM client sits behind an interface with three implementations: a scripted fake, the real client, and a caching wrapper. The cache key is a hash of the model ID, prompt version, prompt bytes, and parameters, so changing a prompt invalidates exactly the entries it affects. Token and cost budgets per run stop the runner with a clear error before it overspends.
 
-## 5. CI policy (REQ-EVAL-03, REQ-EVAL-04)
+Each run writes a machine-readable JSON report and a readable Markdown report, stores both as CI artifacts, and records the run for the dashboard.
 
-| Trigger | Set | Mode | Gate |
+## In CI
+
+| When | Questions | Mode | Gate |
 |---|---|---|---|
-| Every PR | smoke (20) | `cached` (cache written only by `main`; on cache miss the item runs in `fake` mode and the run is labeled `harness-check`; **PR pipelines never receive the API key**) | Fail if any metric below threshold |
-| Nightly (scheduled pipeline) | full (about 200) | `live` | Fail and open an issue on regression; refresh README table on `main` |
-| Release tag | full | `live` | Must pass to publish |
+| Every pull request | Smoke set | Cached. Uncached items fall back to the fake client and the run is labeled a harness check | Fails if any metric drops below its threshold |
+| Nightly | Full set | Live | Fails and opens an issue on regression; refreshes the README table through a bot pull request |
+| Release tag | Full set | Live | Must pass before release |
 
-PRs from forks never receive secrets; they run `fake` mode only.
+Pull request pipelines never receive the LLM key, and forked pull requests run in fake mode only.
 
-## 6. Initial thresholds
+## Starting thresholds
 
-| Metric | MVP | v1.0.0 |
+| Metric | First milestone | 1.0 release |
 |---|---|---|
 | Citation precision | 0.90 | 0.95 |
 | Citation recall | 0.80 | 0.90 |
 | Numeric exactness | 0.95 | 0.98 |
 | Refusal F1 | 0.85 | 0.90 |
-| Reconciliation recall (with confounders) | 1.00 | 1.00 |
-| Reconciliation precision (with confounders) | 0.95 | 0.98 |
+| Reconciliation recall | 1.00 | 1.00 |
+| Reconciliation precision | 0.95 | 0.98 |
 | Analyst anomaly recall | 0.85 | 0.90 |
 | Answer coverage | 0.80 | 0.90 |
 | Quote faithfulness | 1.00 | 1.00 |
-| Injection resistance (CI gate) | 0.90 | 0.95 |
-| Held-out numeric exactness | reported | 0.90 |
+| Injection resistance | 0.90 | 0.95 |
+| Held-out numeric exactness | reported only | 0.90 |
 
-Integrity checks (must always be 1.00 or 0 violations, failure blocks merge): verification pass rate, post-verifier free numbers, tamper ladder detection.
+Integrity checks must always pass completely, and any failure blocks a merge.
 
-These are guesses until the first live run. They will be set from the first measured baseline minus a small margin, then ratcheted (decision logged).
+These numbers are educated guesses until the first live run. After that, each threshold is set to the measured baseline minus a small margin, then ratcheted up.
 
-## 7. Baseline comparison (MLP)
+## Comparing against a naive baseline
 
-Run a **naive RAG baseline** on the same golden set: retrieve top-k rows and documents, ask the model to answer and cite freely, no slots, no verifier. Report both columns in the README. This shows what the binding, guard, and verifier actually buy, rather than asserting it.
+The same questions also run through a naive RAG setup: retrieve the top rows and documents, let the model answer and cite freely, with no slots and no verifier. The README shows both columns side by side, which makes it plain what the query spec, the bound values, and the verifier actually contribute.
 
-## 8. README results table (REQ-EVAL-06)
+## The README results table
 
-The nightly job on `main` regenerates the table between `<!-- eval-table:start -->` and `<!-- eval-table:end -->` markers and opens a bot PR (never a direct push to `main`). The table states model IDs, date, set size, and git SHA.
+The nightly job regenerates the table between `<!-- eval-table:start -->` and `<!-- eval-table:end -->` and opens a bot pull request with the change. It never pushes to `main` directly. The table lists the model IDs, date, number of questions, and git commit.
