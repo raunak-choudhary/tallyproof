@@ -36,7 +36,7 @@ Total brief IDs: 64. Derived IDs: 21. GAPs: **0**. Remapped 2026-10-27 after the
 |---|---|---|---|---|
 | REQ-SEC-07 | Read-only role, SELECT allowlist, limits, timeouts | 1b, 3 | T-104 (roles script), T-112b (grants), T-301, T-302 (query IR), T-302b (hardened guard) | Planned |
 | REQ-SEC-08 | Untrusted data, prompt-injection defense | 1a, 1b, 3 | T-110 (validation), T-111 (injection test data only), T-113d (DLQ), T-305, T-306 (defenses) | Planned |
-| REQ-SEC-09 | Synthetic data only | 1 | T-111 (fixed fake word lists) | Planned |
+| REQ-SEC-09 | **Amended 2026-10-27:** no PII; real data only from public official sources plus a labeled synthetic overlay | 1a | D-03 (column and row removal, deny-list tests), D-05 (sample is PII-free), T-111 (overlay) | Planned |
 | REQ-SEC-10 | Rate limiting and validation on public endpoints | 1b, 3 | T-115b, T-307 | Planned |
 | REQ-SEC-11 | Threat model doc | 0, 4 | T-002 (draft), E-404 (review against built system) | Planned / Epic |
 
