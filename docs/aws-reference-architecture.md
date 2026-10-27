@@ -1,37 +1,39 @@
-# 15. AWS Reference Architecture (mapping, not deployed)
+# Running Tallyproof on AWS
 
-> Added document (not in brief Section 9.1). Reason: the project cannot use AWS accounts, but its reviewers build on AWS. This document shows the production mapping a reviewer would expect, with the decisions that change when moving to AWS. Facts verified 2026-10-26 (`docs/research/stack-versions-2026-10.md` section 6).
+Tallyproof runs on one laptop with open-source components, and nothing in this repository is deployed to AWS. Each component does have a direct AWS counterpart, though, and this page shows how the system would map onto AWS and what would change at production scale. Service details were checked against AWS documentation in October 2026.
 
-## 1. Component mapping
+## Component mapping
 
-| Local (this repo) | AWS production equivalent | What changes |
+| Local component | AWS equivalent | What changes |
 |---|---|---|
-| Redpanda (Kafka API) | Amazon MSK (Provisioned or Serverless) | Same client code; IAM auth; partitions sized from load test |
-| Redpanda Schema Registry (JSON Schema draft-07) | AWS Glue Schema Registry (JSON Schema drafts 4, 6, 7) | Schemas already draft-07 with internal refs only (ADR-0002) |
-| PostgreSQL 16 + pgvector | Aurora PostgreSQL with pgvector | Same migrations; read replica for analyst role; pgAudit for DB-level audit |
-| Ed25519 key in `.env` | AWS KMS asymmetric key `ECC_NIST_EDWARDS25519`, `ED25519_SHA_512`, `MessageType=RAW` | Private key never leaves KMS; checkpoints are small, well under message limits. Do **not** use the pre-hash variant; standard verifiers reject it |
-| Witness file in git + SeaweedFS Object Lock | S3 bucket with Object Lock in **compliance mode** | AWS documents an assessment by Cohasset Associates for SEC 17a-4, CFTC, and FINRA record-keeping environments |
+| Spark in local mode | AWS Glue jobs or Amazon EMR | The same PySpark code, run on a cluster instead of three local cores |
+| Deequ checks | Deequ on Glue or EMR, or AWS Glue Data Quality, which is built on Deequ | The constraints carry over |
+| Downloaded archives (bronze layer) | S3, with Object Lock for the raw files | The source-file hashes in the ledger stay the same |
 | Parquet on SeaweedFS | Amazon S3 data lake | Same layout and partitioning |
-| pyiceberg SQL catalog (Nice) | Amazon S3 Tables or Glue Data Catalog Iceberg tables | Catalog swap only |
-| DuckDB (Nice) | Amazon Athena | SQL dialect differences minor |
-| Redis | Amazon ElastiCache (Valkey or Redis OSS engine) | No code change |
-| Workers (management commands) | ECS Fargate services; consumer groups scale by task count | Health via `/readyz` |
-| Django API | ECS Fargate behind ALB, or App Runner | Same container |
-| Scheduled jobs (nightly eval, control totals) | EventBridge Scheduler to Step Functions (or MWAA for DAGs) | |
-| structlog JSON + OTel (Nice) | CloudWatch Logs and Metrics, ADOT (AWS Distro for OpenTelemetry) | X-Ray SDKs reach end of support 2027-02-25; instrument with OpenTelemetry only |
-| Static replay site | S3 + CloudFront | |
+| Iceberg with a local SQL catalog | Amazon S3 Tables, or Iceberg tables in the Glue Data Catalog | Only the catalog changes |
+| DuckDB for ad hoc queries | Amazon Athena | Minor SQL dialect differences |
+| Redpanda (Kafka API) | Amazon MSK | Same client code, IAM authentication, partitions sized from the load test |
+| Redpanda Schema Registry | AWS Glue Schema Registry | Schemas are already JSON Schema draft-07 with internal references only, which Glue accepts |
+| PostgreSQL 16 with pgvector | Aurora PostgreSQL with pgvector | Same migrations, a read replica for the analyst role, pgAudit for database-level auditing |
+| Ed25519 key in a local file | AWS KMS asymmetric key, spec `ECC_NIST_EDWARDS25519`, algorithm `ED25519_SHA_512` with raw messages | The private key never leaves KMS. The pre-hash variant must be avoided, because standard verifiers reject its signatures |
+| Witness copies and external timestamps | An S3 bucket with Object Lock in compliance mode, alongside the external timestamps | Not even the root account can delete or overwrite locked versions. AWS reports an assessment for SEC 17a-4, CFTC, and FINRA record keeping |
+| Redis | Amazon ElastiCache, Valkey or Redis OSS engine | No code change |
+| Workers | ECS Fargate services, scaled by consumer group | Health checks through `/readyz` |
+| Django API | ECS Fargate behind an Application Load Balancer | Same container |
+| Scheduled jobs | EventBridge Scheduler triggering Step Functions, or Amazon MWAA | |
+| Logs and traces | CloudWatch and the AWS Distro for OpenTelemetry | The X-Ray SDKs reach end of support in February 2027, so instrumentation uses OpenTelemetry only |
+| Static demo site | S3 and CloudFront | |
 
-## 2. Why this matters: the QLDB gap
+## The QLDB gap
 
-QLDB reached end of support on 2025-07-31. AWS recommends Aurora PostgreSQL and states that Aurora PostgreSQL does not keep a permanent, immutable record of changes; that history must be generated and stored outside the database. This project is that pattern: Postgres plus an RFC 9162 Merkle log, KMS-signable checkpoints, and witnessed copies in Object Lock storage.
+Amazon QLDB reached end of support on 31 July 2025. AWS recommends Aurora PostgreSQL in its place, and its migration guidance notes that Aurora PostgreSQL doesn't keep a permanent, immutable record of changes; that history has to be generated and stored outside the database. Tallyproof is a working version of that pattern: Postgres for the data, an RFC 9162 Merkle log for the history, checkpoints that KMS could sign, and witnessed copies in storage nobody can rewrite. Sources are in [references.md](references.md).
 
-## 3. What changes at AWS scale (honest notes)
+## What changes at production scale
 
-- **Single log writer** becomes the bottleneck first. Plan: per-partition logs with a top-level log of shard heads, checkpoints signed per shard and globally.
-- **Proof serving** moves to static tiles on S3 + CloudFront (transparency.dev tile layout), so proof reads never hit Aurora.
-- **Exactly-once** pattern unchanged (offsets in Aurora transaction).
-- **Cost controls** for the LLM: Bedrock or direct Anthropic API with per-team budgets; cache in ElastiCache.
+- **The single log writer is the first bottleneck.** The fix is a log per partition with a top-level log of shard heads, signed both per shard and globally.
+- **Proofs would be served as static tiles** from S3 and CloudFront, using the transparency.dev tile layout, so proof reads never touch Aurora.
+- **Effectively-once processing doesn't change.** Offsets are still stored in the same Aurora transaction as the ledger writes.
+- **Batch jobs scale out** from one laptop to a Glue or EMR cluster with no code changes. The single-machine resource limits become cluster sizing.
+- **LLM costs** stay bounded by per-team budgets, either through Amazon Bedrock or a direct API, with the response cache in ElastiCache.
 
-## 4. Nice-to-have: IaC sketch
-
-E-606 adds an unapplied Terraform or CDK sketch of this layout. It is never deployed from this repo and contains no account IDs.
+An infrastructure-as-code sketch of this layout may be added later. It would never be deployed from this repository and would contain no account identifiers.
