@@ -8,9 +8,10 @@ secrets/
 # Local-only planning input (superseded by docs/)
 PROJECT_BRIEF.md
 
-# Agent local files
+# Agent local files (kept on the developer machine, never published)
 .claude/
 AGENTS.md
+CLAUDE.md
 
 # Knowledge graph output
 graphify-out/
