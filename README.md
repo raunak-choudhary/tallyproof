@@ -8,7 +8,7 @@ A streaming financial ledger with an AI analyst whose every claim is cited to an
 
 ## The idea in one paragraph
 
-Events (invoices, payments, refunds) stream through Kafka into an append-only Postgres ledger. Each accepted event becomes a leaf in an [RFC 9162](https://www.rfc-editor.org/rfc/rfc9162.html) Merkle log. Checkpoints of that log are signed with Ed25519 and copied somewhere outside the database. When the analyst answers a question, it never types a number itself. Values are bound from executed SQL, and every claim cites the events behind it. Your browser fetches the proofs and checks them itself, so you don't have to trust the server. Change one cent in a cited record and verification fails, and the demo shows you which mechanism caught it.
+Events (invoices, payments, refunds) stream through Kafka into an append-only Postgres ledger. Each accepted event becomes a leaf in an [RFC 9162](https://www.rfc-editor.org/rfc/rfc9162.html) Merkle log. Checkpoints of that log are signed with Ed25519 and copied somewhere outside the database. When the analyst answers a question, it never types a number itself. Values are bound from executed SQL, and every claim cites the events behind it. Your browser fetches the proofs and checks them itself. It trusts only a public key pinned in the web build and a checkpoint timestamped by a third party; everything else is checked. Change one cent in a cited record and verification fails, and the demo shows you which mechanism caught it.
 
 ## Why this exists
 
