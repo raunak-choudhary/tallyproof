@@ -37,7 +37,7 @@
 | `WITNESS_EXPORT_PATH` | no | `var/witness/checkpoints.jsonl` | Local runs write to a gitignored path; only the published replay log's witness is committed, under `replay/witness/` |
 | `WITNESS_INTERVAL_SECONDS` | no | `3600` | Max time before a checkpoint is externally timestamped; equals level 5 exposure window |
 | `WITNESS_OTS_ENABLED` | no | `true` | OpenTimestamps anchoring of checkpoint hashes |
-| `DATA_CLASSIFICATION` | yes | none | Must be `synthetic`; API refuses to start otherwise |
+| `DATA_CLASSIFICATION` | yes | none | Must be `public-no-pii`; API refuses to start otherwise |
 | `TRUSTED_PROXY_COUNT` | no | `0` | Number of trusted reverse proxies for client IP resolution |
 | `ANALYST_MAX_INFLIGHT` | no | `4` | Global concurrent analyst requests |
 | `ANALYST_PER_IP_DAILY_TOKENS` | no | `50000` | Per-IP token budget |
@@ -61,7 +61,19 @@
 | `DEMO_TAMPER_ENABLED` | no | `false` | Local tamper tool guard |
 | `LOG_LEVEL` | no | `INFO` | |
 | `LOG_FORMAT` | no | `json` | `json` or `console` |
-| `GENERATOR_SEED` | no | `42` | Reproducibility |
+| `OVERLAY_SEED` | no | `42` | Seed for the labeled anomaly overlay; same seed, same injected anomalies |
+| `DATA_DIR` | no | `data/` | Root for bronze zips, silver and gold Parquet (gitignored) |
+| `DATA_SOURCE_USASPENDING_FILES_URL` | yes for acquisition | none | Base URL of the USAspending award data archive |
+| `DATA_SOURCE_USASPENDING_API_URL` | yes for acquisition | none | Base URL of the USAspending API |
+| `DATA_SOURCE_FISCALDATA_API_URL` | yes for live connector | none | Base URL of the Treasury Fiscal Data API |
+| `DATA_FISCAL_YEARS` | no | `2025` | Comma-separated fiscal years to acquire (`2024,2025` for the full build) |
+| `DATA_DOWNLOAD_MAX_MBPS` | no | `20` | Download rate cap, polite to the source and to the home network |
+| `DATA_REPLAY_SLICE_EVENTS` | no | `1000000` | Events replayed from gold into Kafka for the ledger |
+| `DATA_REPLAY_RATE_PER_SEC` | no | `2000` | Replay speed; raised only for the load test |
+| `SPARK_MASTER` | no | `local[3]` | Resource budget (runbook) |
+| `SPARK_DRIVER_MEMORY` | no | `2g` | Resource budget (runbook) |
+| `SPARK_SHUFFLE_PARTITIONS` | no | `16` | Small on purpose for one laptop |
+| `SPARK_VERSION` | no | `4.1` | Read by PyDeequ to pick the matching Deequ jar |
 | `S3_ENDPOINT_URL`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_BUCKET_LAKE`, `S3_BUCKET_WITNESS` | MLP | none | Lake and witness storage. Secrets |
 
 ## Frontend

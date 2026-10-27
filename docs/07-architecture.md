@@ -6,7 +6,7 @@
 
 Tallyproof is a streaming pipeline with a verifiable ledger at its center and an AI analyst on top.
 
-1. **Generator** produces seeded synthetic finance events and a separate ground-truth manifest.
+1. **Data pipeline** acquires real public spending data from official bulk files and APIs, cleans it with Spark (bronze, silver, gold), removes PII, checks quality with Deequ, and injects a seeded, labeled anomaly overlay whose labels live in a separate manifest (ADR-0016, ADR-0017).
 2. **Redpanda** (Kafka API) carries events, partitioned by account.
 3. **Ingestion workers** validate, deduplicate, and append events to the ledger inside one Postgres transaction that also stores the consumer offset.
 4. **Ledger** is append-only. Each accepted event becomes a leaf in a Merkle log.
@@ -40,13 +40,13 @@ Rel(ci, ll, "Builds and gates")
 ```mermaid
 C4Container
 title Tallyproof: Containers (local full stack)
-Container(gen, "Generator", "Python CLI", "Seeded events + ground-truth manifest")
+Container(gen, "Data pipeline", "PySpark 4.1 + Deequ", "Bronze/silver/gold, PII removal, overlay, Kafka replay")
 ContainerQueue(rp, "Redpanda", "Kafka API", "fin.events.raw.v1, fin.events.dlq.v1, ledger.appended.v1, recon.breaks.v1, ledger.checkpoints.v1")
 Container(ing, "Ingestion workers", "Python, confluent-kafka", "Validate, dedupe, append, store offsets")
 ContainerDb(pg, "PostgreSQL 16 + pgvector", "SQL", "Ledger, Merkle log, checkpoints, journal, breaks, answers, embeddings")
 Container(ckpt, "Checkpointer", "Python worker", "Closes batches, signs checkpoints")
 Container(relay, "Outbox relay", "Python worker", "LISTEN/NOTIFY driven, publishes ledger facts")
-Container(recon, "Reconciliation", "Python worker", "Matches payments to invoices, emits breaks")
+Container(recon, "Reconciliation", "Python worker", "Matches outlays to obligations per award, emits breaks")
 Container(lake, "Lake sink", "Python worker", "Parquet files to S3-compatible store")
 Container(api, "API", "Django 5.2 + DRF + Channels", "REST v1, WebSockets, proofs")
 Container(redis, "Redis", "Cache + channel layer", "")

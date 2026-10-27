@@ -24,7 +24,7 @@ Global elements: header with mode badge ("Live" or "Replay of run `<sha>`"), the
 ## 2. Journeys
 
 ### J1. Recruiter, 2 minutes (Replay)
-1. `/`: hero animation shows an invoice event flowing through the stream, becoming a leaf, rising through the tree to a signed root, and appearing as a citation chip in an answer.
+1. `/`: hero animation shows a real federal contract obligation flowing through the stream, becoming a leaf, rising through the tree to a signed root, and appearing as a citation chip in an answer.
 2. CTA "Try to break it" goes to `/tamper`.
 3. Step 1: the cited event is shown with a green Verified badge. User changes the amount from 1,250.00 to 1,950.00. Verify turns red: "Leaf hash mismatch (level 1)".
 4. Steps 2 to 4 escalate the attacker; each fails at a different, explained mechanism.

@@ -19,3 +19,5 @@ Format: context, decision, reasons, alternatives, consequences. Status moves Pro
 | 0013 | Derive a double-entry journal from events | Proposed |
 | 0014 | Constrained query IR compiled to SQL | Proposed |
 | 0015 | Verification trust model | Proposed |
+| 0016 | Real public spending data with a labeled synthetic overlay | Accepted |
+| 0017 | PySpark 4.1 batch processing with Deequ data quality | Accepted |
