@@ -41,7 +41,7 @@ Streaming financial ledger plus AI analyst. Every claim cites a source event wit
 
 1. No hardcoded config: everything via `backend/config/env.py` (pydantic-settings) from `.env`. Model IDs included.
 2. Python only inside `backend/.venv`; deps via `requirements*.in` then `make deps`; commit `.in` and `.txt`.
-3. One task = one issue = one branch `<type>/<task-id>-<slug>` = one PR. Never push to `main` (exception: the very first commit). Rebase-merge after CI green and a review pass with comments, so every commit stays visible on `main`. Keep merged branches.
+3. One task = one issue. Branches are workstreams (`<type>/<area>`); commit continuously; one PR per completed, green, conflict-free workstream (plan section 0); stacked branches for cross-workstream dependencies. Never push to `main` (exception: the very first commit). Rebase-merge after CI green and a review pass with comments, so every commit stays visible on `main`. Keep merged branches.
 4. Conventional Commits. No AI co-author trailer. No em dashes anywhere.
 5. Tests first for `core`, `ledger`, `ingestion`, `reconciliation`, `analyst/sql_guard`, `analyst/verifier`. Unit/module tests never call a real LLM.
 6. Server returns proofs, never verdicts. Client verifies.

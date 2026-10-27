@@ -2,16 +2,17 @@
 
 > Status: Draft for MC-01. Planning style: **rolling wave**. Phases 0 to 3 are planned at task level. Phases 4 to 6 are planned at epic level and will be broken into tasks at re-planning checkpoints RP-1 and RP-2, when we know what reality taught us. Changing a later phase is expected, not a failure; every change is logged in `12-risks-and-decisions-log.md`.
 
-## 0. Rules for every task
+## 0. Branching and pull request rules (owner decision 2026-10-27)
 
-- One task = one GitHub issue = one branch = one PR (REQ-GIT-02, REQ-GIT-05).
-- Branch: `<type>/<task-id>-<slug>`, for example `feat/t106-merkle-log`.
-- PR title and every commit are Conventional Commits. PRs are rebase-merged so each commit is visible on `main` (owner decision 2026-10-27, refines REQ-GIT-03's squash rule).
-- Target under about 400 changed lines excluding lockfiles and generated files (REQ-GIT-04). If a task grows, split it and record the split.
-- Definition of done: CI green, review pass with comments left on the PR (REQ-GIT-06), docs touched where behavior changed, CLAUDE.md updated if a convention changed, issue closed by the PR.
-- Merged branches are kept (not deleted) until Raunak decides to bulk-clean them.
-- TDD for `core`, `ledger`, `ingestion`, `reconciliation`, `analyst/sql_guard`, `analyst/verifier`: tests first.
-- Schema changes are their own PR (brief Section 14).
+- **Branches are workstreams, not tasks.** One branch per major area of work (for example `docs/planning-refinements`, `feat/core-verification`, `feat/data-pipeline`, `feat/web-verifier`). A branch lives until its workstream is complete.
+- **Commit continuously on the workstream branch.** Every commit is one Conventional Commit with one purpose. A correction to earlier work is its own `fix:` or `refactor:` commit, so the history shows iteration.
+- **One PR per completed workstream.** Open it only when the work on that branch is finished, every test passes, CI is green, and the branch is rebased on the latest `main` with no conflicts. Then rebase-merge, so every commit lands on `main`.
+- **Dependencies between workstreams use stacked branches.** If workstream B needs code from A before A is merged, B branches from A and its PR targets A. After A merges, B is rebased onto `main` with `git rebase --onto main A B`. Sibling branches are never merged into each other, because rebase-merge rewrites commit IDs and would duplicate commits on `main`.
+- **Issues stay one per task** (REQ-GIT-05). A workstream PR closes all of its task issues.
+- **PR size:** REQ-GIT-04's 400-line target now applies to individual commits. Workstream PRs are larger by design, so each PR description walks the reviewer through its commits in order.
+- **Definition of done for a task:** tests written and passing, docs touched where behavior changed, CLAUDE.md updated if a convention changed. A review pass with comments happens on every workstream PR (REQ-GIT-06).
+- TDD for `core`, `ledger`, `ingestion`, `reconciliation`, the analyst query compiler and verifier, and the data quality checks.
+- Schema changes are their own commits, never mixed with feature code (brief Section 14).
 
 Day numbering: Day 1 = Tuesday 2026-10-27. Days are targets, not promises. "Exit" is what must be true to close the issue.
 
