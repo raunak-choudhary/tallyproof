@@ -6,7 +6,7 @@
 
 - One task = one GitHub issue = one branch = one PR (REQ-GIT-02, REQ-GIT-05).
 - Branch: `<type>/<task-id>-<slug>`, for example `feat/t106-merkle-log`.
-- PR title is a Conventional Commit and becomes the squash commit: `feat(core): add RFC 9162 merkle log with inclusion proofs`.
+- PR title and every commit are Conventional Commits. PRs are rebase-merged so each commit is visible on `main` (owner decision 2026-10-27, refines REQ-GIT-03's squash rule).
 - Target under about 400 changed lines excluding lockfiles and generated files (REQ-GIT-04). If a task grows, split it and record the split.
 - Definition of done: CI green, review pass with comments left on the PR (REQ-GIT-06), docs touched where behavior changed, CLAUDE.md updated if a convention changed, issue closed by the PR.
 - Merged branches are kept (not deleted) until Raunak decides to bulk-clean them.
