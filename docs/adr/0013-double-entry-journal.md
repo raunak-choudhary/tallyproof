@@ -1,36 +1,35 @@
 # ADR-0013: Derive a double-entry journal from events
 
-- Status: Proposed (MC-01)
-- Date: 2026-10-26
-- Zone: Open (improvement)
+- Status: Accepted
+- Date: 2026-10-26, revised 2026-10-27 for federal budget data
 
 ## Context
 
-A finance reviewer will ask "where are the debits and credits?" A list of events is not a ledger in the accounting sense.
+A finance reader will ask where the debits and credits are. A list of events isn't a ledger in the accounting sense. The first version of this record used company receivables and payables. Once the project moved to real federal spending data ([ADR-0016](0016-real-public-data-sources.md)), the journal needed to follow budgetary accounting instead.
 
 ## Decision
 
-Derive a small, deterministic double-entry journal from accepted events:
+Derive a small, deterministic double-entry journal from accepted events, using simplified budgetary accounts named after their U.S. Standard General Ledger counterparts:
 
 | Event | Debit | Credit |
 |---|---|---|
-| `invoice.issued` | Accounts Receivable | Revenue |
-| `payment.received` | Cash | Unapplied Cash |
-| `payment.applied` (emitted by reconciliation on match) | Unapplied Cash | Accounts Receivable |
-| `refund.issued` | Refunds / Contra Revenue | Cash |
-| `adjustment.posted` | per adjustment type | per adjustment type |
-| FX difference | FX Loss or Cash | Cash or FX Gain |
+| `obligation.recorded` | Available authority | Obligations, unpaid |
+| `obligation.adjusted` with a negative amount (de-obligation) | Obligations, unpaid | Available authority |
+| `obligation.adjusted` with a positive amount | Available authority | Obligations, unpaid |
+| `outlay.reported` (the period's outlay) | Obligations, unpaid | Obligations, paid |
+| `cash.movement`, deposit | Treasury operating cash | Receipts |
+| `cash.movement`, withdrawal | Disbursements | Treasury operating cash |
 
-Every payment posts to Unapplied Cash first. When reconciliation matches it to an invoice, it emits an application entry. This makes the journal a pure function of the ordered log (events plus reconciliation application records by `leaf_index`), so re-derivation is deterministic regardless of arrival order. An earlier draft posted matched payments directly to AR, which depended on reconciliation timing and broke determinism when a payment arrived before its invoice.
+Every entry depends only on the event itself, and entries are posted in leaf-index order. An outlay against an award with too little unpaid obligation still posts, and the balance goes negative. Reconciliation flags that case separately as `outlay_exceeds_obligation`, without changing the journal. That keeps the journal a pure function of the ordered log: rebuilding it from the same events always gives the same result, whatever order they arrived in. An earlier draft let reconciliation decide which account a payment posted to, which made rebuilding depend on timing.
 
-Enforced by a deferred constraint trigger: debits equal credits per entry. Journal lines are append-only; corrections are reversing entries.
+A deferred constraint trigger requires every entry to balance. Journal lines are append-only, and corrections are reversing entries.
 
 ## Reasons
 
-- Credibility with a finance audience at low cost.
-- Gives the analyst meaningful questions (trial balance, AR aging) with exact answers.
-- The journal is **derived** data: re-derivable from verified events, so it does not need its own Merkle log. Its correctness is checked by property tests (every entry balances, trial balance sums to zero).
+- It makes the ledger credible to a finance reader at little cost.
+- It gives the analyst questions with exact answers, such as unpaid obligations by agency or a trial balance.
+- The journal is derived data. Because it can always be rebuilt from verified events, it doesn't need its own Merkle log. Property tests check that every entry balances and that the trial balance is zero.
 
-## Non-goals
+## Not in scope
 
-Chart-of-accounts configuration, multi-entity consolidation, accrual schedules.
+Full U.S. Standard General Ledger account coverage, multi-agency consolidation, and accrual schedules.
