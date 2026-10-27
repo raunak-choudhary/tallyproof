@@ -23,7 +23,7 @@
 
 - Conventional Commits: `<type>(<scope>): <imperative summary>`, types `feat, fix, docs, test, refactor, perf, build, ci, chore, revert`. Scopes: `core, events, generator, ingestion, ledger, recon, analyst, evals, lake, realtime, api, web, infra, ci, docs`.
 - Body explains what and why. No AI co-author trailers (owner preference).
-- Branch `<type>/<task-id>-<slug>`; PR title equals the squash commit message; PR closes its issue.
+- Branch `<type>/<task-id>-<slug>`; PR closes its issue. PRs are **rebase-merged**, so every commit lands on `main` and every commit must pass the Conventional Commit check, not just the PR title. A fix to earlier work in the same PR is its own `fix:` or `refactor:` commit, never folded silently into an unrelated one.
 - Review pass: at least one round of review comments on every PR before merge, covering correctness, tests, docs, security.
 
 ## Naming
@@ -34,5 +34,5 @@
 
 ## Writing
 
-- No em dashes in docs, comments, commit messages, or PR text (owner preference).
+- No em dashes in docs, comments, commit messages, or PR text (owner preference). **One required exception:** the C2SP signed-note format starts every signature line with U+2014, so `core/checkpoint.py` and `frontend/src/lib/verify/` must emit and parse that exact byte. A unit test asserts it, so no cleanup pass can silently break signatures.
 - Public-facing text reads as written by a person: no emoji headers, no audit-speak.
