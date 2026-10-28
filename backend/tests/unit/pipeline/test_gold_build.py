@@ -1,6 +1,6 @@
 import gzip
 import json
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 from decimal import Decimal
 
 import pytest
@@ -108,3 +108,73 @@ def test_rows_out_of_arrival_order_stop_the_build(spark, spark_settings, monkeyp
     rows = [tuple(row[name] for name in SILVER_COLUMNS) for row in silver_rows()]
     with pytest.raises(gold.GoldOrderError, match="out of order"):
         gold.build_gold(spark_settings, spark.createDataFrame(rows, SCHEMA))
+
+
+def test_outlays_for_awards_in_the_slice_are_merged_in_arrival_order(
+    spark, spark_settings, tmp_path
+):
+    from tallyproof_core.events import EventType, OutlayReported
+    from tallyproof_pipeline.gold import GoldOrderError, build_gold, slice_outlays, stream_outlays
+
+    settings = spark_settings.model_copy(update={"data_dir": tmp_path})
+    outlays = [
+        # (award, account, year, period, cumulative, change, reported)
+        (
+            "CONT_AWD_A1",
+            "097-0100",
+            2025,
+            4,
+            Decimal("300.00"),
+            Decimal("300.00"),
+            datetime(2025, 2, 10, 8, 0),
+        ),
+        (
+            "CONT_AWD_A1",
+            "097-0100",
+            2025,
+            5,
+            Decimal("450.00"),
+            Decimal("150.00"),
+            None,
+        ),  # stamped at period end
+        (
+            "CONT_AWD_ZZ",
+            "097-0100",
+            2025,
+            4,
+            Decimal("50.00"),
+            Decimal("50.00"),
+            datetime(2025, 2, 10, 8, 0),
+        ),
+    ]
+    spark.createDataFrame(
+        outlays,
+        "award_key string, treasury_account string, fiscal_year int, fiscal_period int, "
+        "cumulative_outlay decimal(19,2), period_outlay decimal(19,2), reported_at timestamp_ntz",
+    ).write.parquet(str(settings.silver_dir / "outlays" / "source=x"))
+
+    rows = [tuple(row[name] for name in SILVER_COLUMNS) for row in silver_rows()]
+    report = build_gold(settings, spark.createDataFrame(rows, SCHEMA))
+    events = list(read_events(settings.gold_dir / "events.jsonl.gz"))
+    real_outlays = [e for e in events if e.idempotency_key.startswith("usaspending:outlay:")]
+    assert report.outlay_events == len(real_outlays) == 2  # CONT_AWD_ZZ isn't in the slice
+    first, second = real_outlays
+    assert first.payload.model_dump(mode="json")["period_outlay"] == "300.00"
+    assert first.account_id == next(
+        e.account_id for e in events if e.idempotency_key == "usaspending:T001"
+    )
+    assert second.emitted_at == datetime(2025, 2, 28, tzinfo=UTC)
+    keys = [(e.emitted_at, e.idempotency_key) for e in events]
+    assert keys == sorted(keys)
+    injected = [
+        e.payload for e in events if isinstance(e.payload, OutlayReported) and e not in real_outlays
+    ]
+    assert injected
+    assert {p.treasury_account for p in injected} == {"097-0100"}
+    assert all(e.event_type is EventType.OUTLAY_REPORTED for e in real_outlays)
+
+    sorted_rows = slice_outlays(spark, settings, {"CONT_AWD_A1": "UEI000000001"})
+    assert sorted_rows is not None
+    backwards = sorted_rows.orderBy(sorted_rows["_emitted"].desc())
+    with pytest.raises(GoldOrderError, match="out of order"):
+        list(stream_outlays(backwards, {"CONT_AWD_A1": "UEI000000001"}, seed=1))
