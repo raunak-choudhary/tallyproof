@@ -137,8 +137,8 @@ The analyst calls its model through one client that speaks the OpenAI chat-compl
 | `LLM_CACHE_DIR` | no | `testdata/llm_cache` | Recorded responses, committed so CI can replay them without a key |
 | `ANALYST_MAX_INFLIGHT` | planned | `4` | Concurrent analyst requests |
 | `ANALYST_PER_IP_DAILY_TOKENS` | planned | `50000` | Daily token budget per client IP |
-| `EMBEDDING_MODEL` | planned | `BAAI/bge-small-en-v1.5` | |
-| `EMBEDDING_DIM` | planned | `384` | |
+| `EMBEDDING_MODEL` | no | `BAAI/bge-small-en-v1.5` | Local embedding model for policy retrieval, run through fastembed; downloads once |
+| `EMBEDDING_CACHE_DIR` | no | `var/embeddings` | The downloaded model and cached chunk vectors |
 
 On the free tier, Google may use prompts and responses to improve its products. Prompts carry only public USAspending data and FAR text, so nothing private is exposed; the threat model records this.
 

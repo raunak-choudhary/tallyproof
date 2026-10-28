@@ -20,8 +20,8 @@ Versions were checked against PyPI, npm, Docker Hub, and the official documentat
 | Canonical JSON | rfc8785 | 0.1 | RFC 8785, used by Sigstore ([ADR-0010](adr/0010-canonical-json-rfc8785.md)) |
 | Cryptography | cryptography | 50 | Ed25519 |
 | SQL parsing | sqlglot | 30 (pinned exactly, since it releases often) | Guards the fallback query path |
-| Vector search | pgvector | extension 0.8.7, Python 0.5 | Policy retrieval inside Postgres |
-| Embeddings | sentence-transformers with BAAI/bge-small-en-v1.5 | 6.2 | 384 dimensions, fast on a CPU, MIT licensed |
+| Vector search | numpy, in memory | 2.5 | The policy corpus is about 700 chunks, so cosine similarity in memory beats running a vector index. pgvector stays available in the database image if the corpus grows |
+| Embeddings | fastembed with BAAI/bge-small-en-v1.5 | 0.9 | 384 dimensions on the CPU through ONNX. Chosen over sentence-transformers, which needs PyTorch (about 2 GB) on an 8 GB laptop |
 | LLM client | requests over the OpenAI chat-completions protocol | 2.34 | No vendor SDK: one small client reaches Gemini, Groq, OpenRouter, Together, or Ollama by settings alone. Model IDs come from configuration |
 
 ## Data pipeline

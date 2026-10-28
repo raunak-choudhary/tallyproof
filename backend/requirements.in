@@ -25,3 +25,4 @@ channels-redis>=4.3,<4.4       # channel layer shared across processes
 uvicorn>=0.54,<1               # ASGI server for the WebSocket endpoint (Daphne needs Twisted, which has open CVEs)
 websockets>=17.3,<18            # WebSocket protocol for uvicorn
 sqlglot==30.23.0             # parses fallback SQL into a tree the guard can inspect; pinned exactly, it releases often
+fastembed==0.9.0            # local ONNX embeddings for policy retrieval; far lighter than a PyTorch stack on an 8 GB laptop

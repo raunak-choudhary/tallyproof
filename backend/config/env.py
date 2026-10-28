@@ -188,7 +188,15 @@ class LLMSettings(BaseSettings):
         default=REPO_ROOT / "testdata" / "llm_cache", validation_alias="LLM_CACHE_DIR"
     )
 
-    @field_validator("llm_cache_dir")
+    embedding_model: str = Field(
+        default="BAAI/bge-small-en-v1.5", validation_alias="EMBEDDING_MODEL"
+    )
+    """Runs locally through fastembed; questions are never sent anywhere to be embedded."""
+    embedding_cache_dir: Path = Field(
+        default=REPO_ROOT / "var" / "embeddings", validation_alias="EMBEDDING_CACHE_DIR"
+    )
+
+    @field_validator("llm_cache_dir", "embedding_cache_dir")
     @classmethod
     def _anchor_cache(cls, value: Path) -> Path:
         return value if value.is_absolute() else REPO_ROOT / value

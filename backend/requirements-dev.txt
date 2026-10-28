@@ -441,6 +441,7 @@ filelock==4.2.4 \
     --hash=sha256:301241438c57936ef93f4243a94f2559022268bfcf9b375a9a72eb0f8db8358e \
     --hash=sha256:c6d8663535e1650ee430507b4ffbac7b464dd64b7647ea0112a9f406499d163d
     # via
+    #   -c requirements.txt
     #   cachecontrol
     #   python-discovery
     #   virtualenv
@@ -861,6 +862,7 @@ packaging==26.3 \
     --hash=sha256:94edc256424af38762eb31306eed28beb9f0efc50a8837492c9d6fd6004aed79 \
     --hash=sha256:d7193f7c8e4e93f444fde0262bf90af30e16fa0ad0ad44cb553c87339b23cd1c
     # via
+    #   -c requirements.txt
     #   build
     #   pip-audit
     #   pip-requirements-parser
