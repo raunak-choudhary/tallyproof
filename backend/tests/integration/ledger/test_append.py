@@ -107,3 +107,20 @@ def test_append_refuses_to_run_outside_a_transaction(migrated, monkeypatch):
 def test_an_empty_batch_changes_nothing(migrated):
     with transaction.atomic():
         assert append([]).tree_size == 0
+
+
+def test_policy_sections_with_long_non_ascii_text_append_with_the_same_leaf_hash(migrated):
+    from tallyproof_pipeline.policy import read_corpus, to_events
+    from tallyproof_pipeline.settings import REPO_ROOT
+
+    edition, found = read_corpus(REPO_ROOT / "backend" / "corpus" / "far")
+    longest = max(found, key=lambda s: len(s.text))
+    dashed = next(s for s in found if "—" in s.text)
+    events = to_events(edition, [longest, dashed])
+    with transaction.atomic():
+        result = append(deliveries(events))
+    assert len(result.appended) == 2
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT leaf_hash FROM ledger_event ORDER BY leaf_index")
+        stored = [bytes(row[0]) for row in cursor.fetchall()]
+    assert stored == [e.leaf_hash() for e in events]
