@@ -13,9 +13,12 @@ from typing import Protocol
 
 from django.db import connection, transaction
 
-from apps.ledger.models import JournalLine, LedgerEvent
+from apps.ledger.models import JournalLine, LedgerEvent, Outbox
 from tallyproof_core.events import EventEnvelope
 from tallyproof_core.journal import entry_for
+
+OUTBOX_CHANNEL = "outbox_ready"
+"""Postgres notification channel that wakes the outbox relay."""
 
 
 def envelope_of(row: LedgerEvent) -> EventEnvelope:
@@ -63,6 +66,8 @@ def step(projection: Projection, batch_size: int = 500) -> int:
                 " WHERE name = %s",
                 [start + len(events), projection.name],
             )
+            # Delivered only on commit; wakes the relay if this step wrote outbox rows.
+            cursor.execute("SELECT pg_notify(%s, %s)", [OUTBOX_CHANNEL, projection.name])
     return len(events)
 
 
@@ -97,3 +102,30 @@ class JournalProjection:
                     )
                 )
         JournalLine.objects.bulk_create(lines)
+
+
+class AppendedProjection:
+    """Announces every appended event on ``ledger.appended`` through the outbox."""
+
+    name = "appended"
+
+    def __init__(self, topic: str) -> None:
+        """Publish to ``topic``."""
+        self.topic = topic
+
+    def apply(self, events: Sequence[LedgerEvent]) -> None:
+        """Write one outbox message per event, keyed by account."""
+        Outbox.objects.bulk_create(
+            Outbox(
+                topic=self.topic,
+                key=row.account_id,
+                payload={
+                    "event_id": row.public_id,
+                    "leaf_index": row.leaf_index,
+                    "event_type": row.event_type,
+                    "account_id": row.account_id,
+                    "leaf_hash_hex": bytes(row.leaf_hash).hex(),
+                },
+            )
+            for row in events
+        )
