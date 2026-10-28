@@ -9,15 +9,16 @@ from django.core.management.base import BaseCommand
 from django.db import connection
 
 from apps.ledger.append import APPENDED_CHANNEL
-from apps.ledger.projections import JournalProjection, Projection, step
+from apps.ledger.projections import AppendedProjection, JournalProjection, Projection, step
 from apps.reconciliation.projection import ReconciliationProjection
+from config.env import app_settings
 
 log = logging.getLogger(__name__)
 IDLE_WAIT_SECONDS = 5.0
 
 
 class Command(BaseCommand):
-    """Run the journal and reconciliation projections."""
+    """Run the appended, journal, and reconciliation projections."""
 
     help = "Derive the journal and reconciliation breaks from the log as it grows."
 
@@ -32,7 +33,11 @@ class Command(BaseCommand):
 
         signal.signal(signal.SIGINT, stop)
         signal.signal(signal.SIGTERM, stop)
-        projections: list[Projection] = [JournalProjection(), ReconciliationProjection()]
+        projections: list[Projection] = [
+            AppendedProjection(app_settings().kafka_topic_ledger_appended),
+            JournalProjection(),
+            ReconciliationProjection(),
+        ]
         settings = connection.settings_dict
         with psycopg.connect(
             dbname=settings["NAME"],
