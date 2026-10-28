@@ -28,7 +28,14 @@ from pathlib import Path
 
 from pyspark.sql import Column, DataFrame, SparkSession
 from pyspark.sql import functions as F  # noqa: N812 - conventional alias
-from pyspark.sql.types import DateType, DecimalType, IntegerType, StringType, TimestampNTZType
+from pyspark.sql.types import (
+    DataType,
+    DateType,
+    DecimalType,
+    IntegerType,
+    StringType,
+    TimestampNTZType,
+)
 
 from tallyproof_pipeline.settings import PipelineSettings, get_settings
 
@@ -36,7 +43,7 @@ log = logging.getLogger(__name__)
 
 MONEY = DecimalType(19, 2)
 
-SILVER_COLUMNS: dict[str, object] = {
+SILVER_COLUMNS: dict[str, DataType] = {
     "contract_transaction_unique_key": StringType(),
     "contract_award_unique_key": StringType(),
     "award_id_piid": StringType(),
@@ -131,7 +138,7 @@ def spark_session(
     return builder.getOrCreate()
 
 
-def _typed(column: str, data_type: object) -> Column:
+def _typed(column: str, data_type: DataType) -> Column:
     raw = F.trim(F.col(column))
     raw = F.when(raw == "", None).otherwise(raw)
     if isinstance(data_type, DecimalType):
