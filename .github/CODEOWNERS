@@ -6,6 +6,6 @@
 /.github/                @raunak-choudhary
 /Makefile                @raunak-choudhary
 /witness/                @raunak-choudhary
-/policies/               @raunak-choudhary
+/backend/corpus/         @raunak-choudhary
 /evals/thresholds.toml   @raunak-choudhary
 /docs/adr/               @raunak-choudhary
