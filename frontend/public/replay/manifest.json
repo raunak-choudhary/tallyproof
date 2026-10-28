@@ -1,0 +1,15 @@
+{
+  "bundle_version": 1,
+  "files": {
+    "checkpoints.jsonl": "92eb8dd3f9c9917242cd1f63b68ed954d85c57538d7e376f16070542977a2bde",
+    "events.jsonl": "7086cd3a1a4f06a7daa736331344d5149e3a7049a5ee89d0cd29348fe1252074",
+    "log-key.json": "c8a9569bd7ef3a28db6e8e8348fa3342abad78628eadcc94fa82b3ac17c45472"
+  },
+  "origin": "tallyproof.dev/log/v1",
+  "parameters": {
+    "overlay_seed": 42,
+    "source": "USAspending FY contracts"
+  },
+  "root_hash_hex": "d20c3be499d8419817f960630cd0428bd9c7df56f21ce0dfdfaced9998374210",
+  "tree_size": 2000
+}
