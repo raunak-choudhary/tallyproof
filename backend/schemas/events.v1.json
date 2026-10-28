@@ -65,7 +65,8 @@
         "obligation.adjusted",
         "outlay.reported",
         "cash.movement",
-        "source.registered"
+        "source.registered",
+        "policy.published"
       ],
       "title": "EventType",
       "type": "string"
@@ -304,6 +305,56 @@
       "title": "OutlayReported",
       "type": "object"
     },
+    "PolicyPublished": {
+      "additionalProperties": false,
+      "description": "One section of a policy document, with its full text, as of one edition.\n\nThe whole text is hashed into the leaf, so a quote can be checked against the\nproof itself rather than against a copy the server hands out separately.",
+      "properties": {
+        "citation": {
+          "maxLength": 4000,
+          "minLength": 1,
+          "title": "Citation",
+          "type": "string"
+        },
+        "edition": {
+          "format": "date",
+          "title": "Edition",
+          "type": "string"
+        },
+        "section": {
+          "maxLength": 40,
+          "pattern": "^[0-9]+\\.[0-9A-Za-z.-]+$",
+          "title": "Section",
+          "type": "string"
+        },
+        "source": {
+          "const": "FAR",
+          "title": "Source",
+          "type": "string"
+        },
+        "text": {
+          "maxLength": 200000,
+          "minLength": 1,
+          "title": "Text",
+          "type": "string"
+        },
+        "title": {
+          "maxLength": 4000,
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source",
+        "citation",
+        "section",
+        "title",
+        "edition",
+        "text"
+      ],
+      "title": "PolicyPublished",
+      "type": "object"
+    },
     "SourceRegistered": {
       "additionalProperties": false,
       "description": "A downloaded source file, recorded so events can be traced to it.",
@@ -401,6 +452,9 @@
         },
         {
           "$ref": "#/definitions/SourceRegistered"
+        },
+        {
+          "$ref": "#/definitions/PolicyPublished"
         }
       ],
       "title": "Payload"
