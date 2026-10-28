@@ -115,24 +115,32 @@ A checkpoint's key ID isn't configured: it's derived from the key's name and pub
 | `SPARK_VERSION` | no | `4.1` | Tells PyDeequ which Deequ build to load |
 | `S3_ENDPOINT_URL`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_BUCKET_LAKE`, `S3_BUCKET_WITNESS` | planned, for the lake | | Local S3-compatible storage. The keys are secrets. Today the lake is Parquet under `data/` |
 
-## Analyst and LLM (planned)
+## Analyst and model provider
 
-These arrive with the analyst. Nothing reads them yet.
+The analyst calls its model through one client that speaks the OpenAI chat-completions protocol, which Google Gemini, Groq, OpenRouter, Together, and a local Ollama all serve. The first live provider is Gemini's free tier. Switching providers means changing these settings, not code.
 
 | Variable | Required | Default | Purpose |
 |---|---|---|---|
-| `LLM_PROVIDER` | no | `fake` | `fake` or `anthropic` |
-| `ANTHROPIC_API_KEY` | with the real provider | | Secret |
-| `LLM_ROUTER_MODEL` | with the real provider | | Model ID for query specs; never hardcoded |
+| `LLM_PROVIDER` | no | `fake` | `fake` (scripted answers, no network) or `openai_compatible` |
+| `LLM_BASE_URL` | with the real provider | | The provider's OpenAI-compatible endpoint. Gemini: `https://generativelanguage.googleapis.com/v1beta/openai/` |
+| `LLM_API_KEY` | with the real provider | | Secret. Sent only in the Authorization header, never logged |
 | `LLM_ANSWER_MODEL` | with the real provider | | Model ID for composing answers; never hardcoded |
+| `LLM_ROUTER_MODEL` | no | the answer model | Model ID for query specs |
+| `LLM_JUDGE_MODEL` | no | the answer model | Model ID for the narrative-faithfulness judge |
+| `LLM_TIMEOUT_SECONDS` | no | `30` | Per request |
+| `LLM_MAX_RETRIES` | no | `3` | Retries for rate limits and server errors, with backoff |
+| `LLM_REQUESTS_PER_MINUTE` | no | `10` | Client-side pacing, kept under the free tier's limit |
 | `LLM_MAX_INPUT_TOKENS` | no | `8000` | Per request |
 | `LLM_MAX_OUTPUT_TOKENS` | no | `1200` | Per request |
-| `LLM_DAILY_USD_CAP` | no | `2.00` | Daily spending limit |
-| `LLM_CACHE_DIR` | no | `.cache/llm` | Response cache |
-| `ANALYST_MAX_INFLIGHT` | no | `4` | Concurrent analyst requests |
-| `ANALYST_PER_IP_DAILY_TOKENS` | no | `50000` | Daily token budget per client IP |
-| `EMBEDDING_MODEL` | no | `BAAI/bge-small-en-v1.5` | |
-| `EMBEDDING_DIM` | no | `384` | |
+| `LLM_RUN_MAX_REQUESTS` | no | `1500` | Per evaluation run; the run stops before passing it |
+| `LLM_RUN_MAX_TOKENS` | no | `3000000` | Per evaluation run |
+| `LLM_CACHE_DIR` | no | `testdata/llm_cache` | Recorded responses, committed so CI can replay them without a key |
+| `ANALYST_MAX_INFLIGHT` | planned | `4` | Concurrent analyst requests |
+| `ANALYST_PER_IP_DAILY_TOKENS` | planned | `50000` | Daily token budget per client IP |
+| `EMBEDDING_MODEL` | planned | `BAAI/bge-small-en-v1.5` | |
+| `EMBEDDING_DIM` | planned | `384` | |
+
+On the free tier, Google may use prompts and responses to improve its products. Prompts carry only public USAspending data and FAR text, so nothing private is exposed; the threat model records this.
 
 ## Evaluation (planned)
 
@@ -160,6 +168,6 @@ CI needs no secrets today: every job runs on public code and generates any key i
 
 Planned contexts:
 
-- `llm-eval`: `ANTHROPIC_API_KEY` (a dedicated key with its own spending limit), `LLM_ROUTER_MODEL`, `LLM_ANSWER_MODEL`.
+- `llm-eval`: `LLM_API_KEY` (a dedicated key with its own limits), `LLM_BASE_URL`, `LLM_ANSWER_MODEL`.
 - `bot`: `GITHUB_BOT_TOKEN`, limited to pushing `bot/*` branches and opening pull requests. It can't push to `main`.
 - `signing-ci`: the CI signing key. The release key never enters CI.

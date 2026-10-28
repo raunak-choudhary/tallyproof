@@ -22,7 +22,7 @@ Versions were checked against PyPI, npm, Docker Hub, and the official documentat
 | SQL parsing | sqlglot | 30 (pinned exactly, since it releases often) | Guards the fallback query path |
 | Vector search | pgvector | extension 0.8.7, Python 0.5 | Policy retrieval inside Postgres |
 | Embeddings | sentence-transformers with BAAI/bge-small-en-v1.5 | 6.2 | 384 dimensions, fast on a CPU, MIT licensed |
-| LLM SDK | anthropic | 2 | Model IDs come from configuration |
+| LLM client | requests over the OpenAI chat-completions protocol | 2.34 | No vendor SDK: one small client reaches Gemini, Groq, OpenRouter, Together, or Ollama by settings alone. Model IDs come from configuration |
 
 ## Data pipeline
 

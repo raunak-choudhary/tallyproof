@@ -137,11 +137,13 @@ The demo is a static site with no backend, so its attack surface is the files it
 
 Python dependencies are pinned with hashes through pip-tools, and frontend dependencies through the lockfile. Container images and CircleCI images are pinned by exact version tag (not yet by digest), and GitHub Actions by commit. Dependabot proposes updates, and `pip-audit` and `npm audit` run in CI. The embedding model will be pinned to a specific revision when it's added.
 
-### LLM cost
+### LLM cost and where prompts go
 
-*Built with the analyst.*
+*Partly built: per-request token caps, per-run request and token budgets, client-side pacing, and the response cache exist (`backend/apps/analyst/llm.py`). Per-IP daily budgets arrive with the query endpoint.*
 
-Per-request token caps, a daily spend cap, response caching, and rate limits bound the cost. Requests over the cap get a typed refusal instead of a surprise bill.
+Per-request token caps, run budgets, response caching, and rate limits bound the cost. A run that would pass its budget stops before the call, with a clear error, instead of producing a surprise bill.
+
+The first live provider is Google Gemini's free tier, whose terms let Google use prompts and responses to improve its products. Prompts contain only public USAspending records and FAR text, so nothing private leaves the system. A deployment that handled private data would use a paid tier, whose terms exclude that use, and say so here.
 
 ## Accepted residual risks
 
