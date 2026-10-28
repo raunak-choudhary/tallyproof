@@ -44,6 +44,7 @@ def test_refusals_are_decided_by_rules(question, reason):
     ("question", "break_type"),
     [
         ("Show payments with an award we never recorded", None),
+        ("Outlays with no recorded obligation?", None),
         ("List awards where outlays exceeded the obligation", "outlay_exceeds_obligation"),
         ("Any de-obligations exceeding what was awarded?", "deobligation_exceeds_award"),
         ("Was any contract recorded twice?", "possible_duplicate_award"),

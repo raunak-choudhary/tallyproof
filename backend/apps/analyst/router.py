@@ -90,7 +90,13 @@ ANOMALIES: tuple[tuple[re.Pattern[str], QuerySpec], ...] = tuple(
     )
     for pattern, break_type, rule in (
         (
-            _words(r"no record of", r"never recorded", r"orphan\w*", r"without (?:an? )?award"),
+            _words(
+                r"no record of",
+                r"never recorded",
+                r"orphan\w*",
+                r"without (?:an? )?award",
+                r"no recorded (?:award|obligation)s?",
+            ),
             "orphan_outlay",
             "outlay_without_recorded_award",
         ),
