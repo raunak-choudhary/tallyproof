@@ -27,7 +27,7 @@ endif
 SPARK_VERSION ?= 4.1
 export SPARK_VERSION
 
-.PHONY: help doctor venv deps deps-sync require-venv lint format typecheck test check audit vectors web-install web-lint web-typecheck web-test web-build web-check data-fetch data-build data-quality require-no-containers data-gold keygen replay clean
+.PHONY: help doctor venv deps deps-sync require-venv lint format typecheck test check audit vectors web-install web-lint web-typecheck web-test web-build web-check data-fetch data-build data-quality require-no-containers data-gold keygen replay data-sample clean
 
 help: ## List available commands
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -93,6 +93,9 @@ data-quality: require-venv require-no-containers ## Run the Deequ data quality c
 
 data-gold: require-venv require-no-containers ## Conform silver into ledger events with the anomaly overlay
 	cd $(BACKEND) && .venv/bin/python -m tallyproof_pipeline.gold
+
+data-sample: require-venv ## Refresh the committed real-data sample from gold
+	$(PY) -c "import gzip, itertools; src = gzip.open('data/gold/events.jsonl.gz', 'rt'); out = gzip.GzipFile('testdata/sample/gold_events_sample.jsonl.gz', 'wb', mtime=0); [out.write(line.encode()) for line in itertools.islice(src, 2000)]; out.close()"
 
 keygen: require-venv ## Create a signing key in secrets/ (KEY=dev or KEY=rel)
 	cd $(BACKEND) && .venv/bin/python -m tallyproof_pipeline.keygen $(or $(KEY),dev)
