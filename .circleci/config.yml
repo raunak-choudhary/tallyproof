@@ -54,7 +54,8 @@ jobs:
           name: Unit tests with coverage
           command: make test
           environment:
-            PYTEST_ADDOPTS: --junitxml=test-results/junit.xml
+            # Spark tests need Java and run in their own job.
+            PYTEST_ADDOPTS: --junitxml=test-results/junit.xml -m "not spark"
             # Deterministic, larger property-based test runs, so failures reproduce exactly.
             HYPOTHESIS_PROFILE: ci
       - store_test_results:
@@ -62,6 +63,24 @@ jobs:
       - store_artifacts:
           path: backend/coverage.xml
           destination: coverage/coverage.xml
+
+  spark-tests:
+    executor: python
+    resource_class: medium
+    steps:
+      - setup-python
+      - run:
+          name: Install Java 17 for Spark
+          command: |
+            sudo apt-get update -qq
+            sudo apt-get install -y -qq openjdk-17-jre-headless
+      - run:
+          name: Spark and Deequ tests
+          command: make test JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+          environment:
+            PYTEST_ADDOPTS: --junitxml=test-results/junit.xml -m spark --no-cov
+      - store_test_results:
+          path: backend/test-results
 
   dependency-audit:
     executor: python
@@ -143,6 +162,7 @@ workflows:
       - lint
       - typecheck
       - unit-tests
+      - spark-tests
       - dependency-audit
       - commit-messages
       - secret-scan
@@ -152,6 +172,7 @@ workflows:
             - lint
             - typecheck
             - unit-tests
+            - spark-tests
             - dependency-audit
             - commit-messages
             - secret-scan
