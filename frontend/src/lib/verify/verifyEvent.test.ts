@@ -6,7 +6,7 @@ import { concat, toBase64, toHex, utf8 } from "./bytes";
 import { canonicalize } from "./canonical";
 import { parseVerifierKey } from "./checkpoint";
 import { leafHash } from "./hashing";
-import { root } from "./merkle";
+import { inclusionProof, root } from "./merkle";
 import { forgeCheckpointWithNewRoot, verifyEvent } from "./verifyEvent";
 
 const NAME = "test.tallyproof.dev/log/v1";
@@ -116,5 +116,36 @@ describe("verifyEvent", () => {
       pinnedKey,
     });
     expect(result.steps.find((s) => s.id === "inclusion")?.ok).toBe(false);
+  });
+
+  it("live mode: an audit path from the API verifies, and an edit still fails", () => {
+    const auditPath = inclusionProof(leaves, 4);
+    const live = (canonical: string) =>
+      verifyEvent({
+        canonical,
+        leafIndex: 4,
+        publishedLeaves: [],
+        auditPath,
+        checkpointNote: note,
+        pinnedKey,
+      });
+    expect(live(records[4]!).ok).toBe(true);
+    const edited = canonicalize({ event_id: "evt_4", payload: { amount: "999.00" } });
+    const result = live(edited);
+    expect(result.ok).toBe(false);
+    expect(result.steps.find((s) => s.id === "inclusion")?.ok).toBe(false);
+  });
+
+  it("live mode: a path that does not lead to the signed root fails", () => {
+    const wrongPath = inclusionProof(leaves, 2);
+    const result = verifyEvent({
+      canonical: records[4]!,
+      leafIndex: 4,
+      publishedLeaves: [],
+      auditPath: wrongPath,
+      checkpointNote: note,
+      pinnedKey,
+    });
+    expect(result.ok).toBe(false);
   });
 });
