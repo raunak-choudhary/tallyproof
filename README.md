@@ -2,7 +2,7 @@
 
 Tallyproof is a streaming ledger for public spending data with an AI analyst on top. Every number the analyst gives you is pulled from the ledger by a query, and every claim links to the exact source record, along with a cryptographic proof that the record hasn't changed since it arrived. You can check that proof in your own browser.
 
-> **Status:** design complete, implementation starting. Nothing runs yet. This note will always say exactly what works.
+> **Status, October 2026.** The verification core, the batch data pipeline, and the browser verifier work end to end on real data: you can download a year of federal contract data, clean it, build signed events, and verify any record in the browser, including watching tampering fail. The streaming ledger, the API, and the AI analyst are next. This note will always say exactly what works.
 
 ## Why I built it
 
@@ -55,13 +55,39 @@ Public doesn't automatically mean free of personal data. The cleaning step drops
 
 The full dataset lives in the lake. The verifiable ledger takes a replayed slice of it, a million events by default. That's the usual split between an analytics lake and a transactional store, and I'd rather say so here than let a bigger number imply something that isn't true.
 
+## Measured on real data
+
+Numbers from running the pipeline on FY2025 federal contract transactions on a laptop (Apple M3, 8 GB of RAM), not projections:
+
+| Stage | Result |
+|---|---|
+| Download | One official archive: 1.99 GB zipped, 14.3 GB of CSV in 7 files, verified against its SHA-256 |
+| Clean (Spark, bronze to silver) | 6,639,396 transactions in, 6,534,412 out, as 591 MB of Parquet. 104,984 rows (1.58%) removed because the recipient was a sole proprietor, an individual person. None quarantined |
+| Quality (Deequ) | All 11 constraints pass on every row: complete and unique keys, dates inside the fiscal year, amounts within bounds, recipient IDs in the right format |
+| Build events (gold) | 1,000,000 events in event-time order in 3.2 minutes, with 150 labeled anomalies mixed in for evaluation and none rejected |
+| Verify | 2,000 real events signed into a Merkle log; the browser verifies any of them and catches an edited amount |
+
+Two bugs only showed up on the real data and are fixed in the history: report dates turned out to be timestamps, and zoned timestamps shifted every event by four hours depending on the machine's time zone. A third, an out-of-memory failure when building a million events, led to a streaming design that keeps memory flat at any size.
+
 ## How it differs from existing work
 
 [answerproof](https://github.com/AgentPostmortem/Answerproof) already signs receipts over the documents a RAG system retrieved, so "Merkle-verified citations" alone isn't new. Tallyproof goes further in three ways. Its proofs reach back to when each record was ingested, not just when it was retrieved. Its evaluation uses exact labels instead of a judge model. And numbers in answers are bound to query results, not checked after the model writes them.
 
 ## Running it locally
 
-Coming with the first milestone. The goal is three commands on a laptop with 8 GB of RAM, using the command line only, with no Docker Desktop. The [runbook](docs/runbook.md) already lists the prerequisites, the resource limits, and how to remove everything afterwards.
+Everything runs from the command line on macOS or Linux, with no Docker Desktop. You'll need Python 3.12, Node 22 with pnpm, and Java 17 for Spark; the [runbook](docs/runbook.md) has the exact setup and how to remove everything afterwards.
+
+```bash
+make venv            # Python environment with pinned dependencies
+make check           # lint, strict type checks, and 276 tests
+make data-fetch      # download FY2025 contract data (about 2 GB)
+make data-build      # Spark: clean it and remove personal data
+make data-quality    # Deequ checks on the cleaned data
+make data-gold       # build a million ledger events with labeled anomalies
+make keygen KEY=rel  # create a signing key (kept out of git)
+make replay          # sign a 2,000-event bundle for the browser
+cd frontend && pnpm install && pnpm dev   # open the site and verify records
+```
 
 ## Documentation
 
