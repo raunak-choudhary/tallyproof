@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
 
 import pytest
@@ -138,3 +138,10 @@ def test_days_between_is_inclusive():
         date(2026, 1, 31),
         date(2026, 2, 1),
     ]
+
+
+def test_backfilled_days_are_stamped_when_treasury_published_them():
+    late_fetch = datetime(2026, 12, 1, tzinfo=UTC)
+    event = to_events(ROWS, DAY, now=late_fetch).events[0]
+    assert event.emitted_at == datetime(2026, 10, 27, 21, 0, tzinfo=UTC)
+    assert event.emitted_at - event.occurred_at < timedelta(hours=72)
