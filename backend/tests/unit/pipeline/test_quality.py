@@ -112,3 +112,19 @@ def test_warning_level_findings_are_reported_without_failing(spark, tmp_path):
     results = run_checks(spark, frame(spark, rows), [2025], tmp_path / "metrics.json")
     warnings = [r for r in results if r.check_level == "Warning" and r.status != "Success"]
     assert warnings
+
+
+def test_stop_session_handles_a_context_without_a_gateway():
+    stopped = []
+
+    class Context:
+        _gateway = None
+
+    class Session:
+        sparkContext = Context()  # noqa: N815 - mirrors the real SparkSession attribute
+
+        def stop(self):
+            stopped.append(True)
+
+    stop_session(Session())  # type: ignore[arg-type]
+    assert stopped == [True]
