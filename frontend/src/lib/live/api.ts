@@ -77,13 +77,16 @@ export async function fetchEvent(
   return toEvent((await getJson(base, `/api/v1/events/${id}`, fetcher)) as RawEvent);
 }
 
+/** An event's inclusion proof, against the newest checkpoint or the one at `treeSize`. */
 export async function fetchProof(
   base: string,
   eventId: string,
   fetcher: typeof fetch = fetch,
+  treeSize?: number,
 ): Promise<LiveProof> {
   const id = encodeURIComponent(eventId);
-  const body = (await getJson(base, `/api/v1/events/${id}/proof`, fetcher)) as {
+  const at = treeSize === undefined ? "" : `?tree_size=${treeSize}`;
+  const body = (await getJson(base, `/api/v1/events/${id}/proof${at}`, fetcher)) as {
     leaf_index: number;
     tree_size: number;
     audit_path_hex: string[];
