@@ -83,6 +83,16 @@ export default function HomePage() {
           <span className="text-fg-muted">to verify events as the pipeline appends them.</span>
         </p>
       )}
+      {process.env.NEXT_PUBLIC_API_URL && (
+        <p className="mt-2">
+          <Link href="/ask/" className="text-accent underline-offset-4 hover:underline">
+            Ask the analyst
+          </Link>{" "}
+          <span className="text-fg-muted">
+            a question and verify every record its answer cites.
+          </span>
+        </p>
+      )}
 
       <section aria-labelledby="how-heading" className="mt-12 space-y-3 text-fg-muted">
         <h2 id="how-heading" className="text-lg font-semibold text-fg">
