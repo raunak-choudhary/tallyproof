@@ -44,6 +44,10 @@ step "Services"
 start api "$ROOT/backend/.venv/bin/gunicorn" config.wsgi --workers 2 --bind 127.0.0.1:8000
 start ingest "$PY" manage.py ingest
 start checkpointer "$PY" manage.py checkpointer
+start project "$PY" manage.py project
+start relay "$PY" manage.py relay_outbox
+start fanout "$PY" manage.py fanout
+start stream "$ROOT/backend/.venv/bin/uvicorn" config.asgi:application --host 127.0.0.1 --port 8001
 for _ in $(seq 1 30); do
   curl -fs "$API/readyz" >/dev/null && break
   sleep 1
@@ -77,6 +81,7 @@ cat <<DONE
 
 The live ledger is running.
   API docs:        $API/api/v1/docs/
+  Live stream:     ws://127.0.0.1:8001/ws/v1/stream
   Latest checkpoint: $API/api/v1/checkpoints/latest
   Verify another:  make verify-event
   Live web page:   make web-live   (then open http://localhost:3000)

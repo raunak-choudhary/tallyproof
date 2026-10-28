@@ -177,8 +177,8 @@ require-colima:
 		echo "  colima start $(COLIMA_PROFILE) --cpu 2 --memory 3 --disk 25"; exit 1; }
 	@test -f .env || { echo "No .env yet: cp .env.example .env, then fill in the passwords."; exit 1; }
 
-up: require-colima ## Start Redpanda and Postgres, create topics, wait until healthy
-	$(COMPOSE) up -d --wait redpanda postgres
+up: require-colima ## Start Redpanda, Postgres, and Redis, create topics, wait until healthy
+	$(COMPOSE) up -d --wait redpanda postgres redis
 	$(COMPOSE) run --rm topics
 
 down: require-colima ## Stop the stack and keep its data
@@ -215,7 +215,7 @@ demo: require-venv ## Start the whole live pipeline and verify an event from it 
 	./scripts/demo.sh
 
 demo-stop: ## Stop the demo's processes and containers, keeping their data
-	@for name in api ingest checkpointer web; do \
+	@for name in api ingest checkpointer project relay fanout stream web; do \
 		pid_file=var/demo/$$name.pid; \
 		if [ -f $$pid_file ]; then kill $$(cat $$pid_file) 2>/dev/null && echo "stopped $$name"; rm -f $$pid_file; fi; \
 	done
