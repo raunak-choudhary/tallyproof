@@ -78,7 +78,11 @@ def database() -> Iterator[Database]:
 
 @pytest.fixture(scope="session")
 def django_db_setup(database: Database, django_db_blocker: DjangoDbBlocker) -> None:
-    """Migrate the container's database as the owner, the only role allowed DDL."""
+    """Migrate as the owner, then connect as the app role, exactly like the services.
+
+    Tests that go through Django therefore run with the app role's grants, so a
+    missing grant fails a test instead of passing silently as the owner.
+    """
     settings = connections["default"].settings_dict
     settings.update(
         NAME="tallyproof",
@@ -90,6 +94,7 @@ def django_db_setup(database: Database, django_db_blocker: DjangoDbBlocker) -> N
     with django_db_blocker.unblock():
         call_command("migrate", verbosity=0)
         connections["default"].close()
+    settings.update(USER="tallyproof_app", PASSWORD=database.passwords["app"])
 
 
 @pytest.fixture
