@@ -35,6 +35,11 @@ class AppSettings(BaseSettings):
     secure_ssl_redirect: bool = Field(default=False, validation_alias="DJANGO_SECURE_SSL_REDIRECT")
     hsts_seconds: int = Field(default=0, ge=0, validation_alias="DJANGO_HSTS_SECONDS")
     trusted_proxy_count: int = Field(default=0, ge=0, validation_alias="TRUSTED_PROXY_COUNT")
+    api_throttle_anon_reads: str = Field(
+        default="300/min",
+        pattern=r"^\d+/(s|sec|m|min|h|hour|d|day)$",
+        validation_alias="API_THROTTLE_ANON_READS",
+    )
 
     db_url: SecretStr = Field(validation_alias="DB_URL")
     db_owner_url: SecretStr | None = Field(default=None, validation_alias="DB_OWNER_URL")

@@ -20,6 +20,9 @@ INSTALLED_APPS = [
     "apps.ingestion",
 ]
 
+# Rate-limit counters. Per process for now; a shared cache arrives with Redis.
+CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}}
+
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "corsheaders.middleware.CorsMiddleware",
@@ -49,6 +52,10 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [],
     "DEFAULT_PERMISSION_CLASSES": [],
     "UNAUTHENTICATED_USER": None,
+    "DEFAULT_THROTTLE_CLASSES": ["rest_framework.throttling.AnonRateThrottle"],
+    "DEFAULT_THROTTLE_RATES": {"anon": ENV.api_throttle_anon_reads},
+    "NUM_PROXIES": ENV.trusted_proxy_count,
+    "EXCEPTION_HANDLER": "apps.ledger.api.problems.handler",
 }
 
 SPECTACULAR_SETTINGS = {
