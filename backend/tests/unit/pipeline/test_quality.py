@@ -15,12 +15,10 @@ from pyspark.sql.types import (
 
 from tallyproof_pipeline.quality import (
     QualityError,
-    deequ_session,
     fiscal_year_bounds,
     run_checks,
     stop_session,
 )
-from tallyproof_pipeline.settings import PipelineSettings
 
 pytestmark = pytest.mark.spark
 
@@ -49,23 +47,6 @@ def good_row(key: str, **overrides: Any) -> tuple[Any, ...]:
     }
     values.update(overrides)
     return tuple(values[field.name] for field in SCHEMA.fields)
-
-
-@pytest.fixture(scope="module")
-def spark(tmp_path_factory):
-    settings = PipelineSettings(
-        _env_file=None,
-        DATA_DIR=tmp_path_factory.mktemp("data"),
-        DATA_SOURCE_USASPENDING_FILES_URL="https://files.example.gov/",
-        DATA_SOURCE_USASPENDING_API_URL="https://api.example.gov/",
-        DATA_SOURCE_FISCALDATA_API_URL="https://fiscal.example.gov/",
-        SPARK_MASTER="local[1]",
-        SPARK_DRIVER_MEMORY="1g",
-        SPARK_SHUFFLE_PARTITIONS=1,
-    )
-    session = deequ_session(settings)
-    yield session
-    stop_session(session)
 
 
 def frame(spark: SparkSession, rows: list[tuple[Any, ...]]) -> DataFrame:
