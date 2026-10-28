@@ -38,3 +38,21 @@ def envelope(error: Exception, topic: str, partition: int, offset: int, raw: byt
         "raw_truncated": len(body) > MAX_RAW_BYTES,
     }
     return json.dumps(record, sort_keys=True).encode()
+
+
+def original(record: bytes) -> bytes:
+    """The original message bytes kept inside a dead-letter record."""
+    return base64.b64decode(json.loads(record)["raw_base64"])
+
+
+def validate_fixed(lines: list[str]) -> list[tuple[int, list[dict[str, str]]]]:
+    """Check fixed records before replay. Returns (line number, problems) for each bad one."""
+    from tallyproof_core.events import EventEnvelope
+
+    bad = []
+    for number, line in enumerate(lines, start=1):
+        try:
+            EventEnvelope.model_validate_json(line)
+        except (ValidationError, ValueError) as error:
+            bad.append((number, describe(error)))
+    return bad
