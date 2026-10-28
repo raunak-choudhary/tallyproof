@@ -1,0 +1,4 @@
+tallyproof replay bundle
+manifest sha256 bd2b91854b8277810ea3671568af203b82d001e490cafb0f7d972bdc7bdee8a7
+
+— tallyproof.dev/log/v1 wEuRC8SY++uiPcKGvFkN82ZkE8alnRMew8SD1rpKBsqGjt9hBFC8KUTOEkAIg0BRwNl+XoHg0seiP1fz5u5VNsBZhwc=
