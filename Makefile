@@ -23,11 +23,16 @@ else
   PYTHON ?= python3.12
 endif
 
+# The container stack runs only on its own Colima profile, never Docker Desktop
+# or whatever context happens to be active.
+COLIMA_PROFILE := tallyproof
+COMPOSE := docker --context colima-$(COLIMA_PROFILE) compose --env-file .env -f infra/compose.yaml
+
 # PyDeequ loads the Deequ build that matches this Spark line.
 SPARK_VERSION ?= 4.1
 export SPARK_VERSION
 
-.PHONY: help doctor venv deps deps-sync require-venv lint format typecheck test check audit vectors web-install web-lint web-typecheck web-test web-build web-check data-fetch data-build data-quality require-no-containers data-gold keygen replay data-sample clean
+.PHONY: help doctor venv deps deps-sync require-venv lint format typecheck test check audit vectors web-install web-lint web-typecheck web-test web-build web-check data-fetch data-build data-quality require-no-containers data-gold keygen replay data-sample require-colima up down reset ps logs db-roles console clean
 
 help: ## List available commands
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -123,6 +128,38 @@ web-build: ## Build the static web app (needs the replay bundle and pinned key)
 	cd $(WEB) && pnpm run build
 
 web-check: web-lint web-typecheck web-test ## Everything CI checks on the web app
+
+# --- Container stack ----------------------------------------------------------
+
+require-colima:
+	@colima status $(COLIMA_PROFILE) >/dev/null 2>&1 || { \
+		echo "The Colima VM is not running. Start it with:"; \
+		echo "  colima start $(COLIMA_PROFILE) --cpu 2 --memory 3 --disk 25"; exit 1; }
+	@test -f .env || { echo "No .env yet: cp .env.example .env, then fill in the passwords."; exit 1; }
+
+up: require-colima ## Start Redpanda and Postgres, create topics, wait until healthy
+	$(COMPOSE) up -d --wait redpanda postgres
+	$(COMPOSE) run --rm topics
+
+down: require-colima ## Stop the stack and keep its data
+	$(COMPOSE) --profile tools down
+
+reset: require-colima ## Stop the stack and delete its volumes (asks first)
+	@read -r -p "Delete all local ledger data, topics, and database volumes? [y/N] " answer; \
+		[ "$$answer" = y ] || { echo "Cancelled."; exit 1; }
+	$(COMPOSE) --profile tools down --volumes
+
+ps: require-colima ## Show the stack's containers and health
+	$(COMPOSE) --profile tools ps
+
+logs: require-colima ## Follow the stack's logs (SERVICE=postgres to pick one)
+	$(COMPOSE) logs -f --tail=100 $(SERVICE)
+
+db-roles: require-colima ## Re-run the database role script, for example after changing a password
+	$(COMPOSE) exec -T postgres bash /docker-entrypoint-initdb.d/10-roles.sh
+
+console: require-colima ## Open the broker console at http://localhost:8080
+	$(COMPOSE) --profile tools up -d --wait console
 
 clean: ## Remove caches and build output (keeps the virtual environment)
 	find $(BACKEND) -type d \( -name __pycache__ -o -name .pytest_cache -o -name .mypy_cache -o -name .ruff_cache \) -prune -exec rm -rf {} +
