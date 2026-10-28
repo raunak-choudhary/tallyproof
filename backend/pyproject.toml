@@ -1,0 +1,58 @@
+[project]
+name = "tallyproof"
+version = "0.0.0"
+description = "A streaming, verifiable ledger for public spending data with an AI analyst whose claims carry Merkle proofs"
+readme = "../README.md"
+license = "MIT"
+requires-python = ">=3.12,<3.13"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = [".venv"]
+
+[tool.ruff.lint]
+select = [
+    "E", "F", "W",  # pycodestyle and pyflakes
+    "I",            # import order
+    "B",            # bugbear
+    "UP",           # modern syntax
+    "SIM",          # simplifications
+    "N",            # naming
+    "D",            # docstrings
+    "S",            # security checks from bandit
+    "PT",           # pytest style
+    "RUF",          # ruff-specific rules
+    "ANN",          # type annotations
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.per-file-ignores]
+# Tests use plain asserts and describe themselves through their names.
+"tests/**" = ["S101", "D", "ANN"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_unreachable = true
+files = ["tallyproof_core", "tests"]
+
+[[tool.mypy.overrides]]
+module = ["tests.*"]
+disallow_untyped_defs = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-ra --strict-markers --strict-config"
+xfail_strict = true
+
+[tool.coverage.run]
+branch = true
+source = ["tallyproof_core"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
