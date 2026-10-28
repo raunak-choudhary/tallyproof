@@ -20,8 +20,14 @@ export interface VerifyInput {
   /** The record's canonical JSON text, possibly edited by the reader. */
   canonical: string;
   leafIndex: number;
-  /** Leaf hashes of the whole log as published, in order. */
+  /** Leaf hashes of the whole log as published, in order. Empty when an audit path is given. */
   publishedLeaves: readonly Uint8Array[];
+  /**
+   * The audit path from a live API, leaf first. When given, the browser checks this
+   * path instead of building one from the published leaves. It is still only
+   * trusted if it leads to the root the pinned key signed.
+   */
+  auditPath?: readonly Uint8Array[];
   checkpointNote: string;
   /** The key compiled into the web build: the only key this page trusts. */
   pinnedKey: VerifierKey;
@@ -91,17 +97,19 @@ export function verifyEvent(input: VerifyInput): VerifyResult {
     label: "Leaf hash recomputed in your browser",
     ok: true,
     detail:
-      published && equal(published, computed)
+      input.auditPath || (published && equal(published, computed))
         ? `${toHex(computed).slice(0, 16)}…`
         : `${toHex(computed).slice(0, 16)}… (differs from the published log)`,
   });
 
   const size = checkpoint.treeSize;
   const inRange =
-    input.leafIndex >= 0 && input.leafIndex < size && input.publishedLeaves.length >= size;
-  const proof = inRange
-    ? inclusionProof(input.publishedLeaves.slice(0, size), input.leafIndex)
-    : [];
+    input.leafIndex >= 0 &&
+    input.leafIndex < size &&
+    (input.auditPath !== undefined || input.publishedLeaves.length >= size);
+  const proof = !inRange
+    ? []
+    : (input.auditPath ?? inclusionProof(input.publishedLeaves.slice(0, size), input.leafIndex));
   const included =
     inRange && verifyInclusion(computed, input.leafIndex, size, proof, checkpoint.rootHash);
   steps.push({
