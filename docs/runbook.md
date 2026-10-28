@@ -76,6 +76,10 @@ make data-replay           # stream gold events into Kafka
 - `GET /healthz` answers as long as the process is up.
 - `GET /readyz` also checks the broker, the database, and the cache. Wait for it before replaying data.
 
+## Back up the release signing key
+
+`secrets/checkpoint_rel.key` signs the public demo bundle, and its public key is built into the web app. Keep an offline copy, for example in a password manager. If it is lost, a new key has to be generated, the bundle re-signed, and the web app rebuilt with the new public key; links to the old signatures will no longer verify.
+
 ## Stop and reset
 
 ```bash
