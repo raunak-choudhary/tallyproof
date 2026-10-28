@@ -36,6 +36,15 @@ describe("signed checkpoints", () => {
     expect(() => verifyCheckpoint(c.note, key)).toThrow(CheckpointError);
   });
 
+  it("accepts keys whose base64 contains a plus sign", () => {
+    // Only the first two "+" separate fields (C2SP signed-note); this key's base64 has one.
+    const key = parseVerifierKey(
+      "eval.tallyproof.dev/log/v1+e6394e68+Afy7CUs9XEqZ7UZMDtQG6caBei5luIfXm8TpQUb+Rew2",
+    );
+    expect(key.name).toBe("eval.tallyproof.dev/log/v1");
+    expect(key.publicKey.length).toBe(32);
+  });
+
   it("rejects malformed verifier keys", () => {
     expect(() => parseVerifierKey("example.com/foo+530d903a")).toThrow(/three parts/);
     expect(() =>

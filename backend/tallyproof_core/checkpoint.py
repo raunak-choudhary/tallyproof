@@ -180,7 +180,8 @@ class Verifier:
     @classmethod
     def from_verifier_key(cls, vkey: str) -> "Verifier":
         """Build a verifier from a ``name+hex(key ID)+base64(type || key)`` string."""
-        parts = vkey.split("+")
+        # Only the first two '+' separate fields; the base64 key may contain '+' itself.
+        parts = vkey.split("+", 2)
         if len(parts) != 3:
             raise CheckpointError("verifier key must have three parts separated by +")
         name, id_hex, material_b64 = parts

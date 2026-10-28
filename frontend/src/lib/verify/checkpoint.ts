@@ -41,9 +41,13 @@ function checkKeyName(name: string): void {
 
 /** Parse a verifier key: name+hex(key ID)+base64(0x01 || public key). */
 export function parseVerifierKey(vkey: string): VerifierKey {
-  const parts = vkey.split("+");
-  if (parts.length !== 3) throw new CheckpointError("verifier key must have three parts");
-  const [name, idHex, materialB64] = parts as [string, string, string];
+  // Only the first two "+" separate fields; the base64 key may contain "+" itself.
+  const first = vkey.indexOf("+");
+  const second = first < 0 ? -1 : vkey.indexOf("+", first + 1);
+  if (second < 0) throw new CheckpointError("verifier key must have three parts");
+  const name = vkey.slice(0, first);
+  const idHex = vkey.slice(first + 1, second);
+  const materialB64 = vkey.slice(second + 1);
   checkKeyName(name);
   const material = fromBase64(materialB64);
   if (material.length !== 33 || material[0] !== SIGNATURE_TYPE_ED25519) {
