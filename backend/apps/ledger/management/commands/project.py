@@ -1,0 +1,52 @@
+"""``python manage.py project``: keep the derived views up to date with the log."""
+
+import logging
+import signal
+from types import FrameType
+
+import psycopg
+from django.core.management.base import BaseCommand
+from django.db import connection
+
+from apps.ledger.append import APPENDED_CHANNEL
+from apps.ledger.projections import JournalProjection, Projection, step
+from apps.reconciliation.projection import ReconciliationProjection
+
+log = logging.getLogger(__name__)
+IDLE_WAIT_SECONDS = 5.0
+
+
+class Command(BaseCommand):
+    """Run the journal and reconciliation projections."""
+
+    help = "Derive the journal and reconciliation breaks from the log as it grows."
+
+    def handle(self, *args: object, **options: object) -> None:
+        """Run until SIGINT or SIGTERM."""
+        logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+        stopping = False
+
+        def stop(signum: int, frame: FrameType | None) -> None:
+            nonlocal stopping
+            stopping = True
+
+        signal.signal(signal.SIGINT, stop)
+        signal.signal(signal.SIGTERM, stop)
+        projections: list[Projection] = [JournalProjection(), ReconciliationProjection()]
+        settings = connection.settings_dict
+        with psycopg.connect(
+            dbname=settings["NAME"],
+            user=settings["USER"],
+            password=settings["PASSWORD"],
+            host=settings["HOST"],
+            port=settings["PORT"] or 5432,
+            autocommit=True,
+        ) as listener:
+            listener.execute(f"LISTEN {APPENDED_CHANNEL}")
+            while not stopping:
+                read = sum(step(p) for p in projections)
+                if read:
+                    log.info("projected %d events", read)
+                    continue
+                for _ in listener.notifies(timeout=IDLE_WAIT_SECONDS, stop_after=1):
+                    pass
