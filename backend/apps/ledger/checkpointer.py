@@ -154,7 +154,14 @@ class Checkpointer:
         return None
 
     def close(self) -> Signed:
-        """Sign a checkpoint over the whole log and record the batch."""
+        """Sign a checkpoint over the whole log and record the batch.
+
+        Raises:
+            CheckpointerError: If no leaves are waiting, or the signed prefix changed.
+        """
+        extend(self.tree)
+        if self.pending == 0:
+            raise CheckpointerError("no leaves are waiting to be checkpointed")
         self._check_signed_prefix()
         size = self.tree.size
         root_hash = self.tree.root(size)
