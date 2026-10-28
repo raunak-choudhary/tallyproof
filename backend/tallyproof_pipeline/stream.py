@@ -154,6 +154,12 @@ def main() -> None:  # pragma: no cover - thin command-line wrapper
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--limit", type=int, default=settings.replay_slice_events)
     parser.add_argument("--rate", type=int, default=settings.replay_rate_per_sec)
+    parser.add_argument(
+        "--events",
+        type=Path,
+        default=settings.gold_dir / "events.jsonl.gz",
+        help="gzipped JSON lines of events; invalid records are read from the same folder",
+    )
     args = parser.parse_args()
     producer = Producer(
         {
