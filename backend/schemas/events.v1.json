@@ -1,0 +1,427 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "definitions": {
+    "CashMovement": {
+      "additionalProperties": false,
+      "description": "A deposit to or withdrawal from the Treasury operating cash account.",
+      "properties": {
+        "account": {
+          "maxLength": 4000,
+          "minLength": 1,
+          "title": "Account",
+          "type": "string"
+        },
+        "amount": {
+          "title": "Amount",
+          "type": "string"
+        },
+        "category": {
+          "maxLength": 4000,
+          "minLength": 1,
+          "title": "Category",
+          "type": "string"
+        },
+        "currency": {
+          "const": "USD",
+          "default": "USD",
+          "title": "Currency",
+          "type": "string"
+        },
+        "direction": {
+          "enum": [
+            "deposit",
+            "withdrawal"
+          ],
+          "title": "Direction",
+          "type": "string"
+        },
+        "record_date": {
+          "format": "date",
+          "title": "Record Date",
+          "type": "string"
+        },
+        "unit": {
+          "const": "millions",
+          "default": "millions",
+          "title": "Unit",
+          "type": "string"
+        }
+      },
+      "required": [
+        "record_date",
+        "account",
+        "direction",
+        "category",
+        "amount"
+      ],
+      "title": "CashMovement",
+      "type": "object"
+    },
+    "EventType": {
+      "description": "Every kind of event the ledger accepts.",
+      "enum": [
+        "obligation.recorded",
+        "obligation.adjusted",
+        "outlay.reported",
+        "cash.movement",
+        "source.registered"
+      ],
+      "title": "EventType",
+      "type": "string"
+    },
+    "ObligationAdjusted": {
+      "additionalProperties": false,
+      "description": "A modification to an existing award. Negative amounts are de-obligations.",
+      "properties": {
+        "action_date": {
+          "format": "date",
+          "title": "Action Date",
+          "type": "string"
+        },
+        "action_type": {
+          "anyOf": [
+            {
+              "maxLength": 4000,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Action Type"
+        },
+        "amount": {
+          "title": "Amount",
+          "type": "string"
+        },
+        "award_key": {
+          "maxLength": 4000,
+          "minLength": 1,
+          "title": "Award Key",
+          "type": "string"
+        },
+        "currency": {
+          "const": "USD",
+          "default": "USD",
+          "title": "Currency",
+          "type": "string"
+        },
+        "description": {
+          "anyOf": [
+            {
+              "maxLength": 4000,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Description"
+        },
+        "modification_number": {
+          "maxLength": 4000,
+          "minLength": 1,
+          "title": "Modification Number",
+          "type": "string"
+        }
+      },
+      "required": [
+        "award_key",
+        "modification_number",
+        "amount",
+        "action_date"
+      ],
+      "title": "ObligationAdjusted",
+      "type": "object"
+    },
+    "ObligationRecorded": {
+      "additionalProperties": false,
+      "description": "A new contract obligation: money committed to a recipient.",
+      "properties": {
+        "action_date": {
+          "format": "date",
+          "title": "Action Date",
+          "type": "string"
+        },
+        "action_type": {
+          "anyOf": [
+            {
+              "maxLength": 4000,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Action Type"
+        },
+        "amount": {
+          "title": "Amount",
+          "type": "string"
+        },
+        "award_key": {
+          "maxLength": 4000,
+          "minLength": 1,
+          "title": "Award Key",
+          "type": "string"
+        },
+        "awarding_agency": {
+          "maxLength": 4000,
+          "minLength": 1,
+          "title": "Awarding Agency",
+          "type": "string"
+        },
+        "currency": {
+          "const": "USD",
+          "default": "USD",
+          "title": "Currency",
+          "type": "string"
+        },
+        "description": {
+          "anyOf": [
+            {
+              "maxLength": 4000,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Description"
+        },
+        "funding_agency": {
+          "anyOf": [
+            {
+              "maxLength": 4000,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Funding Agency"
+        },
+        "naics_code": {
+          "anyOf": [
+            {
+              "maxLength": 4000,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Naics Code"
+        },
+        "piid": {
+          "maxLength": 4000,
+          "minLength": 1,
+          "title": "Piid",
+          "type": "string"
+        },
+        "psc_code": {
+          "anyOf": [
+            {
+              "maxLength": 4000,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Psc Code"
+        }
+      },
+      "required": [
+        "award_key",
+        "piid",
+        "awarding_agency",
+        "amount",
+        "action_date"
+      ],
+      "title": "ObligationRecorded",
+      "type": "object"
+    },
+    "OutlayReported": {
+      "additionalProperties": false,
+      "description": "Money paid against an award during one fiscal period.",
+      "properties": {
+        "award_key": {
+          "maxLength": 4000,
+          "minLength": 1,
+          "title": "Award Key",
+          "type": "string"
+        },
+        "cumulative_outlay": {
+          "title": "Cumulative Outlay",
+          "type": "string"
+        },
+        "currency": {
+          "const": "USD",
+          "default": "USD",
+          "title": "Currency",
+          "type": "string"
+        },
+        "fiscal_period": {
+          "maximum": 12,
+          "minimum": 1,
+          "title": "Fiscal Period",
+          "type": "integer"
+        },
+        "fiscal_year": {
+          "maximum": 9007199254740991,
+          "minimum": 0,
+          "title": "Fiscal Year",
+          "type": "integer"
+        },
+        "period_outlay": {
+          "title": "Period Outlay",
+          "type": "string"
+        },
+        "treasury_account": {
+          "maxLength": 4000,
+          "minLength": 1,
+          "title": "Treasury Account",
+          "type": "string"
+        }
+      },
+      "required": [
+        "award_key",
+        "treasury_account",
+        "fiscal_year",
+        "fiscal_period",
+        "cumulative_outlay",
+        "period_outlay"
+      ],
+      "title": "OutlayReported",
+      "type": "object"
+    },
+    "SourceRegistered": {
+      "additionalProperties": false,
+      "description": "A downloaded source file, recorded so events can be traced to it.",
+      "properties": {
+        "fetched_at": {
+          "format": "date-time",
+          "title": "Fetched At",
+          "type": "string"
+        },
+        "file_name": {
+          "maxLength": 4000,
+          "minLength": 1,
+          "title": "File Name",
+          "type": "string"
+        },
+        "sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Sha256",
+          "type": "string"
+        },
+        "size_bytes": {
+          "maximum": 9007199254740991,
+          "minimum": 0,
+          "title": "Size Bytes",
+          "type": "integer"
+        },
+        "url": {
+          "maxLength": 4000,
+          "minLength": 1,
+          "title": "Url",
+          "type": "string"
+        }
+      },
+      "required": [
+        "file_name",
+        "url",
+        "size_bytes",
+        "sha256",
+        "fetched_at"
+      ],
+      "title": "SourceRegistered",
+      "type": "object"
+    }
+  },
+  "description": "One event, as it travels through Kafka and is stored in the ledger.",
+  "properties": {
+    "account_id": {
+      "maxLength": 4000,
+      "minLength": 1,
+      "title": "Account Id",
+      "type": "string"
+    },
+    "correlation_id": {
+      "maxLength": 4000,
+      "minLength": 1,
+      "title": "Correlation Id",
+      "type": "string"
+    },
+    "emitted_at": {
+      "format": "date-time",
+      "title": "Emitted At",
+      "type": "string"
+    },
+    "event_id": {
+      "title": "Event Id",
+      "type": "string"
+    },
+    "event_type": {
+      "$ref": "#/definitions/EventType"
+    },
+    "idempotency_key": {
+      "maxLength": 4000,
+      "minLength": 1,
+      "title": "Idempotency Key",
+      "type": "string"
+    },
+    "occurred_at": {
+      "format": "date-time",
+      "title": "Occurred At",
+      "type": "string"
+    },
+    "payload": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/ObligationRecorded"
+        },
+        {
+          "$ref": "#/definitions/ObligationAdjusted"
+        },
+        {
+          "$ref": "#/definitions/OutlayReported"
+        },
+        {
+          "$ref": "#/definitions/CashMovement"
+        },
+        {
+          "$ref": "#/definitions/SourceRegistered"
+        }
+      ],
+      "title": "Payload"
+    },
+    "schema_version": {
+      "const": 1,
+      "default": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "event_id",
+    "idempotency_key",
+    "event_type",
+    "occurred_at",
+    "emitted_at",
+    "account_id",
+    "correlation_id",
+    "payload"
+  ],
+  "title": "EventEnvelope",
+  "type": "object"
+}
