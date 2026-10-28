@@ -14,3 +14,4 @@ testcontainers[kafka,postgres]>=4.15,<5      # real Redpanda and Postgres in int
 django-stubs[compatible-mypy]>=6.1,<7        # type information for Django under strict mypy
 djangorestframework-stubs>=3.16,<4           # type information for Django REST Framework
 types-channels>=4.3.0.20260518      # type information for Channels
+types-defusedxml>=0.7.0.20250822   # type information for defusedxml
