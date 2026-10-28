@@ -52,7 +52,7 @@ jobs:
       - setup-python
       - run:
           name: Unit tests with coverage
-          command: make test TEST_MARKERS="not spark and not integration"
+          command: make test TEST_MARKERS="not spark and not integration" COVERAGE_NAME=unit
           environment:
             # Spark tests need Java and run in their own job.
             PYTEST_ADDOPTS: --junitxml=test-results/junit.xml
@@ -60,9 +60,10 @@ jobs:
             HYPOTHESIS_PROFILE: ci
       - store_test_results:
           path: backend/test-results
-      - store_artifacts:
-          path: backend/coverage.xml
-          destination: coverage/coverage.xml
+      - persist_to_workspace:
+          root: backend
+          paths:
+            - .coverage.unit
 
   spark-tests:
     executor: python
@@ -76,11 +77,63 @@ jobs:
             sudo apt-get install -y -qq openjdk-17-jre-headless
       - run:
           name: Spark and Deequ tests
-          command: make test TEST_MARKERS=spark JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+          command: make test TEST_MARKERS=spark COVERAGE_NAME=spark JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
           environment:
-            PYTEST_ADDOPTS: --junitxml=test-results/junit.xml --no-cov
+            PYTEST_ADDOPTS: --junitxml=test-results/junit.xml
       - store_test_results:
           path: backend/test-results
+      - persist_to_workspace:
+          root: backend
+          paths:
+            - .coverage.spark
+
+  # Testcontainers needs a real Docker daemon, so this job runs on a Linux VM
+  # rather than inside a container.
+  integration-tests:
+    machine:
+      image: ubuntu-2404:2024.11.1
+    resource_class: medium
+    steps:
+      - checkout
+      - run:
+          name: Install the Python 3.12 venv module
+          command: |
+            sudo apt-get update -qq
+            sudo apt-get install -y -qq python3.12-venv
+      - restore_cache:
+          keys:
+            - venv-machine-v1-{{ arch }}-{{ checksum "backend/requirements.txt" }}-{{ checksum "backend/requirements-dev.txt" }}
+      - run:
+          name: Install pinned dependencies
+          command: make venv PYTHON=/usr/bin/python3.12
+      - save_cache:
+          key: venv-machine-v1-{{ arch }}-{{ checksum "backend/requirements.txt" }}-{{ checksum "backend/requirements-dev.txt" }}
+          paths:
+            - backend/.venv
+      - run:
+          name: Integration tests against real Postgres and Redpanda
+          command: make test-integration
+          environment:
+            PYTEST_ADDOPTS: --junitxml=test-results/junit.xml
+      - store_test_results:
+          path: backend/test-results
+      - persist_to_workspace:
+          root: backend
+          paths:
+            - .coverage.integration
+
+  coverage:
+    executor: python
+    steps:
+      - setup-python
+      - attach_workspace:
+          at: backend
+      - run:
+          name: Combined coverage of every suite must reach the threshold
+          command: make coverage-report
+      - store_artifacts:
+          path: backend/coverage.xml
+          destination: coverage/coverage.xml
 
   dependency-audit:
     executor: python
@@ -154,7 +207,7 @@ jobs:
     steps:
       - run:
           name: All required checks passed
-          command: echo "Backend and web checks, audit, commit messages, and secret scan all passed."
+          command: echo "Backend, integration, coverage, and web checks, audit, commit messages, and secret scan all passed."
 
 workflows:
   checks:
@@ -163,6 +216,12 @@ workflows:
       - typecheck
       - unit-tests
       - spark-tests
+      - integration-tests
+      - coverage:
+          requires:
+            - unit-tests
+            - spark-tests
+            - integration-tests
       - dependency-audit
       - commit-messages
       - secret-scan
@@ -173,6 +232,8 @@ workflows:
             - typecheck
             - unit-tests
             - spark-tests
+            - integration-tests
+            - coverage
             - dependency-audit
             - commit-messages
             - secret-scan

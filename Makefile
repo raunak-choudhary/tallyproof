@@ -32,7 +32,7 @@ COMPOSE := docker --context colima-$(COLIMA_PROFILE) compose --env-file .env -f 
 SPARK_VERSION ?= 4.1
 export SPARK_VERSION
 
-.PHONY: help doctor venv deps deps-sync require-venv lint format typecheck test check audit vectors web-install web-lint web-typecheck web-test web-build web-check web-audit data-fetch data-build data-quality require-no-containers data-gold keygen replay data-sample test-integration require-colima up down reset ps logs db-roles migrate ingest checkpointer verify-witness data-replay console clean
+.PHONY: help doctor venv deps deps-sync require-venv lint format typecheck test check audit vectors web-install web-lint web-typecheck web-test web-build web-check web-audit data-fetch data-build data-quality require-no-containers data-gold keygen replay data-sample test-integration coverage coverage-report require-colima up down reset ps logs db-roles migrate ingest checkpointer verify-witness data-replay console clean
 
 help: ## List available commands
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -78,15 +78,32 @@ typecheck: require-venv ## Run mypy in strict mode
 # Which tests `make test` selects. CI narrows this per job (unit or Spark).
 TEST_MARKERS ?= not integration
 
-test: require-venv ## Run the unit tests with coverage
-	cd $(BACKEND) && .venv/bin/pytest -m "$(TEST_MARKERS)" --cov --cov-report=term --cov-report=xml:coverage.xml
+# Each suite records its own coverage data; `make coverage` combines them and
+# enforces the threshold on what all the tests exercise together.
+PYTEST_COV := --cov --cov-report= --cov-fail-under=0
+COVERAGE_NAME ?= unit
 
-# Testcontainers talks to the Colima VM's Docker socket. Inside the VM the
-# socket lives at the standard path, which is what its cleanup container mounts.
-test-integration: require-venv require-colima ## Run integration tests against real containers
-	cd $(BACKEND) && DOCKER_HOST=unix://$$HOME/.colima/$(COLIMA_PROFILE)/docker.sock \
-		TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE=/var/run/docker.sock \
-		.venv/bin/pytest -m integration -p no:cacheprovider
+test: require-venv ## Run the unit and Spark tests (no containers needed)
+	cd $(BACKEND) && COVERAGE_FILE=.coverage.$(COVERAGE_NAME) .venv/bin/pytest -m "$(TEST_MARKERS)" $(PYTEST_COV)
+
+# On macOS, Testcontainers talks to the Colima VM's Docker socket; inside the VM
+# the socket lives at the standard path, which its cleanup container mounts.
+# On Linux (CI) the default Docker socket is used as is.
+ifeq ($(UNAME),Darwin)
+  INTEGRATION_ENV := DOCKER_HOST=unix://$$HOME/.colima/$(COLIMA_PROFILE)/docker.sock \
+	TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE=/var/run/docker.sock
+  INTEGRATION_NEEDS := require-colima
+endif
+
+test-integration: require-venv $(INTEGRATION_NEEDS) ## Run integration tests against real Postgres and Redpanda containers
+	cd $(BACKEND) && $(INTEGRATION_ENV) COVERAGE_FILE=.coverage.integration \
+		.venv/bin/pytest -m integration -p no:cacheprovider $(PYTEST_COV)
+
+coverage: test test-integration coverage-report ## Run every suite and enforce the coverage threshold
+
+coverage-report: require-venv ## Combine recorded coverage and fail below the threshold
+	cd $(BACKEND) && .venv/bin/coverage combine --keep .coverage.* && \
+		.venv/bin/coverage report && .venv/bin/coverage xml -o coverage.xml
 
 audit: require-venv ## Scan dependencies for known vulnerabilities and check production security settings
 	cd $(BACKEND) && .venv/bin/pip-audit --strict --disable-pip -r requirements.txt -r requirements-dev.txt
@@ -196,4 +213,4 @@ console: require-colima ## Open the broker console at http://localhost:8080
 
 clean: ## Remove caches and build output (keeps the virtual environment)
 	find $(BACKEND) -type d \( -name __pycache__ -o -name .pytest_cache -o -name .mypy_cache -o -name .ruff_cache \) -prune -exec rm -rf {} +
-	rm -f $(BACKEND)/coverage.xml $(BACKEND)/.coverage
+	rm -f $(BACKEND)/coverage.xml $(BACKEND)/.coverage $(BACKEND)/.coverage.*

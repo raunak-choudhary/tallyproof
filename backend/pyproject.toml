@@ -86,7 +86,7 @@ source = ["tallyproof_core", "tallyproof_pipeline", "config", "apps"]
 omit = ["config/wsgi.py", "config/asgi.py", "config/settings/local.py", "config/settings/ci.py"]
 
 [tool.coverage.report]
-# The build fails if coverage of the core code drops below this.
+# The build fails if coverage of unit, Spark, and integration tests together drops below this.
 fail_under = 85
 show_missing = true
 skip_covered = true
