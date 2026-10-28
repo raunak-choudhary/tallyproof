@@ -18,3 +18,4 @@ dj-database-url>=3.1,<4        # turns DB_URL style settings into Django databas
 psycopg[binary]>=3.3,<4        # PostgreSQL driver with COPY support for staged inserts
 confluent-kafka>=2.16,<3       # Kafka client for Redpanda (librdkafka bundled)
 gunicorn>=26.2,<27             # production WSGI server for the API
+structlog>=26.1,<27              # structured JSON logs with correlation IDs
