@@ -174,7 +174,9 @@ class OpenAICompatibleClient:
                 "json_schema": {
                     "name": request.prompt_version.replace(".", "_").replace("-", "_"),
                     "schema": request.response_schema,
-                    "strict": True,
+                    # Strict mode demands every field be required, which optional
+                    # spec parts can't meet; the server validates the result anyway.
+                    "strict": False,
                 },
             }
         return body

@@ -115,7 +115,7 @@ def test_the_real_client_sends_the_chat_protocol_with_structured_output():
     assert body["response_format"]["json_schema"] == {
         "name": "router_v1",
         "schema": schema,
-        "strict": True,
+        "strict": False,
     }
 
 
