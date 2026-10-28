@@ -14,6 +14,10 @@ This document explains how Tallyproof measures the quality of its answers, and h
 
 **Results are labeled honestly.** Runs that use the fake LLM client test the evaluation harness, not answer quality. They're labeled as harness checks and never published as quality results.
 
+## Dataset
+
+Questions are asked about a small committed dataset in `testdata/eval/`, so every run, local or CI, sees the same data. It holds whole real awards from the USAspending gold build, every obligation, modification, and outlay for each, picked by a hash of the award key and spread across the twelve agencies with the most paid awards. Labeled anomalies are then mixed in with a fixed seed, three of each type. `manifest.json` records the counts, and `make eval-dataset` rebuilds it from a local gold build.
+
 ## Question sets
 
 Each question has a stable ID, the question text, a category, the expected answer (a decimal amount, a set of event IDs, a yes or no, an exact policy quote, or a refusal), the events a correct answer must cite, and whether it should be refused.
