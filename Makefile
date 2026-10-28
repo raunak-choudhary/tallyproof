@@ -32,7 +32,7 @@ COMPOSE := docker --context colima-$(COLIMA_PROFILE) compose --env-file .env -f 
 SPARK_VERSION ?= 4.1
 export SPARK_VERSION
 
-.PHONY: help doctor venv deps deps-sync require-venv lint format typecheck test check audit vectors web-install web-lint web-typecheck web-test web-build web-check data-fetch data-build data-quality require-no-containers data-gold keygen replay data-sample test-integration require-colima up down reset ps logs db-roles migrate console clean
+.PHONY: help doctor venv deps deps-sync require-venv lint format typecheck test check audit vectors web-install web-lint web-typecheck web-test web-build web-check web-audit data-fetch data-build data-quality require-no-containers data-gold keygen replay data-sample test-integration require-colima up down reset ps logs db-roles migrate console clean
 
 help: ## List available commands
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -88,8 +88,11 @@ test-integration: require-venv require-colima ## Run integration tests against r
 		TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE=/var/run/docker.sock \
 		.venv/bin/pytest -m integration -p no:cacheprovider
 
-audit: require-venv ## Scan pinned dependencies for known vulnerabilities
+audit: require-venv ## Scan dependencies for known vulnerabilities and check production security settings
 	cd $(BACKEND) && .venv/bin/pip-audit --strict --disable-pip -r requirements.txt -r requirements-dev.txt
+	cd $(BACKEND) && DJANGO_SETTINGS_MODULE=config.settings.test DJANGO_SECURE_SSL_REDIRECT=true \
+		DJANGO_HSTS_SECONDS=31536000 DJANGO_SECRET_KEY=$$(.venv/bin/python -c "import secrets; print(secrets.token_urlsafe(50))") \
+		.venv/bin/python -W ignore manage.py check --deploy --fail-level WARNING
 
 vectors: require-venv ## Regenerate the shared cross-language test vectors
 	cd $(BACKEND) && .venv/bin/python -m tests.vectors_builder
@@ -139,7 +142,10 @@ web-test: ## Run the web app's unit tests
 web-build: ## Build the static web app (needs the replay bundle and pinned key)
 	cd $(WEB) && pnpm run build
 
-web-check: web-lint web-typecheck web-test ## Everything CI checks on the web app
+web-audit: ## Scan the web app's dependencies for known vulnerabilities
+	cd $(WEB) && pnpm audit --prod=false
+
+web-check: web-lint web-typecheck web-test web-audit ## Everything CI checks on the web app
 
 # --- Container stack ----------------------------------------------------------
 
