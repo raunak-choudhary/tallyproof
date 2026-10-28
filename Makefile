@@ -75,8 +75,11 @@ typecheck: require-venv ## Run mypy in strict mode
 	cd $(BACKEND) && .venv/bin/mypy
 	$(VENV)/bin/mypy --strict scripts
 
+# Which tests `make test` selects. CI narrows this per job (unit or Spark).
+TEST_MARKERS ?= not integration
+
 test: require-venv ## Run the unit tests with coverage
-	cd $(BACKEND) && .venv/bin/pytest -m "not integration" --cov --cov-report=term --cov-report=xml:coverage.xml
+	cd $(BACKEND) && .venv/bin/pytest -m "$(TEST_MARKERS)" --cov --cov-report=term --cov-report=xml:coverage.xml
 
 # Testcontainers talks to the Colima VM's Docker socket. Inside the VM the
 # socket lives at the standard path, which is what its cleanup container mounts.
