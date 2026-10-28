@@ -1,6 +1,6 @@
 # ADR-0004: Django 5.2 LTS
 
-- Status: Accepted
+- Status: Accepted. The WebSocket server was changed to Uvicorn by [ADR-0018](0018-uvicorn-for-websockets.md).
 - Date: 2026-10-26
 
 ## Context
