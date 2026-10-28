@@ -21,6 +21,7 @@ INSTALLED_APPS = [
     "apps.ingestion",
     "apps.reconciliation",
     "apps.realtime",
+    "apps.analyst",
 ]
 
 # Live updates fan out through Redis. Each WebSocket client drains the group into
