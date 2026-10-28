@@ -32,7 +32,7 @@ COMPOSE := docker --context colima-$(COLIMA_PROFILE) compose --env-file .env -f 
 SPARK_VERSION ?= 4.1
 export SPARK_VERSION
 
-.PHONY: help doctor venv deps deps-sync require-venv lint format typecheck test check audit vectors web-install web-lint web-typecheck web-test web-build web-check web-audit web-live data-fetch data-build data-quality require-no-containers data-gold keygen replay data-sample test-integration coverage coverage-report require-colima up down reset ps logs db-roles migrate ingest checkpointer verify-witness data-replay data-treasury demo demo-stop verify-event console clean
+.PHONY: help doctor venv deps deps-sync require-venv lint format typecheck test check audit vectors web-install web-lint web-typecheck web-test web-build web-check web-audit web-live data-fetch data-build data-quality require-no-containers data-gold keygen replay data-sample test-integration coverage coverage-report require-colima up down reset ps logs db-roles migrate ingest checkpointer verify-witness data-replay data-treasury demo demo-stop tamper verify-event console clean
 
 help: ## List available commands
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -220,6 +220,10 @@ demo-stop: ## Stop the demo's processes and containers, keeping their data
 		if [ -f $$pid_file ]; then kill $$(cat $$pid_file) 2>/dev/null && echo "stopped $$name"; rm -f $$pid_file; fi; \
 	done
 	-$(MAKE) --no-print-directory down
+
+tamper: require-venv ## Tamper demo: DEMO_TAMPER_ENABLED=true make tamper LEVEL=1 EVENT=evt_... (RESTORE=1 undoes it)
+	cd $(BACKEND) && DJANGO_SETTINGS_MODULE=config.settings.migrate .venv/bin/python manage.py tamper \
+		$(if $(RESTORE),--restore,--level $(LEVEL) --event $(EVENT))
 
 verify-event: require-venv ## Verify an event from the running API against the pinned key (EVENT=evt_...)
 	cd $(BACKEND) && DJANGO_SETTINGS_MODULE=config.settings.local .venv/bin/python manage.py verify_event $(if $(EVENT),--event $(EVENT))
