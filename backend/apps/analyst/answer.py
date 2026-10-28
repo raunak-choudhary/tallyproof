@@ -159,12 +159,13 @@ def from_query(
             evidence.add_slot("count", int(row_count), "number of records", cite)
         return evidence
     if spec.shape in ("list", "lookup"):
-        for row in evidence_rows:
-            cite = evidence.add_citation([row], f"{entity.words} record {row[0]}")
+        for n, row in enumerate(evidence_rows, start=1):
+            # Row numbers, not IDs: some IDs differ between runs, and prompts must not.
+            cite = evidence.add_citation([row], f"{entity.words}, row {n}")
             _field_slots(evidence, spec, spec.fields, row[2:], cite)
         return evidence
     for row in evidence_rows:  # absence
-        cite = evidence.add_citation([row], f"outlay {row[0]} with no recorded award")
+        cite = evidence.add_citation([row], "an outlay with no recorded award")
         evidence.add_slot("text", row[2], "award key", cite)
         if len(row) > 3 and row[3] is not None:
             evidence.add_slot("money", row[3], "amount paid in the period", cite)
@@ -198,7 +199,9 @@ def from_rows(
     )
     has_ids = len(columns) > 1 and columns[0] == "event_id" and columns[1] == "leaf_index"
     for row in rows:
-        cite = evidence.add_citation([row], f"record {row[0]}") if has_ids else None
+        cite = (
+            evidence.add_citation([row], f"row {len(evidence.citations) + 1}") if has_ids else None
+        )
         start = 2 if has_ids else 0
         for name, value in zip(columns[start:], row[start:], strict=True):
             if value is None:
