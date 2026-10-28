@@ -21,6 +21,9 @@ from django.db import connection
 
 from tallyproof_core.events import EventEnvelope
 
+APPENDED_CHANNEL = "ledger_appended"
+"""Postgres notification channel announcing a new log size."""
+
 
 class AppendError(RuntimeError):
     """The ledger refused a batch it should have accepted; the transaction must roll back."""
@@ -142,6 +145,8 @@ def append(deliveries: Sequence[Delivery]) -> AppendResult:
                 "UPDATE merkle_log_head SET next_leaf_index = %s WHERE id = 1",
                 [head + len(fresh)],
             )
+            # Delivered only if this transaction commits; wakes the checkpointer.
+            cursor.execute("SELECT pg_notify(%s, %s)", [APPENDED_CHANNEL, str(head + len(fresh))])
 
         if duplicates:
             cursor.execute(

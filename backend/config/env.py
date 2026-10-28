@@ -89,6 +89,28 @@ class CheckpointerSettings(AppSettings):
     """Settings for the checkpointer, the only process that reads the private key."""
 
     checkpoint_signing_key_file: Path = Field(validation_alias="CHECKPOINT_SIGNING_KEY_FILE")
+    witness_export_path: Path = Field(
+        default=REPO_ROOT / "var" / "witness" / "checkpoints.jsonl",
+        validation_alias="WITNESS_EXPORT_PATH",
+    )
+    witness_interval_seconds: int = Field(
+        default=3600, ge=1, validation_alias="WITNESS_INTERVAL_SECONDS"
+    )
+    witness_ots_enabled: bool = Field(default=True, validation_alias="WITNESS_OTS_ENABLED")
+    witness_ots_calendars: str = Field(
+        default="https://a.pool.opentimestamps.org,https://b.pool.opentimestamps.org",
+        validation_alias="WITNESS_OTS_CALENDARS",
+    )
+
+    @field_validator("checkpoint_signing_key_file", "witness_export_path")
+    @classmethod
+    def _anchor_to_repo(cls, value: Path) -> Path:
+        return value if value.is_absolute() else REPO_ROOT / value
+
+    @property
+    def ots_calendar_list(self) -> list[str]:
+        """``WITNESS_OTS_CALENDARS`` split on commas."""
+        return [c.strip().rstrip("/") for c in self.witness_ots_calendars.split(",") if c.strip()]
 
 
 def _load[T: BaseSettings](model: type[T]) -> T:
