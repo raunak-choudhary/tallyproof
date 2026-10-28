@@ -123,9 +123,8 @@ Every setting comes from environment variables, loaded through one typed setting
 
 | Variable | Purpose |
 |---|---|
-| `NEXT_PUBLIC_DATA_MODE` | `live` or `replay` |
-| `NEXT_PUBLIC_API_URL` | API base URL in live mode |
-| `NEXT_PUBLIC_WS_URL` | WebSocket base URL in live mode |
+| `NEXT_PUBLIC_API_URL` | API base URL. When set, the build includes the live page at `/live/`; when empty, only the static replay demo is built |
+| `NEXT_PUBLIC_WS_URL` | WebSocket base URL for live updates, once they arrive |
 | `NEXT_PUBLIC_REPLAY_BASE` | Path to the replay bundle |
 
 ## CI secrets
