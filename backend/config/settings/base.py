@@ -38,6 +38,7 @@ CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"
 
 MIDDLEWARE = [
     "config.middleware.CorrelationIdMiddleware",
+    "config.middleware.ContentSecurityPolicyMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -104,6 +105,15 @@ SPECTACULAR_SETTINGS = {
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_REFERRER_POLICY = "same-origin"
 X_FRAME_OPTIONS = "DENY"
+# The API serves JSON, so nothing may load or frame it. The docs page may load the
+# Swagger viewer from its CDN (SWAGGER_UI_CDN, above).
+CONTENT_SECURITY_POLICY = "default-src 'none'; frame-ancestors 'none'"
+CONTENT_SECURITY_POLICY_DOCS = (
+    "default-src 'none'; frame-ancestors 'none'; connect-src 'self';"
+    " script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net;"
+    " style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net;"
+    " img-src 'self' data: https://cdn.jsdelivr.net"
+)
 SECURE_SSL_REDIRECT = ENV.secure_ssl_redirect
 SESSION_COOKIE_SECURE = CSRF_COOKIE_SECURE = ENV.secure_ssl_redirect
 SECURE_HSTS_SECONDS = ENV.hsts_seconds
