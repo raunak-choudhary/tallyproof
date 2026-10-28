@@ -4,6 +4,7 @@ import re
 import uuid
 from collections.abc import Callable
 
+from django.conf import settings
 from django.http import HttpRequest, HttpResponse
 
 from config.logging import bind_correlation_id
@@ -30,4 +31,24 @@ class CorrelationIdMiddleware:
         bind_correlation_id(correlation_id)
         response = self.get_response(request)
         response[HEADER] = correlation_id
+        return response
+
+
+class ContentSecurityPolicyMiddleware:
+    """Send a Content-Security-Policy on every response.
+
+    JSON responses get a policy that allows nothing. The API docs page, the only
+    HTML the API serves, may load the Swagger viewer and call the API itself.
+    """
+
+    def __init__(self, get_response: Callable[[HttpRequest], HttpResponse]) -> None:
+        """Wrap the next handler."""
+        self.get_response = get_response
+
+    def __call__(self, request: HttpRequest) -> HttpResponse:
+        """Add the policy unless the view already set one."""
+        response = self.get_response(request)
+        docs = request.path.startswith("/api/v1/docs/")
+        policy = settings.CONTENT_SECURITY_POLICY_DOCS if docs else settings.CONTENT_SECURITY_POLICY
+        response.headers.setdefault("Content-Security-Policy", policy)
         return response
