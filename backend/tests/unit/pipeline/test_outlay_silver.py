@@ -112,8 +112,13 @@ def test_an_award_split_across_csv_members_is_derived_as_one_history(spark, spar
     folder.mkdir(exist_ok=True)
     archive = settings.data_dir / "FY2024P01-P03_All_TAS_AccountBreakdownByAward_x.zip"
     with zipfile.ZipFile(archive, "w") as bundle:
-        bundle.write(write_csv(folder / "part_1.csv", FIRST), "part_1.csv")
-        bundle.write(write_csv(folder / "part_2.csv", SECOND), "part_2.csv")
+        bundle.write(write_csv(folder / "a.csv", FIRST), "FY2024_All_TAS_Contracts_x_01.csv")
+        bundle.write(write_csv(folder / "b.csv", SECOND), "FY2024_All_TAS_Contracts_x_02.csv")
+        # Grant rows live in their own files, which are never read.
+        bundle.write(
+            write_csv(folder / "c.csv", [row("CONT_AWD_G", "1-1", "FY2024P01", "9.00")]),
+            "FY2024_All_TAS_Assistance_x_01.csv",
+        )
     report = build_outlay_silver(spark, settings, archive)
     assert report.rows_read == len(FIRST) + len(SECOND)
     assert report.contract_rows == len(FIRST) + len(SECOND) - 1
@@ -135,3 +140,11 @@ def test_report_time_falls_back_to_the_period_end():
     assert reported_at(datetime(2023, 11, 10, 14), 2024, 1) == datetime(
         2023, 11, 10, 14, tzinfo=UTC
     )
+
+
+def test_an_archive_without_contract_files_is_refused(spark, spark_settings):
+    archive = spark_settings.data_dir / "FY2024P01-P03_All_TAS_AccountBreakdownByAward_y.zip"
+    with zipfile.ZipFile(archive, "w") as bundle:
+        bundle.writestr("FY2024_All_TAS_Assistance_y_01.csv", "award_unique_key\n")
+    with pytest.raises(ValueError, match="no contract CSV files"):
+        build_outlay_silver(spark, spark_settings, archive)

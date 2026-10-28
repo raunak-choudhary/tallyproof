@@ -44,6 +44,9 @@ SOURCE_COLUMNS = (
 """The award financial columns this job reads. Nothing about people is among them."""
 
 CONTRACT_PREFIX = "CONT_AWD_"
+CONTRACT_MEMBER = "_Contracts_"
+"""The archive splits rows into Assistance, Contracts, and Unlinked CSV files. Only the
+contract files are read: the grant files are twice their size and never used here."""
 KEYS = ("award_key", "treasury_account", "fiscal_year", "fiscal_period")
 
 
@@ -158,7 +161,7 @@ def derive(staged: DataFrame) -> tuple[DataFrame, DataFrame, dict[str, int]]:
 def build_outlay_silver(
     spark: SparkSession, settings: PipelineSettings, archive: Path
 ) -> OutlayReport:
-    """Stage every CSV in one archive, then derive per-period payments from all of them.
+    """Stage the contract CSVs in one archive, then derive per-period payments from them.
 
     The CSV members are extracted and staged one at a time, so the disk never holds
     the whole file uncompressed. Payments are derived only after every member is
@@ -170,7 +173,11 @@ def build_outlay_silver(
     work.mkdir(parents=True)
     report = OutlayReport(archive=archive.name)
     with zipfile.ZipFile(archive) as bundle:
-        members = sorted(n for n in bundle.namelist() if n.endswith(".csv"))
+        members = sorted(
+            n for n in bundle.namelist() if n.endswith(".csv") and CONTRACT_MEMBER in n
+        )
+    if not members:
+        raise ValueError(f"{archive.name} has no contract CSV files")
     for member in members:
         extracted = work / Path(member).name
         with (
