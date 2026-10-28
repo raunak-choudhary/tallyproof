@@ -83,3 +83,15 @@ def test_outlays_without_or_above_obligations_are_breaks():
     ]
     assert breaks[1].amount_delta == Decimal("500.00")
     assert breaks[1].events[0] == (obligation.event_id, "award")
+
+
+def test_a_break_lists_each_event_once_even_when_it_opened_the_award():
+    # Real data: an award's first event in the ledger can itself be a de-obligation.
+    adjustment = next(e for e in real_events() if e.event_type.value == "obligation.adjusted")
+    payload = {**adjustment.payload.model_dump(mode="json"), "amount": "-50.00"}
+    first = adjustment.model_copy(
+        update={"payload": type(adjustment.payload).model_validate(payload)}
+    )
+    (found,) = Reconciler().apply(first)
+    assert found.break_type is BreakType.DEOBLIGATION_EXCEEDS_AWARD
+    assert found.events == ((first.event_id, "award"),)
