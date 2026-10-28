@@ -6,6 +6,7 @@ Each process validates only what it uses, so the API never needs, and never
 receives, the private signing key; the checkpointer reads that separately.
 """
 
+from decimal import Decimal
 from functools import lru_cache
 from pathlib import Path
 
@@ -61,6 +62,19 @@ class AppSettings(BaseSettings):
     )
     dedupe_target_fpr: float = Field(
         default=0.001, gt=0, lt=1, validation_alias="DEDUPE_TARGET_FPR"
+    )
+
+    kafka_topic_recon_breaks: str = Field(
+        default="recon.breaks.v1", validation_alias="KAFKA_TOPIC_RECON_BREAKS"
+    )
+    kafka_topic_ledger_appended: str = Field(
+        default="ledger.appended.v1", validation_alias="KAFKA_TOPIC_LEDGER_APPENDED"
+    )
+    recon_late_arrival_watermark_hours: int = Field(
+        default=72, ge=1, validation_alias="RECON_LATE_ARRIVAL_WATERMARK_HOURS"
+    )
+    recon_amount_tolerance: Decimal = Field(
+        default=Decimal("0.00"), ge=0, validation_alias="RECON_AMOUNT_TOLERANCE"
     )
 
     merkle_log_origin: str = Field(validation_alias="MERKLE_LOG_ORIGIN")
