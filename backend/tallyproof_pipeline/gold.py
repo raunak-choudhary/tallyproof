@@ -12,6 +12,10 @@ Each silver row becomes one validated :class:`~tallyproof_core.events.EventEnvel
 - ``occurred_at`` is the action date. ``emitted_at`` is when the government
   reported the transaction, so late reporting shows up as a real gap between the
   two instead of something simulated.
+- Each award in the replayed slice also gets an ``outlay.reported`` event for every
+  period it was paid in, from the outlay silver table when it has been built. An
+  outlay event is the agency's report, so it is stamped with when the report was
+  made; the period it covers is in the payload.
 - Event IDs are derived from the transaction key with a seeded generator, so
   rebuilding gold from the same silver gives byte-identical events and the same
   Merkle root.
@@ -32,11 +36,12 @@ from datetime import UTC, date, datetime, time
 from decimal import Decimal
 from pathlib import Path
 
-from pyspark.sql import DataFrame
+from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql import functions as F  # noqa: N812 - conventional alias
 
 from tallyproof_core.events import EventEnvelope, EventType
 from tallyproof_core.ids import new_id
+from tallyproof_pipeline.outlay_silver import reported_at
 from tallyproof_pipeline.overlay import arrival_key, plan, positive_totals, write_labels
 from tallyproof_pipeline.settings import PipelineSettings, get_settings
 from tallyproof_pipeline.silver import spark_session
@@ -129,6 +134,90 @@ def conform(row: Mapping[str, object], *, seed: int) -> EventEnvelope:
     )
 
 
+def conform_outlay(row: Mapping[str, object], *, recipient: str, seed: int) -> EventEnvelope:
+    """Turn one outlay silver row into an ``outlay.reported`` event.
+
+    Args:
+        row: A row of the outlay silver table.
+        recipient: The award's recipient UEI, taken from its contract transactions.
+        seed: Seed that, with the outlay's key, fixes the event ID.
+    """
+    award, account = str(row["award_key"]), str(row["treasury_account"])
+    fiscal_year, period = int(str(row["fiscal_year"])), int(str(row["fiscal_period"]))
+    reported = row.get("reported_at")
+    if reported is not None and not isinstance(reported, datetime):
+        raise TypeError(f"{award}: reported_at must be a timestamp, got {reported!r}")
+    at = reported_at(reported, fiscal_year, period)
+    idempotency_key = f"usaspending:outlay:{award}:{account}:FY{fiscal_year}P{period:02d}"
+    return EventEnvelope.model_validate(
+        {
+            "event_id": new_id("evt", now=at, rng=_seeded_rng(idempotency_key, seed)),
+            "idempotency_key": idempotency_key,
+            "event_type": EventType.OUTLAY_REPORTED,
+            "occurred_at": at,
+            "emitted_at": at,
+            "account_id": recipient,
+            "correlation_id": hashlib.sha256(idempotency_key.encode()).hexdigest()[:16],
+            "payload": {
+                "award_key": award,
+                "treasury_account": account,
+                "fiscal_year": fiscal_year,
+                "fiscal_period": period,
+                "cumulative_outlay": f"{Decimal(str(row['cumulative_outlay'])):.2f}",
+                "period_outlay": f"{Decimal(str(row['period_outlay'])):.2f}",
+            },
+        }
+    )
+
+
+def slice_outlays(
+    spark: SparkSession, settings: PipelineSettings, recipients: Mapping[str, str]
+) -> DataFrame | None:
+    """Outlay silver rows for the awards in the replayed slice, sorted in arrival order.
+
+    Returns None when outlay silver hasn't been built. The sort uses the same
+    emission time and idempotency key as :func:`conform_outlay`, so the rows can be
+    streamed straight into the merge without holding them in memory.
+    """
+    path = settings.silver_dir / "outlays"
+    if not path.exists() or not recipients:
+        return None
+    awards = spark.createDataFrame([(award,) for award in recipients], ["award_key"])
+    month = (F.col("fiscal_period") + 8) % 12 + 1
+    year = F.col("fiscal_year") - F.when(month >= 10, 1).otherwise(0)
+    period_end = F.to_timestamp_ntz(
+        F.date_format(F.last_day(F.make_date(year, month, F.lit(1))), "yyyy-MM-dd HH:mm:ss")
+    )
+    key = F.format_string(
+        "usaspending:outlay:%s:%s:FY%dP%02d",
+        "award_key",
+        "treasury_account",
+        "fiscal_year",
+        "fiscal_period",
+    )
+    return (
+        spark.read.parquet(str(path))
+        .join(F.broadcast(awards), "award_key", "left_semi")
+        .withColumn("_emitted", F.coalesce(F.col("reported_at"), period_end))
+        .withColumn("_key", key)
+        .orderBy("_emitted", "_key")
+    )
+
+
+def stream_outlays(
+    rows: DataFrame, recipients: Mapping[str, str], seed: int
+) -> Iterator[EventEnvelope]:
+    """Conform sorted outlay rows one at a time, checking the order as they pass."""
+    previous: tuple[object, str] | None = None
+    for row in rows.toLocalIterator():
+        event = conform_outlay(row.asDict(), recipient=recipients[row["award_key"]], seed=seed)
+        key = arrival_key(event)
+        if previous is not None and key < previous:
+            raise GoldOrderError(f"{event.idempotency_key} arrived out of order")
+        previous = key
+        yield event
+
+
 def write_events(events: Iterable[EventEnvelope], path: Path) -> int:
     """Write events as gzip-compressed JSON Lines and return how many were written."""
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -152,6 +241,7 @@ class GoldReport:
     """What the gold build produced."""
 
     real_events: int
+    outlay_events: int
     injected_events: int
     invalid_records: int
     rows_rejected: int
@@ -178,6 +268,9 @@ SLICE_COLUMNS = (
 
 POOL_SIZE = 5000
 """Real events kept in memory as the pool the anomaly overlay copies from."""
+
+POOL_OUTLAYS = 50
+"""Real outlays offered to the overlay, so injected outlays borrow real accounts."""
 
 
 class GoldOrderError(RuntimeError):
@@ -233,6 +326,7 @@ def build_gold(settings: PipelineSettings, silver: DataFrame) -> GoldReport:
     sampler = _seeded_rng("reservoir", settings.overlay_seed)
     pool: list[EventEnvelope] = []
     totals: dict[str, Decimal] = defaultdict(Decimal)
+    recipients: dict[str, str] = {}
     real = rejected = recorded_seen = 0
     previous: tuple[object, str] | None = None
     with gzip.open(base_path, "wt", encoding="utf-8") as out:
@@ -248,6 +342,9 @@ def build_gold(settings: PipelineSettings, silver: DataFrame) -> GoldReport:
             previous = key
             out.write(event.model_dump_json() + "\n")
             real += 1
+            award_key = getattr(event.payload, "award_key", None)
+            if award_key is not None:
+                recipients.setdefault(award_key, event.account_id)
             for award, amount in positive_totals([event]).items():
                 totals[award] += amount
             if event.event_type is EventType.OBLIGATION_RECORDED:
@@ -257,10 +354,30 @@ def build_gold(settings: PipelineSettings, silver: DataFrame) -> GoldReport:
                 elif (slot := sampler.randrange(recorded_seen)) < POOL_SIZE:
                     pool[slot] = event
 
-    planned = plan(
-        pool, totals, seed=settings.overlay_seed, per_anomaly=settings.overlay_per_anomaly
+    outlay_rows = slice_outlays(silver.sparkSession, settings, recipients)
+    seed = settings.overlay_seed
+    # A few real outlays in the pool let injected outlays use real Treasury accounts.
+    sample = (
+        []
+        if outlay_rows is None
+        else [
+            conform_outlay(row.asDict(), recipient=recipients[row["award_key"]], seed=seed)
+            for row in outlay_rows.limit(POOL_OUTLAYS).collect()
+        ]
     )
-    merged = heapq.merge(read_events(base_path), planned.injected, key=arrival_key)
+    planned = plan([*pool, *sample], totals, seed=seed, per_anomaly=settings.overlay_per_anomaly)
+    outlays = iter(()) if outlay_rows is None else stream_outlays(outlay_rows, recipients, seed)
+    outlay_count = 0
+
+    def counted(events: Iterator[EventEnvelope]) -> Iterator[EventEnvelope]:
+        nonlocal outlay_count
+        for event in events:
+            outlay_count += 1
+            yield event
+
+    merged = heapq.merge(
+        read_events(base_path), counted(outlays), planned.injected, key=arrival_key
+    )
     written = write_events(merged, gold / "events.jsonl.gz")
     base_path.unlink()
     write_labels(planned.labels, gold / "labels.jsonl")
@@ -269,7 +386,8 @@ def build_gold(settings: PipelineSettings, silver: DataFrame) -> GoldReport:
             handle.write(json.dumps(record, sort_keys=True) + "\n")
     report = GoldReport(
         real_events=real,
-        injected_events=written - real,
+        outlay_events=outlay_count,
+        injected_events=written - real - outlay_count,
         invalid_records=len(planned.invalid_records),
         rows_rejected=rejected,
     )
