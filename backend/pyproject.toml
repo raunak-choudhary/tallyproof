@@ -46,7 +46,7 @@ convention = "google"
 python_version = "3.12"
 strict = true
 warn_unreachable = true
-files = ["tallyproof_core", "tallyproof_pipeline", "config", "apps", "tests"]
+files = ["tallyproof_core", "tallyproof_pipeline", "config", "apps", "evals", "tests"]
 plugins = ["pydantic.mypy", "mypy_django_plugin.main", "mypy_drf_plugin.main"]
 
 [tool.django-stubs]
@@ -86,7 +86,7 @@ xfail_strict = true
 
 [tool.coverage.run]
 branch = true
-source = ["tallyproof_core", "tallyproof_pipeline", "config", "apps"]
+source = ["tallyproof_core", "tallyproof_pipeline", "config", "apps", "evals"]
 # Server entry points and per-environment settings only wire things together.
 omit = ["config/wsgi.py", "config/asgi.py", "config/settings/local.py", "config/settings/ci.py"]
 

@@ -1,0 +1,23 @@
+{
+  "seed": 2026,
+  "per_anomaly": 3,
+  "awards": 295,
+  "real_events": 672,
+  "events": 717,
+  "labels": {
+    "deobligation_exceeds_award": 3,
+    "duplicate_award_semantic": 3,
+    "duplicate_delivery": 3,
+    "injection_description": 3,
+    "late_arrival": 3,
+    "orphan_outlay": 3,
+    "outlay_exceeds_obligation": 3,
+    "recipient_burst": 3,
+    "schema_invalid": 3
+  },
+  "selection": {
+    "deobligation": 25,
+    "no-outlays": 30,
+    "outlays": 240
+  }
+}
