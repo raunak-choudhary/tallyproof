@@ -159,7 +159,7 @@ Events are keyed by recipient because reconciliation works per award and recipie
 
 ## Database
 
-PostgreSQL 16 with pgvector.
+PostgreSQL 16 with pgvector. The diagram shows the whole design. The ledger, batch, journal, break, and outbox tables exist today; `POLICY_DOCUMENT`, `ANSWER`, `CLAIM`, `CITATION`, and the evaluation tables arrive with the analyst.
 
 ```mermaid
 erDiagram
@@ -274,36 +274,40 @@ The journal uses simplified budgetary accounting: an obligation moves funds from
 
 Roles are created by a script that runs the same way locally and in CI. Grants live in an idempotent migration with default privileges, so tables created later inherit them.
 
-### Analyst views
+### Analyst views (planned)
 
-`analyst.obligations`, `analyst.outlays`, `analyst.awards` (one row per award with totals), `analyst.cash_movements`, `analyst.breaks`, and `analyst.journal`. Every view exposes `event_id`, so each answer can cite the records behind it. Raw bytes, Kafka coordinates, and internal IDs stay hidden, and free-text description columns appear only in a separate view the query compiler must request explicitly.
+These are built with the analyst: `analyst.obligations`, `analyst.outlays`, `analyst.awards` (one row per award with totals), `analyst.cash_movements`, `analyst.breaks`, and `analyst.journal`. Every view exposes `event_id`, so each answer can cite the records behind it. Raw bytes, Kafka coordinates, and internal IDs stay hidden, and free-text description columns appear only in a separate view the query compiler must request explicitly.
 
 ## API
 
-All endpoints are under `/api/v1/` and return JSON. The OpenAPI schema is at `/api/v1/schema/`, with browsable docs at `/api/v1/docs/`. Errors use RFC 9457 problem details.
+All endpoints except the health checks are under `/api/v1/` and return JSON. The OpenAPI schema is at `/api/v1/schema/`, with browsable docs at `/api/v1/docs/`. Errors use RFC 9457 problem details.
 
 | Method | Path | Purpose |
 |---|---|---|
-| GET | `/api/v1/events` | Events, cursor-paginated, filterable by account, type, and date |
+| GET | `/api/v1/log-key` | The log origin and the verifier key every checkpoint is signed with |
+| GET | `/api/v1/events` | Events in log order, cursor-paginated (`limit` up to 200), filterable by `event_type` and `account_id` |
 | GET | `/api/v1/events/{event_id}` | One event with its canonical bytes and leaf index |
-| GET | `/api/v1/events/{event_id}/proof` | Inclusion proof against the latest or a chosen checkpoint |
-| GET | `/api/v1/batches` | Batches and their checkpoints |
-| GET | `/api/v1/batches/{batch_id}` | One batch with its signed checkpoint |
-| GET | `/api/v1/batches/{batch_id}/consistency?from={batch_id}` | Consistency proof between two checkpoints |
-| GET | `/api/v1/checkpoints/latest` | The latest signed checkpoint |
-| GET | `/api/v1/log-key` | Public key and log origin |
-| GET | `/api/v1/sources` | Registered source files with their hashes |
+| GET | `/api/v1/events/{event_id}/proof` | Inclusion proof against the newest checkpoint, or the one at `?tree_size=` |
+| GET | `/api/v1/checkpoints` | Signed checkpoints, newest first |
+| GET | `/api/v1/checkpoints/latest` | The newest signed checkpoint |
+| GET | `/api/v1/checkpoints/{tree_size}` | The checkpoint signed at one tree size |
+| GET | `/api/v1/consistency?first={size}&second={size}` | Proof that the second checkpoint extends the first |
+| GET | `/api/v1/batches/{batch_id}/consistency` | Proof that a batch's checkpoint extends the one before it; 409 for the first batch |
+| GET | `/api/v1/reconciliation/breaks` | Breaks in the order found, filterable by `break_type` and `award_key` |
+| GET | `/api/v1/reconciliation/breaks/{break_id}` | One break and the events involved, with their roles |
+| GET | `/healthz` | Liveness, no dependencies |
+| GET | `/readyz` | Checks the database and the broker; 503 names whichever is down |
+
+Planned with the analyst and evaluation work:
+
+| Method | Path | Purpose |
+|---|---|---|
 | POST | `/api/v1/queries` | Ask a question. Rate limited |
 | GET | `/api/v1/answers/{answer_id}` | An answer with its claims, bound values, and citations |
-| GET | `/api/v1/reconciliation/breaks` | Breaks, filterable by type and account |
-| GET | `/api/v1/reconciliation/breaks/{break_id}` | One break and the events involved |
-| GET | `/api/v1/policy-documents/{document_id}` | A policy document version and its leaf index |
-| GET | `/api/v1/eval-runs` | Evaluation runs |
-| GET | `/api/v1/eval-runs/{run_id}` | Metrics and per-question results for one run |
-| GET | `/healthz` | Liveness, no dependencies |
-| GET | `/readyz` | Checks the broker, database, and cache |
+| GET | `/api/v1/policy-documents/{document_id}` | A policy section and its leaf index |
+| GET | `/api/v1/eval-runs`, `/api/v1/eval-runs/{run_id}` | Evaluation runs and their per-question results |
 
-Live updates stream over the WebSocket at `/ws/v1/stream`: appended events, checkpoints, and breaks.
+Live updates stream over the WebSocket at `/ws/v1/stream`, served separately by `make stream`: appended events, signed checkpoints, and breaks. A client that falls behind receives `{"kind": "facts_dropped", "count": n}` and should re-read state over REST.
 
 A proof response looks like this:
 
@@ -311,19 +315,14 @@ A proof response looks like this:
 {
   "event_id": "evt_01J...",
   "leaf_index": 4211,
-  "canonical_event_b64": "...",
+  "tree_size": 5000,
+  "leaf_hash_hex": "9f2c...",
   "audit_path_hex": ["...", "..."],
-  "checkpoint": {
-    "batch_id": "bat_01J...",
-    "origin": "tallyproof.dev/log/v1",
-    "tree_size": 5000,
-    "root_hash_b64": "...",
-    "body": "...",
-    "signature_b64": "...",
-    "key_id": "rel-..."
-  }
+  "checkpoint_note": "tallyproof.dev/log/v1\n5000\n<root, base64>\n\n\u2014 tallyproof.dev/log/v1 <key ID and signature, base64>\n"
 }
 ```
+
+`checkpoint_note` is the C2SP signed note exactly as it was signed. The client checks its signature against the pinned key, recomputes the leaf hash from the event's canonical bytes, and walks the audit path to the note's root.
 
 The API returns proofs, never verdicts. There's no `"verified": true` anywhere. The client computes the leaf hash itself and does the checking.
 
