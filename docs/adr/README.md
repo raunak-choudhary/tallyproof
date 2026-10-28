@@ -23,3 +23,4 @@ Each record explains the context, the decision, the reasons, the alternatives co
 | 0017 | PySpark 4.1 batch processing with Deequ data quality | Accepted |
 | 0018 | Uvicorn instead of Daphne for the WebSocket server | Accepted |
 | 0019 | Derived state is projected from the ledger, not consumed from Kafka | Accepted |
+| 0020 | GitHub Pages for the public demo, deployed by GitHub Actions | Accepted |
