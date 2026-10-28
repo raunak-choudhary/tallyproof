@@ -17,3 +17,4 @@ django-cors-headers>=4.9,<5    # restricts the API to the web app's origin
 dj-database-url>=3.1,<4        # turns DB_URL style settings into Django database config
 psycopg[binary]>=3.3,<4        # PostgreSQL driver with COPY support for staged inserts
 confluent-kafka>=2.16,<3       # Kafka client for Redpanda (librdkafka bundled)
+gunicorn>=26.2,<27             # production WSGI server for the API
