@@ -9,3 +9,7 @@ ruff==0.17.3            # linter and formatter, pinned exactly because rule sets
 mypy>=2.4,<3            # strict type checking
 pre-commit>=4.7,<5      # git hooks
 pip-audit>=2.9,<3       # known-vulnerability scan of pinned dependencies
+pytest-django>=4.14,<5                       # Django test integration
+testcontainers[kafka,postgres]>=4.15,<5      # real Redpanda and Postgres in integration tests
+django-stubs[compatible-mypy]>=6.1,<7        # type information for Django under strict mypy
+djangorestframework-stubs>=3.16,<4           # type information for Django REST Framework
