@@ -32,7 +32,7 @@ COMPOSE := docker --context colima-$(COLIMA_PROFILE) compose --env-file .env -f 
 SPARK_VERSION ?= 4.1
 export SPARK_VERSION
 
-.PHONY: help doctor venv deps deps-sync require-venv lint format typecheck test check audit vectors web-install web-lint web-typecheck web-test web-build web-check web-audit data-fetch data-build data-quality require-no-containers data-gold keygen replay data-sample test-integration coverage coverage-report require-colima up down reset ps logs db-roles migrate ingest checkpointer verify-witness data-replay data-treasury console clean
+.PHONY: help doctor venv deps deps-sync require-venv lint format typecheck test check audit vectors web-install web-lint web-typecheck web-test web-build web-check web-audit data-fetch data-build data-quality require-no-containers data-gold keygen replay data-sample test-integration coverage coverage-report require-colima up down reset ps logs db-roles migrate ingest checkpointer verify-witness data-replay data-treasury demo demo-stop verify-event console clean
 
 help: ## List available commands
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -203,7 +203,21 @@ verify-witness: require-venv require-colima ## Check exported checkpoints agains
 	cd $(BACKEND) && DJANGO_SETTINGS_MODULE=config.settings.local .venv/bin/python manage.py verify_witness
 
 data-replay: require-venv require-colima ## Stream gold events into Kafka (LIMIT=n RATE=per-second)
-	cd $(BACKEND) && .venv/bin/python -m tallyproof_pipeline.stream $(if $(LIMIT),--limit $(LIMIT)) $(if $(RATE),--rate $(RATE))
+	cd $(BACKEND) && .venv/bin/python -m tallyproof_pipeline.stream $(if $(LIMIT),--limit $(LIMIT)) \
+		$(if $(RATE),--rate $(RATE)) $(if $(EVENTS_FILE),--events $(EVENTS_FILE))
+
+demo: require-venv ## Start the whole live pipeline and verify an event from it (DEMO_EVENTS=n)
+	./scripts/demo.sh
+
+demo-stop: ## Stop the demo's processes and containers, keeping their data
+	@for name in api ingest checkpointer web; do \
+		pid_file=var/demo/$$name.pid; \
+		if [ -f $$pid_file ]; then kill $$(cat $$pid_file) 2>/dev/null && echo "stopped $$name"; rm -f $$pid_file; fi; \
+	done
+	-$(MAKE) --no-print-directory down
+
+verify-event: require-venv ## Verify an event from the running API against the pinned key (EVENT=evt_...)
+	cd $(BACKEND) && DJANGO_SETTINGS_MODULE=config.settings.local .venv/bin/python manage.py verify_event $(if $(EVENT),--event $(EVENT))
 
 data-treasury: require-venv require-colima ## Publish Treasury cash statements (SINCE=yyyy-mm-dd, FOLLOW=1 to keep checking)
 	cd $(BACKEND) && .venv/bin/python -m tallyproof_pipeline.treasury $(if $(SINCE),--since $(SINCE)) $(if $(FOLLOW),--follow)
