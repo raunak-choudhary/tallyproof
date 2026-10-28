@@ -12,6 +12,7 @@ outbox ID in the ``outbox-id`` header so consumers can drop repeats.
 
 import json
 from collections.abc import Callable
+from dataclasses import dataclass
 from typing import Protocol
 
 from django.db import connection, transaction
@@ -32,6 +33,25 @@ class Sink(Protocol):
         on_delivery: Callable[[object, object], None],
     ) -> None: ...
     def flush(self, timeout: float) -> int: ...  # noqa: D102
+
+
+@dataclass(frozen=True)
+class OutboxLag:
+    """How far the relay is behind: unpublished messages and the oldest one's age."""
+
+    pending: int
+    oldest_seconds: float | None
+
+
+def outbox_lag() -> OutboxLag:
+    """Measure the relay's lag from the outbox itself, so it's true whichever relay runs."""
+    with connection.cursor() as cursor:
+        cursor.execute(
+            "SELECT count(*), EXTRACT(EPOCH FROM now() - min(created_at))"
+            " FROM outbox WHERE published_at IS NULL"
+        )
+        pending, oldest = cursor.fetchone()
+    return OutboxLag(int(pending), None if oldest is None else float(oldest))
 
 
 class RelayError(RuntimeError):
