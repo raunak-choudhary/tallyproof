@@ -5,7 +5,7 @@ from decimal import Decimal
 import pytest
 
 from tallyproof_core.events import EventEnvelope
-from tallyproof_pipeline.settings import get_settings
+from tallyproof_pipeline.settings import PipelineSettings
 from tallyproof_pipeline.treasury import (
     PAGE_SIZE,
     TreasuryError,
@@ -17,6 +17,13 @@ from tallyproof_pipeline.treasury import (
 )
 
 DAY = date(2026, 10, 26)
+# Built here rather than read from .env, so the tests don't depend on a developer's machine.
+SETTINGS = PipelineSettings(
+    _env_file=None,
+    DATA_SOURCE_USASPENDING_FILES_URL="https://files.example.gov/",
+    DATA_SOURCE_USASPENDING_API_URL="https://api.example.gov/api/v2/",
+    DATA_SOURCE_FISCALDATA_API_URL="https://fiscal.example.gov/",
+)
 
 
 def line(
@@ -108,7 +115,7 @@ def test_messages_are_keyed_by_the_treasury_account_and_round_trip():
 def test_fetch_day_follows_pages_until_a_short_one():
     full = [line(i, "Deposits", f"c{i}", "1") for i in range(PAGE_SIZE)]
     session = FakeSession([full, ROWS[:2]])
-    rows = fetch_day(session, get_settings(), DAY)  # type: ignore[arg-type]
+    rows = fetch_day(session, SETTINGS, DAY)  # type: ignore[arg-type]
     assert len(rows) == PAGE_SIZE + 2
     assert [c["page[number]"] for c in session.calls] == ["1", "2"]
     assert session.calls[0]["filter"] == "record_date:eq:2026-10-26"
@@ -116,13 +123,13 @@ def test_fetch_day_follows_pages_until_a_short_one():
 
 def test_latest_date_and_bad_responses():
     session = FakeSession([[{"record_date": "2026-10-26"}], []])
-    assert latest_record_date(session, get_settings()) == DAY  # type: ignore[arg-type]
+    assert latest_record_date(session, SETTINGS) == DAY  # type: ignore[arg-type]
     with pytest.raises(TreasuryError, match="no statements"):
-        latest_record_date(session, get_settings())  # type: ignore[arg-type]
+        latest_record_date(session, SETTINGS)  # type: ignore[arg-type]
     broken = FakeSession([])
     broken.get = lambda url, params, timeout: FakeResponse({"error": "x"})  # type: ignore[method-assign]
     with pytest.raises(TreasuryError, match="no data"):
-        fetch_day(broken, get_settings(), DAY)  # type: ignore[arg-type]
+        fetch_day(broken, SETTINGS, DAY)  # type: ignore[arg-type]
 
 
 def test_days_between_is_inclusive():
