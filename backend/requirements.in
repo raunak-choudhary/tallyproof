@@ -19,3 +19,7 @@ psycopg[binary]>=3.3,<4        # PostgreSQL driver with COPY support for staged 
 confluent-kafka>=2.16,<3       # Kafka client for Redpanda (librdkafka bundled)
 gunicorn>=26.2,<27             # production WSGI server for the API
 structlog>=26.1,<27              # structured JSON logs with correlation IDs
+channels>=4.3.2,<4.4           # WebSocket stream of ledger facts
+channels-redis>=4.3,<4.4       # channel layer shared across processes
+uvicorn>=0.54,<1               # ASGI server for the WebSocket endpoint (Daphne needs Twisted, which has open CVEs)
+websockets>=17.3,<18            # WebSocket protocol for uvicorn
