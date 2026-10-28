@@ -1,0 +1,127 @@
+# Tallyproof CI. Each job runs the same make target a developer runs locally.
+# The ci-gate job depends on every check and is the only required status check
+# on main, so adding or removing jobs never requires changing branch protection.
+version: 2.1
+
+executors:
+  python:
+    docker:
+      - image: cimg/python:3.12.9
+    resource_class: small
+
+commands:
+  setup-python:
+    description: Check out the code and install the pinned Python dependencies
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - venv-v1-{{ arch }}-{{ checksum "backend/requirements.txt" }}-{{ checksum "backend/requirements-dev.txt" }}
+      - run:
+          name: Install pinned dependencies
+          command: make venv PYTHON=python3.12
+      - save_cache:
+          key: venv-v1-{{ arch }}-{{ checksum "backend/requirements.txt" }}-{{ checksum "backend/requirements-dev.txt" }}
+          paths:
+            - backend/.venv
+
+jobs:
+  lint:
+    executor: python
+    steps:
+      - setup-python
+      - run:
+          name: Lint and formatting
+          command: make lint
+
+  typecheck:
+    executor: python
+    steps:
+      - setup-python
+      - run:
+          name: Strict type checking
+          command: make typecheck
+
+  unit-tests:
+    executor: python
+    steps:
+      - setup-python
+      - run:
+          name: Unit tests with coverage
+          command: make test
+          environment:
+            PYTEST_ADDOPTS: --junitxml=test-results/junit.xml
+      - store_test_results:
+          path: backend/test-results
+      - store_artifacts:
+          path: backend/coverage.xml
+          destination: coverage/coverage.xml
+
+  dependency-audit:
+    executor: python
+    steps:
+      - setup-python
+      - run:
+          name: Scan pinned dependencies for known vulnerabilities
+          command: make audit
+
+  commit-messages:
+    executor: python
+    steps:
+      - checkout
+      - run:
+          name: Every commit follows Conventional Commits
+          command: |
+            git fetch --quiet origin main
+            if [ "$CIRCLE_BRANCH" = "main" ]; then
+              base="<< pipeline.git.base_revision >>"
+              range="${base:-HEAD~1}..HEAD"
+            else
+              range="origin/main..HEAD"
+            fi
+            echo "Checking commits in $range"
+            python3 scripts/ci/check_commit_messages.py "$range"
+
+  secret-scan:
+    executor: python
+    environment:
+      GITLEAKS_VERSION: 8.30.1
+    steps:
+      - checkout
+      - run:
+          name: Install gitleaks and verify its checksum
+          command: |
+            base="https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}"
+            tarball="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+            curl -sSfL -o "/tmp/${tarball}" "${base}/${tarball}"
+            curl -sSfL -o /tmp/checksums.txt "${base}/gitleaks_${GITLEAKS_VERSION}_checksums.txt"
+            (cd /tmp && grep " ${tarball}\$" checksums.txt | sha256sum --check --strict)
+            tar -xzf "/tmp/${tarball}" -C /tmp gitleaks
+      - run:
+          name: Scan the full history for secrets
+          command: /tmp/gitleaks git --config .gitleaks.toml --redact --verbose .
+
+  ci-gate:
+    executor: python
+    steps:
+      - run:
+          name: All required checks passed
+          command: echo "Lint, types, tests, audit, commit messages, and secret scan all passed."
+
+workflows:
+  checks:
+    jobs:
+      - lint
+      - typecheck
+      - unit-tests
+      - dependency-audit
+      - commit-messages
+      - secret-scan
+      - ci-gate:
+          requires:
+            - lint
+            - typecheck
+            - unit-tests
+            - dependency-audit
+            - commit-messages
+            - secret-scan
