@@ -75,6 +75,15 @@ export default function HomePage() {
         </ul>
       </section>
 
+      {process.env.NEXT_PUBLIC_API_URL && (
+        <p className="mt-6">
+          <Link href="/live/" className="text-accent underline-offset-4 hover:underline">
+            Open the live ledger
+          </Link>{" "}
+          <span className="text-fg-muted">to verify events as the pipeline appends them.</span>
+        </p>
+      )}
+
       <section aria-labelledby="how-heading" className="mt-12 space-y-3 text-fg-muted">
         <h2 id="how-heading" className="text-lg font-semibold text-fg">
           What your browser checks
