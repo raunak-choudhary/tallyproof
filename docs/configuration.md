@@ -85,6 +85,7 @@ Every setting comes from environment variables, loaded through one typed setting
 | `DATA_DOWNLOAD_MAX_MBPS` | no | `20` | Download speed cap |
 | `DATA_REPLAY_SLICE_EVENTS` | no | `1000000` | Events replayed from the lake into Kafka |
 | `DATA_REPLAY_RATE_PER_SEC` | no | `2000` | Replay speed; raised only for load testing |
+| `DATA_TREASURY_POLL_SECONDS` | no | `3600` | How often the live Treasury connector checks for a new daily statement |
 | `OVERLAY_SEED` | no | `42` | Seed for the injected anomalies |
 | `SPARK_MASTER` | no | `local[3]` | Keeps Spark to three cores |
 | `SPARK_DRIVER_MEMORY` | no | `2g` | Keeps Spark within the laptop's memory budget |
