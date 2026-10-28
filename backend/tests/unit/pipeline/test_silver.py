@@ -4,13 +4,11 @@ from decimal import Decimal
 
 import pytest
 
-from tallyproof_pipeline.settings import PipelineSettings
 from tallyproof_pipeline.silver import (
     PII_COLUMNS,
     SILVER_COLUMNS,
     process_member,
     read_csv,
-    spark_session,
     transform,
 )
 
@@ -59,27 +57,6 @@ ROWS = [
     row("T7", federal_action_obligation="-500.00"),
     row("T8", last_modified_date="not a time"),
 ]
-
-
-@pytest.fixture(scope="module")
-def settings(tmp_path_factory):
-    return PipelineSettings(
-        _env_file=None,
-        DATA_DIR=tmp_path_factory.mktemp("data"),
-        DATA_SOURCE_USASPENDING_FILES_URL="https://files.example.gov/",
-        DATA_SOURCE_USASPENDING_API_URL="https://api.example.gov/",
-        DATA_SOURCE_FISCALDATA_API_URL="https://fiscal.example.gov/",
-        SPARK_MASTER="local[1]",
-        SPARK_DRIVER_MEMORY="1g",
-        SPARK_SHUFFLE_PARTITIONS=1,
-    )
-
-
-@pytest.fixture(scope="module")
-def spark(settings):
-    session = spark_session(settings)
-    yield session
-    session.stop()
 
 
 @pytest.fixture(scope="module")
@@ -155,7 +132,10 @@ def test_missing_expected_columns_fail_loudly(spark):
         transform(frame)
 
 
-def test_process_member_writes_parquet_and_a_report_and_removes_the_csv(spark, settings, csv_path):
+def test_process_member_writes_parquet_and_a_report_and_removes_the_csv(
+    spark, spark_settings, csv_path
+):
+    settings = spark_settings
     archive = settings.data_dir / "FY2025_All_Contracts_Full_20261006.zip"
     with zipfile.ZipFile(archive, "w") as bundle:
         bundle.write(csv_path, csv_path.name)
