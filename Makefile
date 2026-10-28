@@ -32,7 +32,7 @@ COMPOSE := docker --context colima-$(COLIMA_PROFILE) compose --env-file .env -f 
 SPARK_VERSION ?= 4.1
 export SPARK_VERSION
 
-.PHONY: help doctor venv deps deps-sync require-venv lint format typecheck test check audit vectors web-install web-lint web-typecheck web-test web-build web-check web-audit web-live data-fetch data-build data-quality require-no-containers data-gold keygen replay data-sample test-integration coverage coverage-report require-colima up down reset ps logs db-roles migrate ingest checkpointer verify-witness data-replay data-treasury demo demo-stop tamper schemas register-schemas verify-event console clean
+.PHONY: help doctor venv deps deps-sync require-venv lint format typecheck test check audit vectors web-install web-lint web-typecheck web-test web-build web-check web-audit web-live data-fetch data-build data-quality require-no-containers data-gold keygen replay data-sample test-integration coverage coverage-report require-colima up down reset ps logs db-roles migrate ingest checkpointer verify-witness data-replay data-treasury policy-fetch policy-publish demo demo-stop tamper schemas register-schemas verify-event console clean
 
 help: ## List available commands
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -206,6 +206,12 @@ checkpointer: require-venv require-colima ## Sign checkpoints as the log grows (
 
 verify-witness: require-venv require-colima ## Check exported checkpoints against the key and the current log
 	cd $(BACKEND) && DJANGO_SETTINGS_MODULE=config.settings.local .venv/bin/python manage.py verify_witness
+
+policy-fetch: require-venv ## Refresh the committed FAR policy corpus from eCFR (review the diff before committing)
+	cd $(BACKEND) && .venv/bin/python -m tallyproof_pipeline.policy fetch
+
+policy-publish: require-venv require-colima ## Publish the committed FAR policy corpus to the raw topic
+	cd $(BACKEND) && .venv/bin/python -m tallyproof_pipeline.policy publish
 
 data-replay: require-venv require-colima ## Stream gold events into Kafka (LIMIT=n RATE=per-second)
 	cd $(BACKEND) && .venv/bin/python -m tallyproof_pipeline.stream $(if $(LIMIT),--limit $(LIMIT)) \

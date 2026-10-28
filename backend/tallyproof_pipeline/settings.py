@@ -29,7 +29,12 @@ class PipelineSettings(BaseSettings):
     usaspending_files_url: HttpUrl = Field(validation_alias="DATA_SOURCE_USASPENDING_FILES_URL")
     usaspending_api_url: HttpUrl = Field(validation_alias="DATA_SOURCE_USASPENDING_API_URL")
     fiscaldata_api_url: HttpUrl = Field(validation_alias="DATA_SOURCE_FISCALDATA_API_URL")
+    ecfr_api_url: HttpUrl = Field(validation_alias="DATA_SOURCE_ECFR_API_URL")
     fiscal_years: list[int] = Field(default=[2025], validation_alias="DATA_FISCAL_YEARS")
+    far_parts: list[int] = Field(default=[2, 4, 32, 43], validation_alias="POLICY_FAR_PARTS")
+    policy_corpus_dir: Path = Field(
+        default=REPO_ROOT / "backend" / "corpus" / "far", validation_alias="POLICY_CORPUS_DIR"
+    )
     download_max_mbps: float = Field(default=20.0, gt=0, validation_alias="DATA_DOWNLOAD_MAX_MBPS")
     overlay_seed: int = Field(default=42, validation_alias="OVERLAY_SEED")
     overlay_per_anomaly: int = Field(default=25, ge=1, validation_alias="OVERLAY_PER_ANOMALY")
