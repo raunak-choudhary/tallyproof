@@ -51,23 +51,34 @@ def test_modification_becomes_obligation_adjusted_and_keeps_negative_amounts():
     assert event.payload.modification_number == "P00004"
 
 
-def test_timing_reflects_when_the_government_reported_it():
+def test_timing_reflects_when_the_government_first_reported_it():
     event = conform(silver_row(), seed=1)
     document = event.leaf_document()
     assert document["occurred_at"] == "2025-03-14T00:00:00Z"
-    assert document["emitted_at"] == "2025-03-20T04:28:07Z"
+    assert document["emitted_at"] == "2025-03-15T13:07:48Z"
+
+
+def test_a_later_edit_does_not_make_a_transaction_look_late():
+    # Real FY2024 rows downloaded in 2026 carry 2025 and 2026 edit times. Using them
+    # made three in four transactions look reported a year after they happened.
+    edited = silver_row(last_modified_date=datetime(2026, 9, 1))
+    assert conform(edited, seed=1).emitted_at == datetime(2025, 3, 15, 13, 7, 48, tzinfo=UTC)
+
+
+def test_the_last_edit_is_used_only_when_the_first_report_time_is_missing():
+    event = conform(silver_row(initial_report_date=None), seed=1)
+    assert event.emitted_at == datetime(2025, 3, 20, 4, 28, 7, tzinfo=UTC)
 
 
 def test_plain_report_dates_and_aware_timestamps_are_both_accepted():
-    assert conform(silver_row(last_modified_date=date(2025, 3, 21)), seed=1).emitted_at == datetime(
-        2025, 3, 21, tzinfo=UTC
-    )
+    plain = silver_row(initial_report_date=date(2025, 3, 21))
+    assert conform(plain, seed=1).emitted_at == datetime(2025, 3, 21, tzinfo=UTC)
     aware = datetime(2025, 3, 22, 8, 0, tzinfo=UTC)
-    assert conform(silver_row(last_modified_date=aware), seed=1).emitted_at == aware
+    assert conform(silver_row(initial_report_date=aware), seed=1).emitted_at == aware
 
 
 def test_report_date_before_action_date_is_clamped_to_the_action_date():
-    event = conform(silver_row(last_modified_date=date(2025, 1, 1)), seed=1)
+    event = conform(silver_row(initial_report_date=date(2025, 1, 1)), seed=1)
     assert event.emitted_at == event.occurred_at
 
 
@@ -102,7 +113,7 @@ def test_rows_that_cannot_form_events_are_rejected():
     with pytest.raises(TypeError, match="action_date"):
         conform(silver_row(action_date="2025-03-14"), seed=1)
     with pytest.raises(TypeError, match="dates or timestamps"):
-        conform(silver_row(last_modified_date="soon"), seed=1)
+        conform(silver_row(initial_report_date="soon"), seed=1)
     with pytest.raises(ValidationError):
         conform(silver_row(recipient_uei=""), seed=1)
 
