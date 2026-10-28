@@ -27,7 +27,7 @@ endif
 SPARK_VERSION ?= 4.1
 export SPARK_VERSION
 
-.PHONY: help doctor venv deps deps-sync require-venv lint format typecheck test check audit vectors web-install web-lint web-typecheck web-test web-build web-check data-fetch clean
+.PHONY: help doctor venv deps deps-sync require-venv lint format typecheck test check audit vectors web-install web-lint web-typecheck web-test web-build web-check data-fetch data-build data-quality require-no-containers clean
 
 help: ## List available commands
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -79,6 +79,17 @@ vectors: require-venv ## Regenerate the shared cross-language test vectors
 
 data-fetch: require-venv ## Download the configured fiscal years into data/bronze
 	cd $(BACKEND) && .venv/bin/python -m tallyproof_pipeline.acquire
+
+require-no-containers:
+	@if command -v colima >/dev/null 2>&1 && colima list 2>/dev/null | grep -q Running; then \
+		echo "A Colima VM is running. Stop it first (colima stop tallyproof): Spark and the"; \
+		echo "container stack never run together on an 8 GB machine."; exit 1; fi
+
+data-build: require-venv require-no-containers ## Clean downloaded archives into silver Parquet with Spark
+	cd $(BACKEND) && .venv/bin/python -m tallyproof_pipeline.silver
+
+data-quality: require-venv require-no-containers ## Run the Deequ data quality checks on silver
+	cd $(BACKEND) && .venv/bin/python -m tallyproof_pipeline.quality
 
 check: lint typecheck test ## Everything CI checks on every pull request
 
