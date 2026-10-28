@@ -64,6 +64,9 @@ class AppSettings(BaseSettings):
         default=0.001, gt=0, lt=1, validation_alias="DEDUPE_TARGET_FPR"
     )
 
+    kafka_schema_registry_url: str = Field(
+        default="http://127.0.0.1:18081", validation_alias="KAFKA_SCHEMA_REGISTRY_URL"
+    )
     kafka_topic_recon_breaks: str = Field(
         default="recon.breaks.v1", validation_alias="KAFKA_TOPIC_RECON_BREAKS"
     )
