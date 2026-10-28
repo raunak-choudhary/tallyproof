@@ -7,6 +7,7 @@ import pytest
 from pyspark.sql.types import StructField, StructType
 
 from tallyproof_pipeline.gold import build_gold, read_events
+from tallyproof_pipeline.overlay import Anomaly
 from tallyproof_pipeline.silver import SILVER_COLUMNS
 
 pytestmark = pytest.mark.spark
@@ -45,7 +46,7 @@ def test_build_gold_writes_events_labels_and_a_report(spark, spark_settings):
     assert report.real_events + report.rows_rejected == 20
     assert report.rows_rejected == 1  # the row with an empty recipient UEI
     assert len(events) == report.real_events + report.injected_events
-    assert len(labels) == 2 * 6
+    assert len(labels) == 2 * len(Anomaly)
     with gzip.open(settings.gold_dir / "invalid_records.jsonl.gz", "rt") as handle:
         assert len(handle.read().splitlines()) == report.invalid_records == 2
     saved = json.loads((settings.gold_dir / "report.json").read_text())
