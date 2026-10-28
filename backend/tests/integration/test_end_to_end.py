@@ -9,7 +9,6 @@ proof the API returns is checked here with the core verifier.
 import json
 import random
 import time
-from collections.abc import Iterator
 from itertools import islice
 
 import pytest
@@ -33,20 +32,18 @@ from tallyproof_pipeline.stream import Outgoing, interleave, publish
 from tests.unit.pipeline.test_replay_bundle import SIGNER
 
 pytestmark = pytest.mark.django_db
-REDPANDA_IMAGE = "docker.redpanda.com/redpandadata/redpanda:v26.2.6"
 RAW, DLQ, GROUP = "fin.events.raw.v1", "fin.events.dlq.v1", "ingest-e2e"
 EVENTS, REDELIVERED, INVALID = 500, 50, 3
 IPV4 = {"broker.address.family": "v4"}
 
 
 @pytest.fixture(scope="module")
-def broker() -> Iterator[str]:
-    with RedpandaContainer(REDPANDA_IMAGE) as redpanda:
-        servers = redpanda.get_bootstrap_server()
-        admin = AdminClient({"bootstrap.servers": servers, **IPV4})
-        for future in admin.create_topics([NewTopic(RAW, 3, 1), NewTopic(DLQ, 1, 1)]).values():
-            future.result(timeout=30)
-        yield servers
+def broker(redpanda: RedpandaContainer) -> str:
+    servers = redpanda.get_bootstrap_server()
+    admin = AdminClient({"bootstrap.servers": servers, **IPV4})
+    for future in admin.create_topics([NewTopic(RAW, 3, 1), NewTopic(DLQ, 1, 1)]).values():
+        future.result(timeout=30)
+    return servers
 
 
 def messages() -> list[Outgoing]:

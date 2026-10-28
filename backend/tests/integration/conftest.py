@@ -14,11 +14,13 @@ import pytest
 from django.core.management import call_command
 from django.db import connections
 from pytest_django import DjangoDbBlocker
+from testcontainers.community.kafka import RedpandaContainer
 from testcontainers.community.postgres import PostgresContainer
 
 from tallyproof_pipeline.settings import REPO_ROOT
 
 POSTGRES_IMAGE = "pgvector/pgvector:0.8.7-pg16-trixie"
+REDPANDA_IMAGE = "docker.redpanda.com/redpandadata/redpanda:v26.2.6"
 ROLE_SCRIPT = REPO_ROOT / "infra" / "postgres" / "create-roles.sql"
 ROLES = ("owner", "app", "analyst")
 
@@ -106,3 +108,10 @@ def migrated(django_db_setup: None, database: Database) -> Database:
         conn.execute("ALTER TABLE ledger_event ENABLE TRIGGER USER")
         conn.execute("UPDATE merkle_log_head SET next_leaf_index = 0")
     return database
+
+
+@pytest.fixture(scope="session")
+def redpanda() -> Iterator[RedpandaContainer]:
+    """One Redpanda broker and schema registry, shared by every test that needs one."""
+    with RedpandaContainer(REDPANDA_IMAGE) as container:
+        yield container
