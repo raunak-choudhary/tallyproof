@@ -31,6 +31,10 @@ class AppSettings(BaseSettings):
     allowed_hosts: str = Field(validation_alias="DJANGO_ALLOWED_HOSTS")
     cors_allowed_origins: str = Field(default="", validation_alias="CORS_ALLOWED_ORIGINS")
     data_classification: str = Field(validation_alias="DATA_CLASSIFICATION")
+    # Off for local HTTP development; on wherever the API is served over HTTPS.
+    secure_ssl_redirect: bool = Field(default=False, validation_alias="DJANGO_SECURE_SSL_REDIRECT")
+    hsts_seconds: int = Field(default=0, ge=0, validation_alias="DJANGO_HSTS_SECONDS")
+    trusted_proxy_count: int = Field(default=0, ge=0, validation_alias="TRUSTED_PROXY_COUNT")
 
     db_url: SecretStr = Field(validation_alias="DB_URL")
     db_owner_url: SecretStr | None = Field(default=None, validation_alias="DB_OWNER_URL")
