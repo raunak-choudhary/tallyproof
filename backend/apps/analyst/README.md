@@ -10,6 +10,8 @@ Answers questions about the ledger with numbers bound to query results and citat
 | `llm.py` | The model client interface and its implementations: a scripted fake, a client for any OpenAI-compatible provider (Gemini first), a response cache keyed by model, prompt version, and parameters, and per-run budgets |
 | `router.py` | Routes a question: fixed rules for refusals, policy questions, and known anomaly lists; the model, answering in JSON, for the rest. Its spec is validated before use |
 | `retrieval.py` | Finds the FAR text a question is about: chunks of each section's leaf, BM25 and local embeddings fused by reciprocal rank. Each chunk keeps its leaf and offsets, so quotes cite and check against the exact leaf |
+| `answer.py` | Bound-claim answers (ADR-0009): evidence as typed slots, citations, and quote sources; the verifier that rejects free numbers, unbound labels, and inexact quotes; rendering |
+| `pipeline.py` | Question to answer: route, compile and run (or guarded fallback SQL, or policy retrieval), compose, verify, one repair, otherwise a typed refusal |
 | `compiler.py` | Compiles a spec into SQL over the views, pinned to a checkpoint, with every value bound and the filter rendered in words |
 
 The `tallyproof_analyst` role can read these views and nothing else. Its connections are read-only by default, time out after 3 seconds, and have `search_path` pinned to `analyst` (`infra/postgres/create-roles.sql`). Even with read-only mode switched off, it holds no grant that allows a write.

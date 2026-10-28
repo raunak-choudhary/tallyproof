@@ -252,8 +252,8 @@ class QuerySpec(_Strict):
                 raise SpecError(f"{self.entity} has no amount to {self.metric}")
             if self.limit is not None and self.group_by is None:
                 raise SpecError("only a grouped aggregate can be limited to its top groups")
-            if self.fields or self.order_by:
-                raise SpecError("an aggregate takes no fields or order_by")
+            if self.order_by or (self.fields and self.metric not in ("min_amount", "max_amount")):
+                raise SpecError("only a min or max aggregate takes fields, and none takes order_by")
         elif self.metric is not None or self.group_by is not None:
             raise SpecError(f"a {self.shape} takes no metric or group_by")
         if self.shape == "list" and self.limit is None:

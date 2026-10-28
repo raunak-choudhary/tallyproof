@@ -84,8 +84,11 @@ def test_a_grouped_top_n_ranks_groups_and_cites_their_rows():
 
 def test_min_and_max_cite_the_extreme_row():
     q = compile_spec(
-        spec(shape="aggregate", entity="obligations", metric="max_amount"), tree_size=5, max_rows=10
+        spec(shape="aggregate", entity="obligations", metric="max_amount", fields=["piid"]),
+        tree_size=5,
+        max_rows=10,
     )
+    assert q.evidence_sql.startswith('SELECT t."event_id", t."leaf_index", t."amount", t."piid"')
     assert q.evidence_sql.endswith('ORDER BY t."amount" DESC, t."leaf_index" LIMIT 1')
     assert q.words == "largest of obligations and modifications"
 
@@ -129,6 +132,10 @@ def test_breaks_are_pinned_by_the_leaf_that_found_them():
         ({"shape": "aggregate", "entity": "obligations", "metric": "avg"}, "metric"),
         ({"shape": "aggregate", "entity": "obligations"}, "needs a metric"),
         ({"shape": "aggregate", "entity": "journal", "metric": "sum_amount"}, "no amount"),
+        (
+            {"shape": "aggregate", "entity": "obligations", "metric": "count", "fields": ["piid"]},
+            "only a min or max",
+        ),
         (
             {"shape": "aggregate", "entity": "obligations", "metric": "count", "limit": 3},
             "only a grouped aggregate",
