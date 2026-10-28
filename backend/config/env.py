@@ -43,9 +43,18 @@ class AppSettings(BaseSettings):
         validation_alias="API_THROTTLE_ANON_READS",
     )
 
+    api_throttle_anon_queries: str = Field(
+        default="10/min",
+        pattern=r"^\d+/(s|sec|m|min|h|hour|d|day)$",
+        validation_alias="API_THROTTLE_ANON_QUERIES",
+    )
+    """Rate limit for asking the analyst questions, per client IP."""
+
     db_url: SecretStr = Field(validation_alias="DB_URL")
     db_owner_url: SecretStr | None = Field(default=None, validation_alias="DB_OWNER_URL")
     db_analyst_url: SecretStr | None = Field(default=None, validation_alias="DB_ANALYST_URL")
+    db_analyst_max_rows: int = Field(default=1000, ge=1, validation_alias="DB_ANALYST_MAX_ROWS")
+    """Most records one answer may cite; a question that needs more is refused as too broad."""
 
     kafka_bootstrap_servers: str = Field(validation_alias="KAFKA_BOOTSTRAP_SERVERS")
     kafka_topic_events_raw: str = Field(

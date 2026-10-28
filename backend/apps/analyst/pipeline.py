@@ -49,6 +49,7 @@ RefusalCode = Literal[
     "unverifiable_claim",
     "budget_exceeded",
     "model_unavailable",
+    "no_checkpoint",
 ]
 
 

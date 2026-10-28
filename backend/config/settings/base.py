@@ -63,6 +63,13 @@ ASGI_APPLICATION = "config.asgi.application"
 DATABASES = {
     "default": dj_database_url.parse(ENV.db_url.get_secret_value(), conn_max_age=60),
 }
+# The analyst's queries run on their own connection as the read-only role, which
+# can see only the analyst views. Migrations never run on it.
+if ENV.db_analyst_url is not None:
+    DATABASES["analyst"] = dj_database_url.parse(
+        ENV.db_analyst_url.get_secret_value(), conn_max_age=60
+    )
+DATABASE_ROUTERS = ["apps.analyst.routers.AnalystDatabaseRouter"]
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 USE_TZ = True
@@ -82,7 +89,10 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [],
     "UNAUTHENTICATED_USER": None,
     "DEFAULT_THROTTLE_CLASSES": ["rest_framework.throttling.AnonRateThrottle"],
-    "DEFAULT_THROTTLE_RATES": {"anon": ENV.api_throttle_anon_reads},
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": ENV.api_throttle_anon_reads,
+        "queries": ENV.api_throttle_anon_queries,
+    },
     "NUM_PROXIES": ENV.trusted_proxy_count,
     "EXCEPTION_HANDLER": "apps.ledger.api.problems.handler",
 }

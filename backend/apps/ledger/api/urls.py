@@ -2,6 +2,7 @@
 
 from django.urls import path
 
+from apps.analyst import api as analyst
 from apps.ledger.api import views
 from apps.reconciliation import api as reconciliation
 
@@ -19,6 +20,8 @@ urlpatterns = [
         views.BatchConsistencyView.as_view(),
         name="batch-consistency",
     ),
+    path("queries", analyst.QueryView.as_view(), name="queries"),
+    path("answers/<str:answer_id>", analyst.AnswerView.as_view(), name="answer"),
     path("reconciliation/breaks", reconciliation.BreakListView.as_view(), name="break-list"),
     path(
         "reconciliation/breaks/<str:break_id>",

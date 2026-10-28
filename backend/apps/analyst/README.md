@@ -12,6 +12,9 @@ Answers questions about the ledger with numbers bound to query results and citat
 | `retrieval.py` | Finds the FAR text a question is about: chunks of each section's leaf, BM25 and local embeddings fused by reciprocal rank. Each chunk keeps its leaf and offsets, so quotes cite and check against the exact leaf |
 | `answer.py` | Bound-claim answers (ADR-0009): evidence as typed slots, citations, and quote sources; the verifier that rejects free numbers, unbound labels, and inexact quotes; rendering |
 | `pipeline.py` | Question to answer: route, compile and run (or guarded fallback SQL, or policy retrieval), compose, verify, one repair, otherwise a typed refusal |
+| `service.py` | Wires the pipeline to the analyst connection, the configured model, and the FAR index; answers as of the newest checkpoint and stores the result |
+| `api.py` | `POST /api/v1/queries` (own rate limit) and `GET /api/v1/answers/{answer_id}`; every cited event comes with its proof URL, never a verdict |
+| `models.py` | `analyst_answer`, append-only |
 | `compiler.py` | Compiles a spec into SQL over the views, pinned to a checkpoint, with every value bound and the filter rendered in words |
 
 The `tallyproof_analyst` role can read these views and nothing else. Its connections are read-only by default, time out after 3 seconds, and have `search_path` pinned to `analyst` (`infra/postgres/create-roles.sql`). Even with read-only mode switched off, it holds no grant that allows a write.
