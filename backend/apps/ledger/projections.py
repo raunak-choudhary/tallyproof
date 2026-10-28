@@ -1,0 +1,99 @@
+"""Derived views that read the log in leaf order: the journal, reconciliation, the outbox.
+
+Each projection keeps a cursor, the next leaf index it will read, in
+``projection_cursor``. A step locks the cursor, reads the next events, applies
+them, and advances the cursor in the same transaction. A crash rolls back both,
+so a projection never skips or repeats an event, and it can be rebuilt from the
+log alone.
+"""
+
+import json
+from collections.abc import Sequence
+from typing import Protocol
+
+from django.db import connection, transaction
+
+from apps.ledger.models import JournalLine, LedgerEvent
+from tallyproof_core.events import EventEnvelope
+from tallyproof_core.journal import entry_for
+
+
+def envelope_of(row: LedgerEvent) -> EventEnvelope:
+    """Rebuild a stored event's envelope from the exact bytes that were hashed."""
+    document = json.loads(bytes(row.canonical_bytes))
+    return EventEnvelope.model_validate({**document, "correlation_id": row.correlation_id or "-"})
+
+
+class Projection(Protocol):
+    """A view derived from events in log order."""
+
+    name: str
+
+    def apply(self, events: Sequence[LedgerEvent]) -> None:
+        """Derive rows for these events, inside the caller's transaction."""
+
+
+def step(projection: Projection, batch_size: int = 500) -> int:
+    """Apply the next batch of events to a projection. Returns how many were read."""
+    with transaction.atomic():
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "INSERT INTO projection_cursor (name, next_leaf_index) VALUES (%s, 0)"
+                " ON CONFLICT (name) DO NOTHING",
+                [projection.name],
+            )
+            cursor.execute(
+                "SELECT next_leaf_index FROM projection_cursor WHERE name = %s FOR UPDATE",
+                [projection.name],
+            )
+            start: int = cursor.fetchone()[0]
+        events = list(
+            LedgerEvent.objects.filter(
+                leaf_index__gte=start, leaf_index__lt=start + batch_size
+            ).order_by("leaf_index")
+        )
+        if not events:
+            return 0
+        if events[0].leaf_index != start or events[-1].leaf_index != start + len(events) - 1:
+            raise RuntimeError(f"{projection.name}: the log has a gap after leaf {start}")
+        projection.apply(events)
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "UPDATE projection_cursor SET next_leaf_index = %s, updated_at = now()"
+                " WHERE name = %s",
+                [start + len(events), projection.name],
+            )
+    return len(events)
+
+
+def catch_up(projection: Projection, batch_size: int = 500) -> int:
+    """Apply every event not yet projected. Returns how many were read."""
+    total = 0
+    while read := step(projection, batch_size):
+        total += read
+    return total
+
+
+class JournalProjection:
+    """Posts the double-entry journal (ADR-0013)."""
+
+    name = "journal"
+
+    def apply(self, events: Sequence[LedgerEvent]) -> None:
+        """Insert each event's balanced lines."""
+        lines = []
+        for row in events:
+            entry_id = f"jrn:{row.public_id}"
+            for number, line in enumerate(entry_for(envelope_of(row)), start=1):
+                lines.append(
+                    JournalLine(
+                        event=row,
+                        leaf_index=row.leaf_index,
+                        entry_id=entry_id,
+                        line_number=number,
+                        account=line.account.value,
+                        debit=line.debit,
+                        credit=line.credit,
+                    )
+                )
+        JournalLine.objects.bulk_create(lines)
