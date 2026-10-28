@@ -11,7 +11,7 @@ Reference machine: Apple M3, 8 GB RAM, about 45 GB free disk. The design is size
 | Homebrew | Package manager | already present | system |
 | Colima + Docker CLI + Compose plugin | Container runtime without Docker Desktop | `brew install colima docker docker-compose` (already present on the reference machine) | system |
 | OpenJDK 17 | Spark 4.2 runs on Java 17, 21, or 25 | `brew install openjdk@17` | **keg-only**: not on the system PATH, no `sudo` symlink. The Makefile sets `JAVA_HOME=$(brew --prefix openjdk@17)/libexec/openjdk.jdk/Contents/Home` for project commands only |
-| Python 3.12 | Backend and data pipeline | already present | all packages live in `backend/.venv` |
+| Python 3.12 | Backend and data pipeline | Homebrew's `python@3.12`, which `make venv` picks automatically on macOS. Some pyenv builds lack the BLAKE2 hash module, and `make venv` refuses those with a clear message | all packages live in `backend/.venv` |
 | Node 22 + pnpm | Frontend | already present | packages in `frontend/node_modules` |
 
 A dedicated Colima profile keeps project containers separate from any other work and caps their resources:
@@ -45,19 +45,31 @@ Colima, Docker CLI, Python, Node, and their dependencies were already present be
 
 ## First run
 
+Working today:
+
 ```bash
-cp .env.example .env                 # fill in the secrets; .env is never committed
-make venv                            # create backend/.venv and install pinned dependencies
-make keygen                          # writes a local signing key to secrets/ (ignored by git)
-make data-fetch                      # download the archives and record their hashes (~2 GB per fiscal year)
-make data-build                      # Spark: clean, remove personal data, check quality, write Parquet
-colima start tallyproof              # start the container VM (see Machine setup above)
-make up                              # Redpanda, Postgres, Redis, object storage, API, workers, web
-make data-replay                     # stream a slice of gold events into Kafka
-open http://localhost:3000           # web app; broker console on :8080; API docs on :8000/api/v1/docs/
+make venv                  # backend/.venv with pinned dependencies (make doctor shows the toolchain)
+make check                 # lint, strict type checks, tests
+make data-fetch            # download the configured fiscal years and record their hashes
+make data-build            # Spark: clean into silver and remove personal data
+make data-quality          # Deequ constraints on silver
+make data-gold             # build ledger events with the labeled anomaly overlay
+make data-sample           # refresh the committed 2,000-event sample from gold
+make keygen KEY=rel        # create the release signing key in secrets/
+make replay                # export the signed 2,000-event bundle to data/replay
+cd frontend && pnpm install && pnpm dev   # browse and verify records locally
 ```
 
-`make data-build` refuses to start while the container stack is running, because the laptop can't hold both comfortably. The download only happens once; later builds reuse the archives in `data/`.
+`make data-build`, `data-quality`, and `data-gold` refuse to start while a Colima VM is running, because the laptop can't hold Spark and the container stack together.
+
+Coming with the streaming ledger:
+
+```bash
+cp .env.example .env
+colima start tallyproof
+make up                    # Redpanda, Postgres, Redis, object storage, API, workers, web
+make data-replay           # stream gold events into Kafka
+```
 
 ## Health checks
 
