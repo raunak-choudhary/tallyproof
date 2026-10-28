@@ -63,8 +63,9 @@ deps: require-venv ## Recompile pinned requirement files after editing a .in fil
 deps-sync: require-venv ## Make the virtual environment match the pinned files exactly
 	cd $(BACKEND) && .venv/bin/pip-sync --quiet requirements.txt requirements-dev.txt
 
-lint: require-venv ## Check style, formatting, and that no model change lacks a migration
+lint: require-venv ## Check style, formatting, hardcoded literals, and that no model change lacks a migration
 	$(VENV)/bin/ruff check . && $(VENV)/bin/ruff format --check .
+	$(VENV)/bin/python scripts/ci/check_literals.py
 	cd $(BACKEND) && DJANGO_SETTINGS_MODULE=config.settings.test \
 		.venv/bin/python -W ignore::RuntimeWarning manage.py makemigrations --check --dry-run
 

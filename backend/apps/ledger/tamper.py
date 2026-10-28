@@ -27,7 +27,7 @@ from tallyproof_core.checkpoint import Checkpoint, Signer
 from tallyproof_core.hashing import leaf_hash
 from tallyproof_core.log_tree import LogTree
 
-LOOPBACK = {"localhost", "127.0.0.1", "::1"}
+LOOPBACK = {"localhost", "127.0.0.1", "::1"}  # literal-ok: the safety rule itself, not config
 
 
 class TamperRefusedError(RuntimeError):
