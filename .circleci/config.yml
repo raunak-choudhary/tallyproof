@@ -29,6 +29,48 @@ commands:
           paths:
             - backend/.venv
 
+  setup-machine-python:
+    description: Check out the code and install Python dependencies on a VM that can run Docker
+    steps:
+      - checkout
+      - run:
+          name: Install the Python 3.12 venv module
+          command: |
+            sudo apt-get update -qq
+            sudo apt-get install -y -qq python3.12-venv
+      - restore_cache:
+          keys:
+            - venv-machine-v1-{{ arch }}-{{ checksum "backend/requirements.txt" }}-{{ checksum "backend/requirements-dev.txt" }}
+      - run:
+          name: Install pinned dependencies
+          command: make venv PYTHON=/usr/bin/python3.12
+      - save_cache:
+          key: venv-machine-v1-{{ arch }}-{{ checksum "backend/requirements.txt" }}-{{ checksum "backend/requirements-dev.txt" }}
+          paths:
+            - backend/.venv
+
+  run-eval:
+    description: Run one evaluation in a throwaway database and keep its reports
+    parameters:
+      set:
+        type: string
+      mode:
+        type: string
+    steps:
+      - restore_cache:
+          keys:
+            - embeddings-v1-{{ checksum "backend/corpus/far/manifest.json" }}
+      - run:
+          name: Evaluate << parameters.set >> in << parameters.mode >> mode
+          command: make eval SET=<< parameters.set >> MODE=<< parameters.mode >>
+      - save_cache:
+          key: embeddings-v1-{{ checksum "backend/corpus/far/manifest.json" }}
+          paths:
+            - var/embeddings
+      - store_artifacts:
+          path: var/eval
+          destination: eval
+
 jobs:
   lint:
     executor: python
@@ -94,22 +136,7 @@ jobs:
       image: ubuntu-2404:2024.11.1
     resource_class: medium
     steps:
-      - checkout
-      - run:
-          name: Install the Python 3.12 venv module
-          command: |
-            sudo apt-get update -qq
-            sudo apt-get install -y -qq python3.12-venv
-      - restore_cache:
-          keys:
-            - venv-machine-v1-{{ arch }}-{{ checksum "backend/requirements.txt" }}-{{ checksum "backend/requirements-dev.txt" }}
-      - run:
-          name: Install pinned dependencies
-          command: make venv PYTHON=/usr/bin/python3.12
-      - save_cache:
-          key: venv-machine-v1-{{ arch }}-{{ checksum "backend/requirements.txt" }}-{{ checksum "backend/requirements-dev.txt" }}
-          paths:
-            - backend/.venv
+      - setup-machine-python
       - run:
           name: Integration tests against real Postgres and Redpanda
           command: make test-integration
@@ -202,15 +229,43 @@ jobs:
           name: Lint, type-check, and test the web app
           command: make web-check
 
+  # Pull requests replay recorded model responses and never receive a key. Until
+  # recordings exist, the run is a harness check: integrity gates, quality doesn't.
+  eval-smoke:
+    machine:
+      image: ubuntu-2404:2024.11.1
+    resource_class: medium
+    steps:
+      - setup-machine-python
+      - run-eval:
+          set: smoke
+          mode: cached
+
+  # Scheduled only. The llm-eval context holds the provider key and is limited to main.
+  eval-nightly:
+    machine:
+      image: ubuntu-2404:2024.11.1
+    resource_class: medium
+    environment:
+      LLM_PROVIDER: openai_compatible
+    steps:
+      - setup-machine-python
+      - run-eval:
+          set: all
+          mode: live
+
   ci-gate:
     executor: python
     steps:
       - run:
           name: All required checks passed
-          command: echo "Backend, integration, coverage, and web checks, audit, commit messages, and secret scan all passed."
+          command: echo "Backend, integration, coverage, web, and evaluation checks, audit, commit messages, and secret scan all passed."
 
 workflows:
   checks:
+    when:
+      not:
+        equal: [scheduled_pipeline, << pipeline.trigger_source >>]
     jobs:
       - lint
       - typecheck
@@ -226,6 +281,7 @@ workflows:
       - commit-messages
       - secret-scan
       - web-checks
+      - eval-smoke
       - ci-gate:
           requires:
             - lint
@@ -238,3 +294,11 @@ workflows:
             - commit-messages
             - secret-scan
             - web-checks
+            - eval-smoke
+
+  nightly-eval:
+    when:
+      equal: [scheduled_pipeline, << pipeline.trigger_source >>]
+    jobs:
+      - eval-nightly:
+          context: llm-eval

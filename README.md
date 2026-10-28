@@ -79,6 +79,14 @@ Numbers from running the pipeline on FY2024 and FY2025 federal contract transact
 
 Several bugs only showed up on the real data and are fixed in the history. Report dates turned out to be timestamps, and zoned timestamps shifted every event by four hours depending on the machine's time zone. An out-of-memory failure when building a million events led to a streaming design that keeps memory flat at any size. Older records get edited for years, so timing events by their last edit made three in four FY2024 transactions look reported late; they're now timed by their first report. And a reconciliation rule kept only one Treasury account's running total per award, which could hide an award paid from two accounts.
 
+### Answer quality
+
+The analyst is scored on 178 template questions and 40 held-out questions written before any prompt work, against expected answers computed independently from the labeled data ([evaluation](docs/evaluation.md)). The table fills in from the first live run; until then every pull request runs the evaluation harness with recorded or scripted responses, which checks the wiring (every cited proof verifies, every labeled anomaly is caught) but says nothing about answer quality, so it isn't shown here.
+
+<!-- eval-table:start -->
+No live evaluation has run yet.
+<!-- eval-table:end -->
+
 ## How it differs from existing work
 
 [answerproof](https://github.com/AgentPostmortem/Answerproof) already signs receipts over the documents a RAG system retrieved, so "Merkle-verified citations" alone isn't new. Tallyproof goes further in three ways. Its proofs reach back to when each record was ingested, not just when it was retrieved. Its evaluation uses exact labels instead of a judge model. And numbers in answers are bound to query results, not checked after the model writes them.
