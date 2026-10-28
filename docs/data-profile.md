@@ -54,6 +54,31 @@ No rows were quarantined. An earlier run quarantined almost a million rows becau
 
 The silver Parquet is 581 MB for FY2025 and 601 MB for FY2024. FY2025 took 20.8 minutes on its first run; FY2024, after a change to parse each CSV once instead of once per output, took 18.9 minutes with the Python driver at 90 MB. Silver skips files it has already built, so adding FY2024 didn't redo FY2025.
 
+## What the cleaned data looks like
+
+`make data-profile` computes these over all 13,124,445 silver rows in 45 seconds and writes `data/silver/_reports/profile.json`.
+
+**Amounts.** 11,317,098 transactions add money ($1.63 trillion in total), 518,725 take it away (de-obligations, $92.0 billion), and 1,288,622 are exactly zero, usually administrative changes that move no money. Most are small: half are under $374, and 90 percent under $25,892. The extremes are one obligation of $14.1 billion and one de-obligation of $4.3 billion.
+
+| Percentile | 1st | 10th | 25th | 50th | 75th | 90th | 99th |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| Obligation ($) | -32,480.00 | 0.00 | 58.24 | 373.38 | 2,399.95 | 25,892.00 | 1,413,584.14 |
+
+Percentiles are approximate, to within 0.1 percent of rank.
+
+**Who obligates.** The Department of Defense accounts for 8,797,923 transactions (67 percent), and the General Services Administration, which buys on behalf of other agencies, for 3,011,779 (23 percent). Veterans Affairs, Justice, and Agriculture follow, each under 2 percent.
+
+**Missing values.** Every key and every column the ledger needs is complete: transaction and award keys, recipient UEI, action date, awarding agency, and amount. The gaps are in descriptive columns. The reasons below are inferred from the column definitions, not checked row by row:
+
+| Column | Missing | Likely reason |
+|---|---:|---|
+| `action_type`, `action_type_code` | 81.3% | Only modifications carry an action type; base awards have none |
+| `parent_award_id_piid` | 18.6% | Only orders placed under another contract have a parent |
+| `primary_place_of_performance_state_code` | 7.3% | Work performed outside the United States |
+| `current_total_value_of_award`, `period_of_performance_current_end_date`, `primary_place_of_performance_country_code` | 4.2% | Not reported on some modification types |
+| `recipient_state_code` | 2.0% | Recipients outside the United States |
+| Everything else | under 0.02% | |
+
 ## Outlays
 
 The outlay file reports, for each award, Treasury account, program activity, object class, and month, how much has been paid since the start of the fiscal year. The outlay job keeps contract awards, adds the rows up to one cumulative figure per award, account, and month, and takes the change from the previous month as that month's payment.
