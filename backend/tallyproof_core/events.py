@@ -43,7 +43,7 @@ MoneyText = Annotated[str, AfterValidator(_money_text)]
 
 # Pydantic itself rejects strings that are not valid Unicode, such as lone surrogates.
 Text = Annotated[str, Field(min_length=1, max_length=4000)]
-OptionalText = Annotated[str | None, Field(default=None, max_length=4000)]
+OptionalText = Annotated[str | None, Field(max_length=4000)]
 SafeInt = Annotated[int, Field(ge=0, le=MAX_SAFE_INTEGER)]
 
 
@@ -67,14 +67,14 @@ class ObligationRecorded(_Strict):
     award_key: Text
     piid: Text
     awarding_agency: Text
-    funding_agency: OptionalText
+    funding_agency: OptionalText = None
     amount: MoneyText
     currency: Literal["USD"] = "USD"
     action_date: date
-    action_type: OptionalText
-    naics_code: OptionalText
-    psc_code: OptionalText
-    description: OptionalText
+    action_type: OptionalText = None
+    naics_code: OptionalText = None
+    psc_code: OptionalText = None
+    description: OptionalText = None
 
 
 class ObligationAdjusted(_Strict):
@@ -85,8 +85,8 @@ class ObligationAdjusted(_Strict):
     amount: MoneyText
     currency: Literal["USD"] = "USD"
     action_date: date
-    action_type: OptionalText
-    description: OptionalText
+    action_type: OptionalText = None
+    description: OptionalText = None
 
 
 class OutlayReported(_Strict):
