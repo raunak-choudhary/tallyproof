@@ -23,7 +23,7 @@ else
   PYTHON ?= python3.12
 endif
 
-.PHONY: help doctor venv deps deps-sync require-venv lint format typecheck test check audit clean
+.PHONY: help doctor venv deps deps-sync require-venv lint format typecheck test check audit vectors clean
 
 help: ## List available commands
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -69,6 +69,9 @@ test: require-venv ## Run the unit tests with coverage
 
 audit: require-venv ## Scan pinned dependencies for known vulnerabilities
 	cd $(BACKEND) && .venv/bin/pip-audit --strict --disable-pip -r requirements.txt -r requirements-dev.txt
+
+vectors: require-venv ## Regenerate the shared cross-language test vectors
+	cd $(BACKEND) && .venv/bin/python -m tests.vectors_builder
 
 check: lint typecheck test ## Everything CI checks on every pull request
 
