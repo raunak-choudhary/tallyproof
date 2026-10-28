@@ -16,3 +16,11 @@ description = "Public USAspending award and IDV identifiers"
 targetRules = ["generic-api-key"]
 regexTarget = "match"
 regexes = ['''(?:CONT|ASST)_(?:AWD|IDV)_[A-Za-z0-9_.-]+''']
+
+# The replay bundle's manifest maps file names such as log-key.json to the SHA-256
+# of public files. The name contains "key" and the hash looks random, so the generic
+# rule fires. Only that one manifest file is exempt, and only from that rule.
+[[allowlists]]
+description = "SHA-256 hashes of public files in the signed replay manifest"
+targetRules = ["generic-api-key"]
+paths = ['''^frontend/public/replay/manifest\.json$''']
