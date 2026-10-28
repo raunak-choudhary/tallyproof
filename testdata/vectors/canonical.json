@@ -95,6 +95,29 @@
       "canonical_utf8": "{\"account_id\":\"ZQGGHJH74DW7\",\"emitted_at\":\"2025-03-15T09:30:00Z\",\"event_id\":\"evt_01JBXQ4V6Z9GQ1W8R3T5Y7U2PA\",\"event_type\":\"obligation.recorded\",\"idempotency_key\":\"usaspending:CONT_AWD_75N95021C00001:P00003\",\"occurred_at\":\"2025-03-14T00:00:00Z\",\"payload\":{\"amount\":\"125000.00\",\"award_key\":\"CONT_AWD_75N95021C00001_7529_-NONE-_-NONE-\",\"awarding_agency\":\"Department of Health and Human Services\",\"currency\":\"USD\",\"description\":\"LABORATORY ANALYSIS SERVICES\"},\"schema_version\":1}",
       "canonical_sha256_hex": "f161363b4402a412cf8afcd35941f0c76ae5940fb8adf43a87c2a4d2ab72f7ac",
       "leaf_hash_hex": "e6d12a8dda6c439585165aee29da79ab8a1980af4adda913b80112b7ad0a9d41"
+    },
+    {
+      "name": "policy event",
+      "input": {
+        "event_id": "evt_01KQ3Z1XW0000000000000000A",
+        "idempotency_key": "ecfr:far:32.906:4c1f0e2a9b7d3e55",
+        "event_type": "policy.published",
+        "schema_version": 1,
+        "occurred_at": "2026-10-19T00:00:00Z",
+        "emitted_at": "2026-10-19T00:00:00Z",
+        "account_id": "policy-far",
+        "payload": {
+          "source": "FAR",
+          "citation": "48 CFR 32.906",
+          "section": "32.906",
+          "title": "Making payments.",
+          "edition": "2026-10-19",
+          "text": "(a) General. The Government will not make invoice payments earlier than 7 days prior to the due dates specified in the contract unless the agency head determines—\n\n(1) To make earlier payment on a case-by-case basis; or"
+        }
+      },
+      "canonical_utf8": "{\"account_id\":\"policy-far\",\"emitted_at\":\"2026-10-19T00:00:00Z\",\"event_id\":\"evt_01KQ3Z1XW0000000000000000A\",\"event_type\":\"policy.published\",\"idempotency_key\":\"ecfr:far:32.906:4c1f0e2a9b7d3e55\",\"occurred_at\":\"2026-10-19T00:00:00Z\",\"payload\":{\"citation\":\"48 CFR 32.906\",\"edition\":\"2026-10-19\",\"section\":\"32.906\",\"source\":\"FAR\",\"text\":\"(a) General. The Government will not make invoice payments earlier than 7 days prior to the due dates specified in the contract unless the agency head determines—\\n\\n(1) To make earlier payment on a case-by-case basis; or\",\"title\":\"Making payments.\"},\"schema_version\":1}",
+      "canonical_sha256_hex": "02c4eef89ab100f5baf44ff9128ce7231aec76a862704c611e06d049578e76cf",
+      "leaf_hash_hex": "2a40ab9cc89e9732a269455546c7e7d5a8948ff1e2e33fb6e51215f51159a3c6"
     }
   ]
 }

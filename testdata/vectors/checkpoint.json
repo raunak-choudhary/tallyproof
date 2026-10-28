@@ -2,27 +2,27 @@
   "description": "C2SP signed checkpoints over the canonical vector leaves",
   "verifier_key": "vectors.tallyproof.dev/test+db931638+AbTDJZ17TVI0N6We4giRBaZ5/Y9SHq682NdMLTNI3OTs",
   "valid": {
-    "note": "vectors.tallyproof.dev/test\n8\nzjplNRI3Qt5en6WpgbrenYBKDDIcXfOjqWF0gaTcMZY=\n\n— vectors.tallyproof.dev/test 25MWOLjKr7foUIeJlq8VUSCoqrJsMFPpvwnRHywlZVN/zQ7i4T1emJi5k/4hDwXAWYiLapbYSJvnzfCpOwdplL6Gdws=\n",
+    "note": "vectors.tallyproof.dev/test\n9\nR9g5vjzyFKOA67kY2FkK0jqqwRKphudM2o5zOi7sVPo=\n\n— vectors.tallyproof.dev/test 25MWOAURAZjpvgQJJd1TCSiksfUK7f6hwZKPoTWWVkSAXwgmzxm/ClKjVhDSbOimQU8s72xOYBjpxFtU2pScY5w3bAA=\n",
     "origin": "vectors.tallyproof.dev/test",
-    "tree_size": 8,
-    "root_hash_hex": "ce3a6535123742de5e9fa5a981bade9d804a0c321c5df3a3a9617481a4dc3196"
+    "tree_size": 9,
+    "root_hash_hex": "47d839be3cf214a380ebb918d8590ad23aaac112a986e74cda8e733a2eec54fa"
   },
   "must_fail": [
     {
       "reason": "tree size changed after signing",
-      "note": "vectors.tallyproof.dev/test\n9\nzjplNRI3Qt5en6WpgbrenYBKDDIcXfOjqWF0gaTcMZY=\n\n— vectors.tallyproof.dev/test 25MWOLjKr7foUIeJlq8VUSCoqrJsMFPpvwnRHywlZVN/zQ7i4T1emJi5k/4hDwXAWYiLapbYSJvnzfCpOwdplL6Gdws=\n"
+      "note": "vectors.tallyproof.dev/test\n10\nR9g5vjzyFKOA67kY2FkK0jqqwRKphudM2o5zOi7sVPo=\n\n— vectors.tallyproof.dev/test 25MWOAURAZjpvgQJJd1TCSiksfUK7f6hwZKPoTWWVkSAXwgmzxm/ClKjVhDSbOimQU8s72xOYBjpxFtU2pScY5w3bAA=\n"
     },
     {
       "reason": "root hash changed after signing",
-      "note": "vectors.tallyproof.dev/test\n8\n501797ad38def89a86b74d7b2aa06935d18c3f75d09c\n\n— vectors.tallyproof.dev/test 25MWOLjKr7foUIeJlq8VUSCoqrJsMFPpvwnRHywlZVN/zQ7i4T1emJi5k/4hDwXAWYiLapbYSJvnzfCpOwdplL6Gdws=\n"
+      "note": "vectors.tallyproof.dev/test\n9\nce3a6535123742de5e9fa5a981bade9d804a0c321c5d\n\n— vectors.tallyproof.dev/test 25MWOAURAZjpvgQJJd1TCSiksfUK7f6hwZKPoTWWVkSAXwgmzxm/ClKjVhDSbOimQU8s72xOYBjpxFtU2pScY5w3bAA=\n"
     },
     {
       "reason": "signed by a different key with the same name",
-      "note": "vectors.tallyproof.dev/test\n8\nzjplNRI3Qt5en6WpgbrenYBKDDIcXfOjqWF0gaTcMZY=\n\n— vectors.tallyproof.dev/test BCc5livm9l9lvNIZsPTWpkHIBvzeBM9so50+HsaOCCPDJn9Hh+00UVmXjxOLQu8G2+wDMwhDgxzuM2Fm42AfEQZe9As=\n"
+      "note": "vectors.tallyproof.dev/test\n9\nR9g5vjzyFKOA67kY2FkK0jqqwRKphudM2o5zOi7sVPo=\n\n— vectors.tallyproof.dev/test BCc5lgxFxN6umylpLSvgOGWN4q5w9z2SdA2s60NXtf+A01T0+2ctYeTB1tii6b9PyPBzY4PRF2r5+HFRoiGZ9V6eIgQ=\n"
     },
     {
       "reason": "signature block removed",
-      "note": "vectors.tallyproof.dev/test\n8\nzjplNRI3Qt5en6WpgbrenYBKDDIcXfOjqWF0gaTcMZY="
+      "note": "vectors.tallyproof.dev/test\n9\nR9g5vjzyFKOA67kY2FkK0jqqwRKphudM2o5zOi7sVPo="
     }
   ]
 }

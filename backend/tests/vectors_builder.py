@@ -49,6 +49,31 @@ CANONICAL_CASES: list[tuple[str, Any]] = [
             },
         },
     ),
+    (
+        "policy event",
+        {
+            "event_id": "evt_01KQ3Z1XW0000000000000000A",
+            "idempotency_key": "ecfr:far:32.906:4c1f0e2a9b7d3e55",
+            "event_type": "policy.published",
+            "schema_version": 1,
+            "occurred_at": "2026-10-19T00:00:00Z",
+            "emitted_at": "2026-10-19T00:00:00Z",
+            "account_id": "policy-far",
+            "payload": {
+                "source": "FAR",
+                "citation": "48 CFR 32.906",
+                "section": "32.906",
+                "title": "Making payments.",
+                "edition": "2026-10-19",
+                "text": (
+                    "(a) General. The Government will not make invoice payments earlier than"
+                    " 7 days prior to the due dates specified in the contract unless the"
+                    " agency head determines\u2014\n\n(1) To make earlier payment on a"
+                    " case-by-case basis; or"
+                ),
+            },
+        },
+    ),
 ]
 
 
