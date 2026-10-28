@@ -42,6 +42,11 @@ files = ["tallyproof_core", "tallyproof_pipeline", "tests"]
 plugins = ["pydantic.mypy"]
 
 [[tool.mypy.overrides]]
+# PyDeequ ships no type information.
+module = ["pydeequ", "pydeequ.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
 module = ["tests.*"]
 disallow_untyped_defs = false
 
@@ -50,6 +55,13 @@ testpaths = ["tests"]
 pythonpath = ["."]
 addopts = "-ra --strict-markers --strict-config"
 markers = ["spark: needs Java 17 and starts a local Spark session"]
+filterwarnings = [
+    # py4j, the Python-to-JVM bridge Spark uses, leaves local sockets for the
+    # garbage collector to close. Harmless, and not something this project controls.
+    "ignore:unclosed <socket.socket:ResourceWarning",
+    # PyDeequ builds result DataFrames through a Spark constructor marked internal.
+    "ignore:DataFrame constructor is internal:UserWarning",
+]
 xfail_strict = true
 
 [tool.coverage.run]
