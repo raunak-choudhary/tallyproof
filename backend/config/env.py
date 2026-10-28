@@ -11,7 +11,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
-from pydantic import Field, SecretStr, ValidationError, field_validator
+from pydantic import Field, SecretStr, ValidationError, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -155,6 +155,71 @@ class CheckpointerSettings(AppSettings):
         return [c.strip().rstrip("/") for c in self.witness_ots_calendars.split(",") if c.strip()]
 
 
+class LLMSettings(BaseSettings):
+    """Which model provider the analyst and the evaluation judge call, and the limits.
+
+    The provider is anything that serves the OpenAI chat-completions protocol; the
+    first live provider is Google Gemini's free tier. Model IDs and the base URL
+    always come from here, never from code.
+    """
+
+    model_config = SettingsConfigDict(
+        env_file=REPO_ROOT / ".env", env_file_encoding="utf-8", extra="ignore"
+    )
+
+    llm_provider: Literal["fake", "openai_compatible"] = Field(
+        default="fake", validation_alias="LLM_PROVIDER"
+    )
+    llm_base_url: str | None = Field(default=None, validation_alias="LLM_BASE_URL")
+    llm_api_key: SecretStr | None = Field(default=None, validation_alias="LLM_API_KEY")
+    llm_answer_model: str | None = Field(default=None, validation_alias="LLM_ANSWER_MODEL")
+    llm_router_model: str | None = Field(default=None, validation_alias="LLM_ROUTER_MODEL")
+    llm_judge_model: str | None = Field(default=None, validation_alias="LLM_JUDGE_MODEL")
+    llm_timeout_seconds: float = Field(default=30.0, gt=0, validation_alias="LLM_TIMEOUT_SECONDS")
+    llm_max_retries: int = Field(default=3, ge=0, le=6, validation_alias="LLM_MAX_RETRIES")
+    llm_requests_per_minute: int = Field(
+        default=10, ge=1, validation_alias="LLM_REQUESTS_PER_MINUTE"
+    )
+    llm_max_input_tokens: int = Field(default=8000, ge=1, validation_alias="LLM_MAX_INPUT_TOKENS")
+    llm_max_output_tokens: int = Field(default=1200, ge=1, validation_alias="LLM_MAX_OUTPUT_TOKENS")
+    llm_run_max_requests: int = Field(default=1500, ge=1, validation_alias="LLM_RUN_MAX_REQUESTS")
+    llm_run_max_tokens: int = Field(default=3_000_000, ge=1, validation_alias="LLM_RUN_MAX_TOKENS")
+    llm_cache_dir: Path = Field(
+        default=REPO_ROOT / "testdata" / "llm_cache", validation_alias="LLM_CACHE_DIR"
+    )
+
+    @field_validator("llm_cache_dir")
+    @classmethod
+    def _anchor_cache(cls, value: Path) -> Path:
+        return value if value.is_absolute() else REPO_ROOT / value
+
+    @model_validator(mode="after")
+    def _real_provider_is_complete(self) -> "LLMSettings":
+        if self.llm_provider == "openai_compatible":
+            missing = [
+                name
+                for name, value in (
+                    ("LLM_BASE_URL", self.llm_base_url),
+                    ("LLM_API_KEY", self.llm_api_key),
+                    ("LLM_ANSWER_MODEL", self.llm_answer_model),
+                )
+                if not value
+            ]
+            if missing:
+                raise ValueError(f"the real provider needs {', '.join(missing)}")
+        return self
+
+    @property
+    def router_model(self) -> str | None:
+        """Model for query specs; the answer model unless set separately."""
+        return self.llm_router_model or self.llm_answer_model
+
+    @property
+    def judge_model(self) -> str | None:
+        """Model for the narrative-faithfulness judge; the answer model unless set."""
+        return self.llm_judge_model or self.llm_answer_model
+
+
 def _load[T: BaseSettings](model: type[T]) -> T:
     try:
         return model()
@@ -176,3 +241,8 @@ def app_settings() -> AppSettings:
 def checkpointer_settings() -> CheckpointerSettings:
     """Load the checkpointer's settings, including the signing key file path."""
     return _load(CheckpointerSettings)
+
+
+def llm_settings() -> LLMSettings:
+    """Load the model provider settings."""
+    return _load(LLMSettings)
