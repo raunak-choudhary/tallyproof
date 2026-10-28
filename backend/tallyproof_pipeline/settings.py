@@ -45,6 +45,10 @@ class PipelineSettings(BaseSettings):
     kafka_topic_events_raw: str = Field(
         default="fin.events.raw.v1", validation_alias="KAFKA_TOPIC_EVENTS_RAW"
     )
+    # The statement is published once per business day, so checking hourly is plenty.
+    treasury_poll_seconds: int = Field(
+        default=3600, ge=60, validation_alias="DATA_TREASURY_POLL_SECONDS"
+    )
     spark_master: str = Field(default="local[3]", validation_alias="SPARK_MASTER")
     spark_driver_memory: str = Field(default="2g", validation_alias="SPARK_DRIVER_MEMORY")
     spark_shuffle_partitions: int = Field(
