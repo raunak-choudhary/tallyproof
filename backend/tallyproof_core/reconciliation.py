@@ -12,7 +12,8 @@ Break types (docs/backend-design.md, anomaly catalog):
 - ``deobligation_exceeds_award``: an adjustment takes an award's obligations
   below zero.
 - ``orphan_outlay``: an outlay against an award never obligated.
-- ``outlay_exceeds_obligation``: cumulative outlays above the award's obligations.
+- ``outlay_exceeds_obligation``: outlays above the award's obligations, adding up the latest
+  cumulative figure for each Treasury account and fiscal year.
 - ``late_after_close``: an event reported long after it happened.
 """
 
@@ -65,8 +66,14 @@ def _involved(*pairs: tuple[str, str]) -> tuple[tuple[str, str], ...]:
 @dataclass
 class _Award:
     obligated: Decimal = Decimal(0)
-    outlaid: Decimal = Decimal(0)
     first_event_id: str = ""
+    # Outlays are cumulative within one Treasury account and fiscal year, so the
+    # award's total is the latest figure for each account and year, added up.
+    latest_outlays: dict[tuple[str, int], Decimal] = field(default_factory=dict)
+
+    @property
+    def outlaid(self) -> Decimal:
+        return sum(self.latest_outlays.values(), Decimal(0))
 
 
 @dataclass
@@ -89,7 +96,12 @@ class Reconciler:
             case EventType.OBLIGATION_ADJUSTED:
                 breaks += self._adjusted(event, award_key, Decimal(payload["amount"]))
             case EventType.OUTLAY_REPORTED:
-                breaks += self._outlay(event, award_key, Decimal(payload["cumulative_outlay"]))
+                breaks += self._outlay(
+                    event,
+                    award_key,
+                    (str(payload["treasury_account"]), int(payload["fiscal_year"])),
+                    Decimal(payload["cumulative_outlay"]),
+                )
         lag = event.emitted_at - event.occurred_at
         if lag > self.late_after:
             breaks.append(
@@ -151,10 +163,16 @@ class Reconciler:
             ]
         return []
 
-    def _outlay(self, event: EventEnvelope, award_key: str, cumulative: Decimal) -> list[Break]:
+    def _outlay(
+        self,
+        event: EventEnvelope,
+        award_key: str,
+        account_year: tuple[str, int],
+        cumulative: Decimal,
+    ) -> list[Break]:
         award = self._awards.get(award_key)
         if award is None:
-            self._award(award_key, event.event_id).outlaid = cumulative
+            self._award(award_key, event.event_id).latest_outlays[account_year] = cumulative
             return [
                 Break(
                     BreakType.ORPHAN_OUTLAY,
@@ -165,8 +183,8 @@ class Reconciler:
                     ((event.event_id, "outlay"),),
                 )
             ]
-        award.outlaid = cumulative
-        excess = cumulative - award.obligated
+        award.latest_outlays[account_year] = cumulative
+        excess = award.outlaid - award.obligated
         if excess > self.tolerance:
             return [
                 Break(

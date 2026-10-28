@@ -45,12 +45,14 @@ def test_the_same_log_gives_the_same_breaks(overlaid):
     assert len({b.dedupe_key for b in first}) == len(first)
 
 
-def outlay(award: str, cumulative: str, period: int = 1) -> EventEnvelope:
+def outlay(
+    award: str, cumulative: str, period: int = 1, account: str = "089-0222", year: int = 2025
+) -> EventEnvelope:
     now = datetime(2025, 3, 1, tzinfo=UTC)
     return EventEnvelope.model_validate(
         {
             "event_id": new_id("evt"),
-            "idempotency_key": f"test:outlay:{award}:{period}",
+            "idempotency_key": f"test:outlay:{award}:{account}:{year}:{period}",
             "event_type": "outlay.reported",
             "occurred_at": now,
             "emitted_at": now + timedelta(hours=1),
@@ -58,8 +60,8 @@ def outlay(award: str, cumulative: str, period: int = 1) -> EventEnvelope:
             "correlation_id": "c",
             "payload": {
                 "award_key": award,
-                "treasury_account": "089-0222",
-                "fiscal_year": 2025,
+                "treasury_account": account,
+                "fiscal_year": year,
                 "fiscal_period": period,
                 "cumulative_outlay": cumulative,
                 "period_outlay": cumulative,
@@ -85,6 +87,23 @@ def test_outlays_without_or_above_obligations_are_breaks():
     ]
     assert breaks[1].amount_delta == Decimal("500.00")
     assert breaks[1].events[0] == (obligation.event_id, "award")
+
+
+def test_outlays_from_different_accounts_and_years_add_up():
+    obligation = real_events(1)[0]  # 1,000.00 obligated on CONT_AWD_A0
+    award = obligation.payload.model_dump()["award_key"]
+    breaks = run(
+        [
+            obligation,
+            outlay(award, "400.00", account="089-0222"),
+            outlay(award, "450.00", period=2, account="089-0222"),  # cumulative: replaces 400
+            outlay(award, "300.00", account="097-0100"),  # another account: 750 total so far
+            outlay(award, "450.00", period=1, account="089-0222", year=2026),  # new year: 1,200
+        ]
+    )
+    assert breaks[0].break_type is BreakType.OUTLAY_EXCEEDS_OBLIGATION
+    assert breaks[0].amount_delta == Decimal("200.00")
+    assert len(breaks) == 1
 
 
 def test_a_break_lists_each_event_once_even_when_it_opened_the_award():
