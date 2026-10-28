@@ -24,12 +24,12 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser: CommandParser) -> None:
         """Accept the API address and an optional event ID."""
-        parser.add_argument("--api", default="http://127.0.0.1:8000", help="API base URL")
+        parser.add_argument("--api", help="API base URL; API_BASE_URL when omitted")
         parser.add_argument("--event", help="event ID; a random recent one if omitted")
 
     def handle(self, *args: object, **options: object) -> None:
         """Print each check; exit non-zero if any fails."""
-        api = str(options["api"]).rstrip("/")
+        api = str(options["api"] or app_settings().api_base_url).rstrip("/")
         with requests.Session() as http:
             event_id = options["event"]
             if not event_id:

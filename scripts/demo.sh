@@ -12,7 +12,7 @@ ROOT=$(cd "$(dirname "$0")/.." && pwd)
 RUN="$ROOT/var/demo"
 PY="$ROOT/backend/.venv/bin/python"
 EVENTS=${DEMO_EVENTS:-20000}
-API=http://127.0.0.1:8000
+API=${API_BASE_URL:-http://127.0.0.1:8000}
 export DJANGO_SETTINGS_MODULE=config.settings.local
 mkdir -p "$RUN"
 

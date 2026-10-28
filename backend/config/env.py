@@ -65,6 +65,9 @@ class AppSettings(BaseSettings):
         default=0.001, gt=0, lt=1, validation_alias="DEDUPE_TARGET_FPR"
     )
 
+    api_base_url: str = Field(default="http://127.0.0.1:8000", validation_alias="API_BASE_URL")
+    """Where command-line tools such as ``verify_event`` reach the running API."""
+
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = Field(
         default="INFO", validation_alias="LOG_LEVEL"
     )
