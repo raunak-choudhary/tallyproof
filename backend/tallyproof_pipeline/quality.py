@@ -16,15 +16,23 @@ Usage::
 
 import json
 import logging
+import os
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
+
+import pyspark
+from pyspark.sql import DataFrame, SparkSession
+
+# PyDeequ picks its Deequ build from SPARK_VERSION and refuses to import without it.
+# Derive it from the installed Spark (4.1.3 gives "4.1") so imports work however
+# the code is run; an explicitly set value still wins.
+os.environ.setdefault("SPARK_VERSION", ".".join(pyspark.__version__.split(".")[:2]))
 
 import pydeequ
 from pydeequ.checks import Check, CheckLevel
 from pydeequ.repository import FileSystemMetricsRepository, ResultKey
 from pydeequ.verification import VerificationResult, VerificationSuite
-from pyspark.sql import DataFrame, SparkSession
 
 from tallyproof_pipeline.settings import PipelineSettings, get_settings
 from tallyproof_pipeline.silver import PII_COLUMNS, spark_session
