@@ -6,7 +6,7 @@ from types import FrameType
 
 import psycopg
 from django.core.management.base import BaseCommand
-from django.db import connection
+from django.db import DatabaseError, connection
 
 from apps.ledger.append import APPENDED_CHANNEL
 from apps.ledger.projections import AppendedProjection, JournalProjection, Projection, step
@@ -50,7 +50,16 @@ class Command(BaseCommand):
         ) as listener:
             listener.execute(f"LISTEN {APPENDED_CHANNEL}")
             while not stopping:
-                read = sum(step(p) for p in projections)
+                read = 0
+                for projection in projections:
+                    # Each step is one transaction: a failure leaves nothing half-written,
+                    # and the other projections keep going while this one is retried.
+                    try:
+                        read += step(projection)
+                    except DatabaseError:
+                        log.exception(
+                            "projection %s failed; retrying on the next wake-up", projection.name
+                        )
                 if read:
                     log.info("projected %d events", read)
                     continue
