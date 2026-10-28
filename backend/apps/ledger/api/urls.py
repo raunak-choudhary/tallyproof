@@ -14,6 +14,11 @@ urlpatterns = [
     path("events/<str:event_id>", views.EventDetailView.as_view(), name="event"),
     path("events/<str:event_id>/proof", views.InclusionProofView.as_view(), name="event-proof"),
     path("consistency", views.ConsistencyProofView.as_view(), name="consistency"),
+    path(
+        "batches/<str:batch_id>/consistency",
+        views.BatchConsistencyView.as_view(),
+        name="batch-consistency",
+    ),
     path("reconciliation/breaks", reconciliation.BreakListView.as_view(), name="break-list"),
     path(
         "reconciliation/breaks/<str:break_id>",
