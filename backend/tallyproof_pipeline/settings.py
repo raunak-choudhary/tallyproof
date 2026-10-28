@@ -32,6 +32,10 @@ class PipelineSettings(BaseSettings):
     fiscal_years: list[int] = Field(default=[2025], validation_alias="DATA_FISCAL_YEARS")
     download_max_mbps: float = Field(default=20.0, gt=0, validation_alias="DATA_DOWNLOAD_MAX_MBPS")
     overlay_seed: int = Field(default=42, validation_alias="OVERLAY_SEED")
+    overlay_per_anomaly: int = Field(default=25, ge=1, validation_alias="OVERLAY_PER_ANOMALY")
+    replay_slice_events: int = Field(
+        default=1_000_000, ge=1, validation_alias="DATA_REPLAY_SLICE_EVENTS"
+    )
     spark_master: str = Field(default="local[3]", validation_alias="SPARK_MASTER")
     spark_driver_memory: str = Field(default="2g", validation_alias="SPARK_DRIVER_MEMORY")
     spark_shuffle_partitions: int = Field(

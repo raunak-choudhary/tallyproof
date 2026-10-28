@@ -1,5 +1,9 @@
 """Silver to gold: conform cleaned contract transactions into ledger events.
 
+Usage::
+
+    python -m tallyproof_pipeline.gold
+
 Each silver row becomes one validated :class:`~tallyproof_core.events.EventEnvelope`:
 
 - A base award (modification number empty or ``0``) becomes ``obligation.recorded``.
@@ -21,12 +25,19 @@ import hashlib
 import json
 import random
 from collections.abc import Iterable, Iterator, Mapping
+from dataclasses import asdict, dataclass
 from datetime import UTC, date, datetime, time
 from decimal import Decimal
 from pathlib import Path
 
+from pyspark.sql import DataFrame
+from pyspark.sql import functions as F  # noqa: N812 - conventional alias
+
 from tallyproof_core.events import EventEnvelope, EventType
 from tallyproof_core.ids import new_id
+from tallyproof_pipeline.overlay import inject, write_labels
+from tallyproof_pipeline.settings import PipelineSettings, get_settings
+from tallyproof_pipeline.silver import spark_session
 
 BASE_MODIFICATIONS = frozenset({"", "0", "00", "000"})
 
@@ -132,3 +143,66 @@ def read_events(path: Path) -> Iterator[EventEnvelope]:
     with gzip.open(path, "rt", encoding="utf-8") as handle:
         for line in handle:
             yield EventEnvelope.model_validate(json.loads(line))
+
+
+@dataclass(frozen=True)
+class GoldReport:
+    """What the gold build produced."""
+
+    real_events: int
+    injected_events: int
+    invalid_records: int
+    rows_rejected: int
+
+
+def replay_slice(silver: DataFrame, limit: int) -> DataFrame:
+    """Pick a deterministic slice of silver in event-time order."""
+    return silver.orderBy(F.col("action_date"), F.col("contract_transaction_unique_key")).limit(
+        limit
+    )
+
+
+def build_gold(settings: PipelineSettings, silver: DataFrame) -> GoldReport:
+    """Conform a slice of silver into events, add the overlay, and write gold.
+
+    Rows are streamed to the driver one partition at a time, so memory stays flat
+    however large the slice is. Rows that cannot form a valid event are counted,
+    not hidden.
+    """
+    events: list[EventEnvelope] = []
+    rejected = 0
+    for row in replay_slice(silver, settings.replay_slice_events).toLocalIterator():
+        try:
+            events.append(conform(row.asDict(), seed=settings.overlay_seed))
+        except (TypeError, ValueError):
+            rejected += 1
+    result = inject(events, seed=settings.overlay_seed, per_anomaly=settings.overlay_per_anomaly)
+    gold = settings.gold_dir
+    write_events(result.events, gold / "events.jsonl.gz")
+    write_labels(result.labels, gold / "labels.jsonl")
+    with gzip.open(gold / "invalid_records.jsonl.gz", "wt", encoding="utf-8") as handle:
+        for record in result.invalid_records:
+            handle.write(json.dumps(record, sort_keys=True) + "\n")
+    report = GoldReport(
+        real_events=len(events),
+        injected_events=len(result.events) - len(events),
+        invalid_records=len(result.invalid_records),
+        rows_rejected=rejected,
+    )
+    (gold / "report.json").write_text(json.dumps(asdict(report), indent=2) + "\n")
+    return report
+
+
+def main() -> None:  # pragma: no cover - thin command-line wrapper
+    """Build gold from silver and print a summary."""
+    settings = get_settings()
+    spark = spark_session(settings)
+    try:
+        silver = spark.read.parquet(str(settings.silver_dir / "contracts"))
+        print(build_gold(settings, silver))
+    finally:
+        spark.stop()
+
+
+if __name__ == "__main__":  # pragma: no cover
+    main()
