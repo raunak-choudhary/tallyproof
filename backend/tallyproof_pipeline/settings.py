@@ -36,6 +36,15 @@ class PipelineSettings(BaseSettings):
     replay_slice_events: int = Field(
         default=1_000_000, ge=1, validation_alias="DATA_REPLAY_SLICE_EVENTS"
     )
+    replay_rate_per_sec: int = Field(
+        default=2000, ge=1, validation_alias="DATA_REPLAY_RATE_PER_SEC"
+    )
+    kafka_bootstrap_servers: str = Field(
+        default="127.0.0.1:19092", validation_alias="KAFKA_BOOTSTRAP_SERVERS"
+    )
+    kafka_topic_events_raw: str = Field(
+        default="fin.events.raw.v1", validation_alias="KAFKA_TOPIC_EVENTS_RAW"
+    )
     spark_master: str = Field(default="local[3]", validation_alias="SPARK_MASTER")
     spark_driver_memory: str = Field(default="2g", validation_alias="SPARK_DRIVER_MEMORY")
     spark_shuffle_partitions: int = Field(
