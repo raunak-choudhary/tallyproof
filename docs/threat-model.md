@@ -39,6 +39,8 @@ The data is real public U.S. government spending, plus a labeled synthetic anoma
 
 ### The analyst's database access
 
+*Built with the analyst. The controls below are the design; the read-only role and its 3 second timeout already exist.*
+
 Most numeric questions never produce free-form SQL. The model fills in a typed query spec, and the server compiles it into SQL it already knows is safe ([ADR-0014](adr/0014-constrained-query-ir.md)). The fallback path, which does accept model-written SQL, is treated as hostile input and checked at two layers.
 
 At the database:
@@ -59,6 +61,8 @@ Clients only ever see generic error codes, never raw Postgres messages, because 
 
 ### Prompt injection
 
+*Built with the analyst. Policy text already enters only through a reviewed pull request (`backend/corpus/far`, covered by CODEOWNERS).*
+
 | Threat | Control |
 |---|---|
 | Instructions hidden in descriptions or policy text | Untrusted text goes into clearly delimited data blocks, length-capped, and the system prompt says data is never instructions |
@@ -76,34 +80,38 @@ Tamper detection is layered: a client-side leaf recomputation, a signature check
 
 Keys come in three classes, so a leak of one doesn't compromise the others:
 
-| Class | `key_id` prefix | Where it lives | What it signs |
+| Class | Key file | Where it lives | What it signs |
 |---|---|---|---|
-| Local | `dev-` | A gitignored key file on the developer machine | Local checkpoints |
-| CI | `ci-` | A restricted CircleCI context | Integration test checkpoints |
-| Release | `rel-` | Offline, on the maintainer's machine, never in CI | Public demo checkpoints and the signed bundle manifest |
+| Local | `secrets/checkpoint_dev.key` (`make keygen KEY=dev`) | Gitignored, on the developer machine | Local checkpoints |
+| Test | none | Generated in memory by each test run and thrown away | Test checkpoints |
+| Release | `secrets/checkpoint_rel.key` (`make keygen KEY=rel`) | Offline, on the maintainer's machine, never in CI | Public demo checkpoints and the signed bundle manifest |
+
+Each key's ID is derived from its name and public key, as the C2SP signed-note format specifies, so two keys can't be confused.
 
 - Keys load from a file path, not an environment variable, so they never show up in `docker inspect`, debug pages, or crash dumps.
 - Only the checkpointer process mounts a private key. The API and analyst never have one.
-- Rotation uses a key-transition record signed by the old key. Revoked key IDs are published with the witness data.
+- Planned: rotation through a key-transition record signed by the old key, with revoked key IDs published alongside the witness data. Today a new key means a new pinned key in the web build.
 - Private keys are never committed, test keys included. Tests generate keys at runtime, and a custom gitleaks rule catches the key file format.
 
 Witnesses:
 
-- Every checkpoint hash is timestamped through OpenTimestamps (anchored in Bitcoin, no account needed), and optionally through an RFC 3161 timestamp authority. This is the only witness the operator can't forge.
-- A copy of the checkpoints also lives in the repository under branch protection and CODEOWNERS. It's convenient, but it isn't independent, since the maintainer controls the repository. Verification fails if that history is ever rewritten.
+- Checkpoint hashes are timestamped through OpenTimestamps (anchored in Bitcoin, no account needed), at least once every `WITNESS_INTERVAL_SECONDS`. This is the only witness the operator can't forge. An RFC 3161 timestamp authority could be added as a second one; it isn't built.
+- The public demo's checkpoints are committed with its signed bundle under `frontend/public/replay/`, covered by CODEOWNERS. That copy is convenient but not independent, since the maintainer controls the repository. Locally, `make verify-witness` fails if the exported witness history no longer matches the log.
 - `WITNESS_INTERVAL_SECONDS` sets the longest gap before a checkpoint is timestamped, which is also how long a key thief could act unnoticed.
 
-The append-only tables have no update or delete grants for the application role, triggers as a second layer, and `TRUNCATE` revoked. The local tamper tool used for demos refuses to run unless the settings module is `local`, the database is on loopback, and tampering is explicitly enabled.
+The append-only tables have no update or delete grants for the application role, triggers as a second layer, and `TRUNCATE` revoked. The local tamper tool used for demos refuses to run unless tampering is explicitly enabled (`DEMO_TAMPER_ENABLED=true`) and the database is on loopback.
 
 ### Secrets and configuration
 
 - One typed settings module loads from `.env`, and a missing required variable stops startup with its name. Each process validates only the secrets it actually uses.
 - `.env` is ignored by git. `.env.example` lists every variable with an explanation ([configuration.md](configuration.md)).
 - gitleaks runs in pre-commit and in CI.
-- Nothing environment-specific is hardcoded: model IDs, URLs, thresholds, batch sizes. A CI check flags model-ID and localhost literals outside settings and tests.
+- Nothing environment-specific is hardcoded: model IDs, URLs, thresholds, batch sizes. `scripts/ci/check_literals.py` runs in `make lint` and fails on URL, local-address, and model-ID literals outside the settings modules, docstrings, comments, and tests.
 - A structlog processor redacts keys, tokens, and passwords in connection strings, and it has its own unit test.
 
 ### CI
+
+*CI holds no secrets today. The items about the LLM key, the bot token, and the response cache take effect with the analyst and evaluation work.*
 
 - Pull request pipelines never get the LLM key. When a PR's evaluation hits an uncached prompt, that item runs against a fake client and the run is labeled as a harness check. Only `main` and scheduled pipelines call the real model.
 - Secrets sit in three separate CircleCI contexts (LLM evaluation, the GitHub bot, CI signing), each restricted to `main` and scheduled triggers. Passing secrets to forked PRs is off.
@@ -115,11 +123,11 @@ The append-only tables have no update or delete grants for the application role,
 ### Public endpoints
 
 - Every endpoint is public by design, since all served data is public and free of personal data. The API refuses to start unless `DATA_CLASSIFICATION` is `public-no-pii`.
-- Rate limits apply per IP with explicitly configured trusted proxies, alongside a global cap on concurrent analyst requests, a per-IP daily token budget, and a breaker that switches to cached answers when the daily spend cap gets close.
-- Proof and consistency endpoints cap their ranges and pagination depth, and results are cached per checkpoint.
-- WebSockets check the origin, cap connections per IP, and limit message size.
-- Answer and query IDs carry 80 random bits, so they can't be enumerated.
-- CORS is limited to the configured web origin, and standard security headers are set (CSP, HSTS outside local, `X-Content-Type-Options`, `Referrer-Policy`).
+- Rate limits apply per IP with explicitly configured trusted proxies. With the analyst come a global cap on concurrent analyst requests, a per-IP daily token budget, and a breaker that switches to cached answers when the daily spend cap gets close.
+- List endpoints use cursors and cap a page at 200 items, and size parameters are validated. Proofs come from one in-memory tree that's extended as the log grows, so a request never rebuilds the log.
+- WebSockets check the origin against `DJANGO_ALLOWED_HOSTS`, cap connections per IP (`WS_MAX_CONNECTIONS_PER_IP`), and limit frame size (`WS_MAX_MESSAGE_BYTES`). A slow client drops its own oldest facts instead of slowing anyone else.
+- Public IDs carry 80 random bits (ULIDs), so they can't be enumerated.
+- CORS is limited to the configured web origin, and standard security headers are set: a Content-Security-Policy that allows nothing on JSON responses, HSTS wherever HTTPS is configured, `X-Content-Type-Options`, `Referrer-Policy`, and `X-Frame-Options`.
 
 ### The public demo
 
@@ -127,9 +135,11 @@ The demo is a static site with no backend, so its attack surface is the files it
 
 ### Supply chain
 
-Python dependencies are pinned with hashes through pip-tools, and frontend dependencies through the lockfile. Container images are pinned by tag and digest, and CircleCI orbs by exact version. Dependabot proposes updates, and `pip-audit` and `npm audit` run in CI. The embedding model is pinned to a specific revision.
+Python dependencies are pinned with hashes through pip-tools, and frontend dependencies through the lockfile. Container images and CircleCI images are pinned by exact version tag (not yet by digest), and GitHub Actions by commit. Dependabot proposes updates, and `pip-audit` and `npm audit` run in CI. The embedding model will be pinned to a specific revision when it's added.
 
 ### LLM cost
+
+*Built with the analyst.*
 
 Per-request token caps, a daily spend cap, response caching, and rate limits bound the cost. Requests over the cap get a typed refusal instead of a surprise bill.
 
