@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import type { Bundle } from "@/lib/replay/bundle";
 import { loadBundle } from "@/lib/replay/bundle";
+import { replayBase } from "@/lib/replay/paths";
 import { pinnedVerifierKey } from "@/lib/replay/pinnedKey";
 import { utf8 } from "@/lib/verify/bytes";
 import { canonicalize } from "@/lib/verify/canonical";
@@ -14,8 +15,6 @@ import { forgeCheckpointWithNewRoot, verifyEvent } from "@/lib/verify/verifyEven
 import { VerificationSteps } from "./VerificationSteps";
 
 type Mode = "original" | "edited" | "rebuilt";
-
-const REPLAY_BASE = process.env.NEXT_PUBLIC_REPLAY_BASE ?? "/replay";
 
 function withAmount(canonical: string, amount: string): string {
   const record = JSON.parse(canonical) as { payload: Record<string, unknown> };
@@ -30,7 +29,7 @@ export function EventVerifier({ eventId }: { eventId: string }) {
   const [result, setResult] = useState<VerifyResult | null>(null);
 
   useEffect(() => {
-    loadBundle(REPLAY_BASE, pinnedVerifierKey())
+    loadBundle(replayBase(), pinnedVerifierKey())
       .then(setBundle)
       .catch((error: unknown) =>
         setLoadError(error instanceof Error ? error.message : String(error)),
