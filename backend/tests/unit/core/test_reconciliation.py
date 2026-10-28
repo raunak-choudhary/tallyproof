@@ -116,3 +116,23 @@ def test_a_break_lists_each_event_once_even_when_it_opened_the_award():
     (found,) = Reconciler().apply(first)
     assert found.break_type is BreakType.DEOBLIGATION_EXCEEDS_AWARD
     assert found.events == ((first.event_id, "award"),)
+
+
+def test_partial_payments_raise_nothing_until_they_pass_the_obligation():
+    obligation = real_events(1)[0]  # 1,000.00 obligated on CONT_AWD_A0
+    award = obligation.payload.model_dump()["award_key"]
+    paid_in_parts = [
+        outlay(award, cumulative, period=n)
+        for n, cumulative in enumerate(["250.00", "600.00", "1000.00"], start=1)
+    ]
+    assert run([obligation, *paid_in_parts]) == []  # paid exactly in full, in three parts
+    over = run([obligation, *paid_in_parts, outlay(award, "1000.01", period=4)])
+    assert [b.amount_delta for b in over] == [Decimal("0.01")]
+
+
+def test_the_tolerance_absorbs_small_differences():
+    obligation = real_events(1)[0]
+    award = obligation.payload.model_dump()["award_key"]
+    engine = Reconciler(tolerance=Decimal("0.50"))
+    events = [obligation, outlay(award, "1000.40")]
+    assert [b for e in events for b in engine.apply(e)] == []
