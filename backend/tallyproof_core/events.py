@@ -59,6 +59,7 @@ class EventType(StrEnum):
     OUTLAY_REPORTED = "outlay.reported"
     CASH_MOVEMENT = "cash.movement"
     SOURCE_REGISTERED = "source.registered"
+    POLICY_PUBLISHED = "policy.published"
 
 
 class ObligationRecorded(_Strict):
@@ -123,12 +124,28 @@ class SourceRegistered(_Strict):
     fetched_at: datetime
 
 
+class PolicyPublished(_Strict):
+    """One section of a policy document, with its full text, as of one edition.
+
+    The whole text is hashed into the leaf, so a quote can be checked against the
+    proof itself rather than against a copy the server hands out separately.
+    """
+
+    source: Literal["FAR"]
+    citation: Text
+    section: Annotated[str, Field(pattern=r"^[0-9]+\.[0-9A-Za-z.-]+$", max_length=40)]
+    title: Text
+    edition: date
+    text: Annotated[str, Field(min_length=1, max_length=200_000)]
+
+
 PAYLOAD_TYPES: dict[EventType, type[_Strict]] = {
     EventType.OBLIGATION_RECORDED: ObligationRecorded,
     EventType.OBLIGATION_ADJUSTED: ObligationAdjusted,
     EventType.OUTLAY_REPORTED: OutlayReported,
     EventType.CASH_MOVEMENT: CashMovement,
     EventType.SOURCE_REGISTERED: SourceRegistered,
+    EventType.POLICY_PUBLISHED: PolicyPublished,
 }
 
 LEAF_FIELDS = (
@@ -166,7 +183,12 @@ class EventEnvelope(_Strict):
     account_id: Text
     correlation_id: Text
     payload: (
-        ObligationRecorded | ObligationAdjusted | OutlayReported | CashMovement | SourceRegistered
+        ObligationRecorded
+        | ObligationAdjusted
+        | OutlayReported
+        | CashMovement
+        | SourceRegistered
+        | PolicyPublished
     )
 
     @field_validator("event_id")
