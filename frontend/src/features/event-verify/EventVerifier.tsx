@@ -11,6 +11,8 @@ import { leafHash } from "@/lib/verify/hashing";
 import type { VerifyResult } from "@/lib/verify/verifyEvent";
 import { forgeCheckpointWithNewRoot, verifyEvent } from "@/lib/verify/verifyEvent";
 
+import { VerificationSteps } from "./VerificationSteps";
+
 type Mode = "original" | "edited" | "rebuilt";
 
 const REPLAY_BASE = process.env.NEXT_PUBLIC_REPLAY_BASE ?? "/replay";
@@ -138,31 +140,7 @@ export function EventVerifier({ eventId }: { eventId: string }) {
           </button>
         </div>
 
-        {result && (
-          <div aria-live="polite">
-            <p className={`font-semibold ${result.ok ? "text-ok" : "text-fail"}`}>
-              {result.ok
-                ? "Verified: this record is exactly what the signed log committed to."
-                : mode === "original"
-                  ? "Verification failed."
-                  : "Tampering detected. This is the check that caught it:"}
-            </p>
-            <ol className="mt-3 space-y-2">
-              {result.steps.map((step) => (
-                <li key={step.id} className="flex gap-3">
-                  <span aria-hidden="true" className={step.ok ? "text-ok" : "text-fail"}>
-                    {step.ok ? "✓" : "✕"}
-                  </span>
-                  <span>
-                    <span className="font-medium">{step.label}</span>
-                    <span className="sr-only">{step.ok ? " passed" : " failed"}</span>
-                    <span className="block font-mono text-sm text-fg-muted">{step.detail}</span>
-                  </span>
-                </li>
-              ))}
-            </ol>
-          </div>
-        )}
+        {result && <VerificationSteps result={result} tampered={mode !== "original"} />}
       </section>
     </div>
   );
