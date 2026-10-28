@@ -252,7 +252,7 @@ erDiagram
   }
 ```
 
-Supporting tables: `merkle_log_head` (a single row holding the next leaf index), `consumer_offset`, `dedupe_rejection`, `outbox`, `projection_cursor` (one row per projection), `break_event` (which events a break involves, and in what role), and, in the next phase, `doc_chunk` with a 384-dimension embedding column.
+Supporting tables: `merkle_log_head` (a single row holding the next leaf index), `consumer_offset`, `dedupe_rejection`, `outbox`, `projection_cursor` (one row per projection), `break_event` (which events a break involves, and in what role), and no chunk table: policy chunks and their vectors are built in memory from the `policy.published` leaves and cached on disk.
 
 Constraints worth knowing about:
 
