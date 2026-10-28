@@ -3,3 +3,9 @@
 
 rfc8785>=0.1.4,<0.2     # RFC 8785 JSON canonicalization (Trail of Bits, used by Sigstore)
 cryptography>=50,<51    # Ed25519 signing and verification for checkpoints
+
+pydantic>=2.14,<3           # event schemas and validation, exported as JSON Schema
+pydantic-settings>=2.16,<3  # typed settings loaded from .env
+requests>=2.34,<3           # resumable downloads from the official data archives
+pyspark==4.1.3              # batch processing; held at 4.1 because PyDeequ supports 4.1, not 4.2
+pydeequ==1.7.0              # Amazon Deequ data quality checks inside Spark
