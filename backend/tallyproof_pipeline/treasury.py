@@ -39,6 +39,8 @@ ENDPOINT = "v1/accounting/dts/deposits_withdrawals_operating_cash"
 ACCOUNT_ID = "treasury-operating-cash"
 PAGE_SIZE = 1000
 DIRECTIONS = {"Deposits": "deposit", "Withdrawals": "withdrawal"}
+PUBLISHED_AFTER = timedelta(days=1, hours=21)
+"""Statements appear around 4 pm Eastern (21:00 UTC) on the next business day."""
 
 
 class TreasuryError(RuntimeError):
@@ -118,8 +120,11 @@ def to_events(
     rows: list[dict[str, str]], record_date: date, now: datetime | None = None
 ) -> DayResult:
     """Turn one day's rows into events, and check the detail lines against the totals."""
-    emitted = (now or datetime.now(UTC)).replace(microsecond=0)
     occurred = datetime.combine(record_date, datetime.min.time(), tzinfo=UTC)
+    # When Treasury published the statement (about 4 pm Eastern the next day), not
+    # when we fetched it: otherwise a backfilled week would look like late reports.
+    published = occurred + PUBLISHED_AFTER
+    emitted = min(published, (now or datetime.now(UTC)).replace(microsecond=0))
     events: list[EventEnvelope] = []
     sums = {"deposit": Decimal(0), "withdrawal": Decimal(0)}
     lines = {"deposit": 0, "withdrawal": 0}
