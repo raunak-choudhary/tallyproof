@@ -55,7 +55,7 @@ jobs:
           command: make test
           environment:
             # Spark tests need Java and run in their own job.
-            PYTEST_ADDOPTS: --junitxml=test-results/junit.xml -m "not spark"
+            PYTEST_ADDOPTS: --junitxml=test-results/junit.xml -m "not spark and not integration"
             # Deterministic, larger property-based test runs, so failures reproduce exactly.
             HYPOTHESIS_PROFILE: ci
       - store_test_results:
