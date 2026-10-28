@@ -39,6 +39,7 @@ convention = "google"
 # attributes by design. Migrations are generated or hold SQL built only from
 # module constants, and are documented by their module docstrings.
 "apps/*/models.py" = ["RUF012", "D105", "D106"]
+"apps/**/serializers.py" = ["RUF012", "D106"]
 "apps/*/migrations/*.py" = ["RUF012", "D", "E501", "S608"]
 
 [tool.mypy]
