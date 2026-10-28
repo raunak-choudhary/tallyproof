@@ -18,7 +18,7 @@ Every setting comes from environment variables, loaded through one typed setting
 | `DJANGO_HSTS_SECONDS` | no | `0` | Strict-Transport-Security max age. Preload stays off on purpose |
 | `TRUSTED_PROXY_COUNT` | no | `0` | Reverse proxies to trust when finding a client's IP |
 | `API_THROTTLE_ANON_READS` | no | `300/min` | Rate limit for read endpoints |
-| `API_THROTTLE_ANON_QUERIES` | planned | `10/min` | Rate limit for asking the analyst questions |
+| `API_THROTTLE_ANON_QUERIES` | no | `10/min` | Rate limit for asking the analyst questions, per client IP |
 | `API_BASE_URL` | no | `http://127.0.0.1:8000` | Where command-line tools such as `make verify-event` reach the API |
 | `LOG_LEVEL` | no | `INFO` | `DEBUG`, `INFO`, `WARNING`, or `ERROR` |
 | `LOG_FORMAT` | no | `json` | `json` for one object per line, or `console` for reading while developing |
@@ -35,7 +35,7 @@ Every setting comes from environment variables, loaded through one typed setting
 | `DB_OWNER_URL` | for migrations | | Owner role used only by `make migrate`; never given to the API or workers |
 | `DB_ANALYST_URL` | yes | | Read-only role for the analyst |
 | `DB_ANALYST_STATEMENT_TIMEOUT_MS` | planned | `3000` | Today the role script sets the analyst's 3 second timeout directly |
-| `DB_ANALYST_MAX_ROWS` | planned | `1000` | |
+| `DB_ANALYST_MAX_ROWS` | no | `1000` | Most records one answer may cite; a question needing more is refused as too broad |
 
 ## Kafka and ingestion
 

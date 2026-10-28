@@ -159,7 +159,7 @@ Events are keyed by recipient because reconciliation works per award and recipie
 
 ## Database
 
-PostgreSQL 16 with pgvector. The diagram shows the whole design. The ledger, batch, journal, break, and outbox tables exist today; `POLICY_DOCUMENT`, `ANSWER`, `CLAIM`, `CITATION`, and the evaluation tables arrive with the analyst.
+PostgreSQL 16 with pgvector. The diagram shows the whole design. The ledger, batch, journal, break, outbox, and answer tables exist today; the evaluation tables arrive with the evaluation runner. Policy documents are `policy.published` events rather than a table of their own, and an answer stores its claims and citations as JSON on its own row (`analyst_answer`, append-only), so the diagram's `CLAIM` and `CITATION` boxes describe that JSON rather than separate tables.
 
 ```mermaid
 erDiagram
@@ -308,6 +308,8 @@ All endpoints except the health checks are under `/api/v1/` and return JSON. The
 | GET | `/api/v1/batches/{batch_id}/consistency` | Proof that a batch's checkpoint extends the one before it; 409 for the first batch |
 | GET | `/api/v1/reconciliation/breaks` | Breaks in the order found, filterable by `break_type` and `award_key` |
 | GET | `/api/v1/reconciliation/breaks/{break_id}` | One break and the events involved, with their roles |
+| POST | `/api/v1/queries` | Ask the analyst a question (`{"question": "..."}`). Answered as of the newest checkpoint, or refused with a code and a reason. Throttled per IP by `API_THROTTLE_ANON_QUERIES` |
+| GET | `/api/v1/answers/{answer_id}` | A stored answer: text with values filled in, each value's meaning and citation, the filter in words, and every cited event with its proof URL pinned to the answer's checkpoint |
 | GET | `/healthz` | Liveness, no dependencies |
 | GET | `/readyz` | Checks the database and the broker; 503 names whichever is down |
 
@@ -315,8 +317,6 @@ Planned with the analyst and evaluation work:
 
 | Method | Path | Purpose |
 |---|---|---|
-| POST | `/api/v1/queries` | Ask a question. Rate limited |
-| GET | `/api/v1/answers/{answer_id}` | An answer with its claims, bound values, and citations |
 | GET | `/api/v1/policy-documents/{document_id}` | A policy section and its leaf index |
 | GET | `/api/v1/eval-runs`, `/api/v1/eval-runs/{run_id}` | Evaluation runs and their per-question results |
 

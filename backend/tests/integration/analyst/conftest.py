@@ -33,3 +33,18 @@ def query(sql: str, *params: Any) -> list[tuple[Any, ...]]:
         cursor.execute("RESET ROLE")
         cursor.execute("RESET search_path")
     return rows
+
+
+class AsAnalyst:
+    """An executor that runs SQL with the analyst role's privileges on the test connection."""
+
+    def run(self, sql: str, params: Any) -> tuple[list[str], list[tuple[Any, ...]]]:
+        with connection.cursor() as cursor:
+            cursor.execute("SET LOCAL ROLE tallyproof_analyst")
+            cursor.execute("SET LOCAL search_path = analyst")
+            cursor.execute(sql, list(params) if params else None)
+            columns = [c.name for c in cursor.description or []]
+            rows = [tuple(r) for r in cursor.fetchall()]
+            cursor.execute("RESET ROLE")
+            cursor.execute("RESET search_path")
+        return columns, rows
