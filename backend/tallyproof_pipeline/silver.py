@@ -26,6 +26,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from pyspark import StorageLevel
 from pyspark.sql import Column, DataFrame, SparkSession
 from pyspark.sql import functions as F  # noqa: N812 - conventional alias
 from pyspark.sql.types import (
@@ -235,7 +236,12 @@ def process_member(
     ):
         shutil.copyfileobj(source, target, length=1024 * 1024)
     try:
-        raw = read_csv(spark, extracted)
+        # Parsing a 2 GB multi-line CSV is the expensive step, and the counts, the
+        # silver write, and the quarantine write each need the rows. Persisting the
+        # parsed rows to local disk parses the file once instead of once per pass,
+        # without holding 2 GB in the driver's memory.
+        raw = read_csv(spark, extracted).persist(StorageLevel.DISK_ONLY)
+        rows_read = raw.count()
         silver, quarantined, dropped = transform(raw)
         stem = Path(member).stem
         out = settings.silver_dir / "contracts" / f"source={archive.stem}" / f"member={stem}"
@@ -247,10 +253,11 @@ def process_member(
         report = MemberReport(
             archive=archive.name,
             member=member,
-            rows_read=raw.count(),
+            rows_read=rows_read,
             rows_written=spark.read.parquet(str(out)).count(),
             dropped=dropped,
         )
+        raw.unpersist()
     finally:
         extracted.unlink(missing_ok=True)
     reports_dir = settings.silver_dir / "_reports" / archive.stem
