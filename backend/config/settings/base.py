@@ -23,8 +23,9 @@ INSTALLED_APPS = [
     "apps.realtime",
 ]
 
-# Live updates fan out through Redis. A client whose buffer is full misses
-# messages instead of slowing everyone down; it can catch up through the API.
+# Live updates fan out through Redis. Each WebSocket client drains the group into
+# its own small buffer, so a slow client drops its oldest facts instead of
+# slowing everyone down (apps/realtime/consumers.py).
 CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
@@ -42,6 +43,15 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+]
+
+# Only the API docs page renders a template (drf-spectacular's Swagger viewer).
+TEMPLATES = [
+    {
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "APP_DIRS": True,
+        "OPTIONS": {"context_processors": []},
+    }
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -75,11 +85,18 @@ REST_FRAMEWORK = {
     "EXCEPTION_HANDLER": "apps.ledger.api.problems.handler",
 }
 
+# The docs page loads the Swagger viewer from its CDN, pinned to one version
+# rather than drf-spectacular's default of "latest".
+SWAGGER_UI_VERSION = "5.33.2"
+SWAGGER_UI_CDN = f"https://cdn.jsdelivr.net/npm/swagger-ui-dist@{SWAGGER_UI_VERSION}"
+
 SPECTACULAR_SETTINGS = {
     "TITLE": "Tallyproof API",
     "DESCRIPTION": "Ledger events, Merkle proofs, and signed checkpoints. "
     "The API returns proofs; clients do the verifying.",
     "VERSION": "1.0.0",
+    "SWAGGER_UI_DIST": SWAGGER_UI_CDN,
+    "SWAGGER_UI_FAVICON_HREF": f"{SWAGGER_UI_CDN}/favicon-32x32.png",
 }
 
 # Browser hardening. The API sets no cookies today; the cookie flags make sure
