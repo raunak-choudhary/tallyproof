@@ -7,7 +7,7 @@ Each record explains the context, the decision, the reasons, the alternatives co
 | 0001 | PostgreSQL over NoSQL for the ledger | Accepted |
 | 0002 | Redpanda as the local Kafka-compatible broker | Accepted |
 | 0003 | Merkle log structure and batching policy | Accepted |
-| 0004 | Django 5.2 LTS | Accepted |
+| 0004 | Django 5.2 LTS | Accepted; its WebSocket server was changed by 0018 |
 | 0005 | Replay mode for the public demo | Accepted |
 | 0006 | Project name | Accepted |
 | 0007 | Signed checkpoints and external witnessing | Accepted |
@@ -21,3 +21,5 @@ Each record explains the context, the decision, the reasons, the alternatives co
 | 0015 | Verification trust model | Accepted |
 | 0016 | Real public spending data with a labeled synthetic overlay | Accepted |
 | 0017 | PySpark 4.1 batch processing with Deequ data quality | Accepted |
+| 0018 | Uvicorn instead of Daphne for the WebSocket server | Accepted |
+| 0019 | Derived state is projected from the ledger, not consumed from Kafka | Accepted |
