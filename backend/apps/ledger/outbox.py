@@ -47,11 +47,13 @@ def outbox_lag() -> OutboxLag:
     """Measure the relay's lag from the outbox itself, so it's true whichever relay runs."""
     with connection.cursor() as cursor:
         cursor.execute(
-            "SELECT count(*), EXTRACT(EPOCH FROM now() - min(created_at))"
+            # clock_timestamp(), not now(): now() is the transaction's start time,
+            # which would understate the age inside a long transaction.
+            "SELECT count(*), GREATEST(0, EXTRACT(EPOCH FROM clock_timestamp() - min(created_at)))"
             " FROM outbox WHERE published_at IS NULL"
         )
         pending, oldest = cursor.fetchone()
-    return OutboxLag(int(pending), None if oldest is None else float(oldest))
+    return OutboxLag(int(pending), float(oldest) if pending else None)
 
 
 class RelayError(RuntimeError):
