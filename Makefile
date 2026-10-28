@@ -32,7 +32,7 @@ COMPOSE := docker --context colima-$(COLIMA_PROFILE) compose --env-file .env -f 
 SPARK_VERSION ?= 4.1
 export SPARK_VERSION
 
-.PHONY: help doctor venv deps deps-sync require-venv lint format typecheck test check audit vectors web-install web-lint web-typecheck web-test web-build web-check web-audit web-live data-fetch data-build data-quality require-no-containers data-gold keygen replay data-sample test-integration coverage coverage-report require-colima up down reset ps logs db-roles migrate ingest checkpointer verify-witness data-replay data-treasury policy-fetch policy-publish demo demo-stop tamper schemas register-schemas verify-event console clean
+.PHONY: help doctor venv deps deps-sync require-venv lint format typecheck test check audit vectors web-install web-lint web-typecheck web-test web-build web-check web-audit web-live data-fetch data-build data-quality require-no-containers data-gold keygen replay data-sample test-integration coverage coverage-report require-colima up down reset ps logs db-roles migrate ingest checkpointer project relay fanout stream check-derived rebuild-derived check-totals dead-letters verify-witness data-replay data-treasury policy-fetch policy-publish demo demo-stop tamper schemas register-schemas verify-event console clean
 
 help: ## List available commands
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -203,6 +203,31 @@ ingest: require-venv require-colima ## Run the ingestion consumer (Ctrl+C finish
 
 checkpointer: require-venv require-colima ## Sign checkpoints as the log grows (Ctrl+C stops)
 	cd $(BACKEND) && DJANGO_SETTINGS_MODULE=config.settings.local .venv/bin/python manage.py checkpointer
+
+project: require-venv require-colima ## Build the journal, reconciliation breaks, and announcements as the log grows
+	cd $(BACKEND) && DJANGO_SETTINGS_MODULE=config.settings.local .venv/bin/python manage.py project
+
+relay: require-venv require-colima ## Publish outbox rows to Kafka
+	cd $(BACKEND) && DJANGO_SETTINGS_MODULE=config.settings.local .venv/bin/python manage.py relay_outbox
+
+fanout: require-venv require-colima ## Forward ledger facts and breaks to WebSocket clients
+	cd $(BACKEND) && DJANGO_SETTINGS_MODULE=config.settings.local .venv/bin/python manage.py fanout
+
+stream: require-venv require-colima ## Serve the WebSocket endpoint on 127.0.0.1:8001
+	cd $(BACKEND) && DJANGO_SETTINGS_MODULE=config.settings.local .venv/bin/uvicorn config.asgi:application --host 127.0.0.1 --port 8001
+
+check-derived: require-venv require-colima ## Recompute the journal from the ledger and report any difference
+	cd $(BACKEND) && DJANGO_SETTINGS_MODULE=config.settings.local .venv/bin/python manage.py check_derived
+
+rebuild-derived: require-venv require-colima ## Clear a derived view so the projections rebuild it (VIEW=journal|reconciliation)
+	cd $(BACKEND) && DJANGO_SETTINGS_MODULE=config.settings.migrate .venv/bin/python manage.py rebuild_derived $(VIEW)
+
+check-totals: require-venv require-colima ## Check every consumed message was appended, refused, or dead-lettered
+	cd $(BACKEND) && DJANGO_SETTINGS_MODULE=config.settings.local .venv/bin/python manage.py check_totals
+
+dead-letters: require-venv require-colima ## List dead letters (EXPORT=file writes them, REPLAY=file publishes fixed ones)
+	cd $(BACKEND) && DJANGO_SETTINGS_MODULE=config.settings.local .venv/bin/python manage.py dead_letters \
+		$(if $(EXPORT),--export $(EXPORT),$(if $(REPLAY),--replay $(REPLAY),--list))
 
 verify-witness: require-venv require-colima ## Check exported checkpoints against the key and the current log
 	cd $(BACKEND) && DJANGO_SETTINGS_MODULE=config.settings.local .venv/bin/python manage.py verify_witness
