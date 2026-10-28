@@ -22,6 +22,7 @@ import json
 import logging
 import shutil
 import zipfile
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -103,19 +104,28 @@ class MemberReport:
     dropped: dict[str, int] = field(default_factory=dict)
 
 
-def spark_session(settings: PipelineSettings) -> SparkSession:
-    """Start a local Spark session within the laptop resource budget."""
+def spark_session(
+    settings: PipelineSettings, extra: Mapping[str, str] | None = None
+) -> SparkSession:
+    """Start a local Spark session within the laptop resource budget.
+
+    Args:
+        settings: Supplies the master, driver memory, and shuffle partitions.
+        extra: Additional Spark settings, for example the Deequ packages.
+    """
     settings.work_dir.mkdir(parents=True, exist_ok=True)
-    return (
+    builder = (
         SparkSession.builder.master(settings.spark_master)
-        .appName("tallyproof-silver")
+        .appName("tallyproof")
         .config("spark.driver.memory", settings.spark_driver_memory)
         .config("spark.sql.shuffle.partitions", str(settings.spark_shuffle_partitions))
         .config("spark.sql.session.timeZone", "UTC")
         .config("spark.local.dir", str(settings.work_dir / "spark"))
         .config("spark.ui.enabled", "false")
-        .getOrCreate()
     )
+    for key, value in (extra or {}).items():
+        builder = builder.config(key, value)
+    return builder.getOrCreate()
 
 
 def _typed(column: str, data_type: object) -> Column:
