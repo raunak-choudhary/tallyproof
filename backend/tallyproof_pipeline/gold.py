@@ -67,10 +67,15 @@ def conform(row: Mapping[str, object], *, seed: int) -> EventEnvelope:
     if not isinstance(action_date, date):
         raise TypeError(f"{key}: action_date must be a date, got {action_date!r}")
     reported = row.get("last_modified_date") or row.get("initial_report_date") or action_date
-    if not isinstance(reported, date):
-        raise TypeError(f"{key}: report dates must be dates")
+    if isinstance(reported, datetime):
+        # Silver stores report times as UTC wall-clock time without a zone.
+        reported_at = reported if reported.tzinfo else reported.replace(tzinfo=UTC)
+    elif isinstance(reported, date):
+        reported_at = _midnight(reported)
+    else:
+        raise TypeError(f"{key}: report dates must be dates or timestamps")
     occurred_at = _midnight(action_date)
-    emitted_at = max(_midnight(reported), occurred_at)
+    emitted_at = max(reported_at, occurred_at)
     amount = row["federal_action_obligation"]
     amount_text = f"{Decimal(str(amount)):.2f}" if amount is not None else "0.00"
     modification = _optional(row.get("modification_number")) or ""

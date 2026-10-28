@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import UTC, date, datetime
 from decimal import Decimal
 from typing import Any
 
@@ -17,8 +17,8 @@ def silver_row(**overrides: Any) -> dict[str, Any]:
         "modification_number": "0",
         "federal_action_obligation": Decimal("1250000.00"),
         "action_date": date(2025, 3, 14),
-        "last_modified_date": date(2025, 3, 20),
-        "initial_report_date": date(2025, 3, 15),
+        "last_modified_date": datetime(2025, 3, 20, 4, 28, 7),
+        "initial_report_date": datetime(2025, 3, 15, 13, 7, 48),
         "awarding_agency_name": "Department of Defense",
         "funding_agency_name": "Department of the Air Force",
         "recipient_uei": "ZQGGHJH74DW7",
@@ -55,7 +55,15 @@ def test_timing_reflects_when_the_government_reported_it():
     event = conform(silver_row(), seed=1)
     document = event.leaf_document()
     assert document["occurred_at"] == "2025-03-14T00:00:00Z"
-    assert document["emitted_at"] == "2025-03-20T00:00:00Z"
+    assert document["emitted_at"] == "2025-03-20T04:28:07Z"
+
+
+def test_plain_report_dates_and_aware_timestamps_are_both_accepted():
+    assert conform(silver_row(last_modified_date=date(2025, 3, 21)), seed=1).emitted_at == datetime(
+        2025, 3, 21, tzinfo=UTC
+    )
+    aware = datetime(2025, 3, 22, 8, 0, tzinfo=UTC)
+    assert conform(silver_row(last_modified_date=aware), seed=1).emitted_at == aware
 
 
 def test_report_date_before_action_date_is_clamped_to_the_action_date():
@@ -93,7 +101,7 @@ def test_missing_amount_becomes_zero_and_empty_optionals_are_omitted():
 def test_rows_that_cannot_form_events_are_rejected():
     with pytest.raises(TypeError, match="action_date"):
         conform(silver_row(action_date="2025-03-14"), seed=1)
-    with pytest.raises(TypeError, match="report dates"):
+    with pytest.raises(TypeError, match="dates or timestamps"):
         conform(silver_row(last_modified_date="soon"), seed=1)
     with pytest.raises(ValidationError):
         conform(silver_row(recipient_uei=""), seed=1)
