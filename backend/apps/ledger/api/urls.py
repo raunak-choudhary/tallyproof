@@ -3,6 +3,7 @@
 from django.urls import path
 
 from apps.ledger.api import views
+from apps.reconciliation import api as reconciliation
 
 urlpatterns = [
     path("log-key", views.LogKeyView.as_view(), name="log-key"),
@@ -13,4 +14,10 @@ urlpatterns = [
     path("events/<str:event_id>", views.EventDetailView.as_view(), name="event"),
     path("events/<str:event_id>/proof", views.InclusionProofView.as_view(), name="event-proof"),
     path("consistency", views.ConsistencyProofView.as_view(), name="consistency"),
+    path("reconciliation/breaks", reconciliation.BreakListView.as_view(), name="break-list"),
+    path(
+        "reconciliation/breaks/<str:break_id>",
+        reconciliation.BreakDetailView.as_view(),
+        name="break",
+    ),
 ]
