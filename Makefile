@@ -23,7 +23,7 @@ else
   PYTHON ?= python3.12
 endif
 
-.PHONY: help doctor venv deps deps-sync require-venv lint format typecheck test check audit vectors clean
+.PHONY: help doctor venv deps deps-sync require-venv lint format typecheck test check audit vectors web-install web-lint web-typecheck web-test web-build web-check clean
 
 help: ## List available commands
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -74,6 +74,25 @@ vectors: require-venv ## Regenerate the shared cross-language test vectors
 	cd $(BACKEND) && .venv/bin/python -m tests.vectors_builder
 
 check: lint typecheck test ## Everything CI checks on every pull request
+
+WEB := frontend
+
+web-install: ## Install the web app's locked dependencies
+	cd $(WEB) && pnpm install --frozen-lockfile
+
+web-lint: ## Lint and format-check the web app
+	cd $(WEB) && pnpm run lint
+
+web-typecheck: ## Type-check the web app
+	cd $(WEB) && pnpm run typecheck
+
+web-test: ## Run the web app's unit tests
+	cd $(WEB) && pnpm run test
+
+web-build: ## Build the static web app (needs the replay bundle and pinned key)
+	cd $(WEB) && pnpm run build
+
+web-check: web-lint web-typecheck web-test ## Everything CI checks on the web app
 
 clean: ## Remove caches and build output (keeps the virtual environment)
 	find $(BACKEND) -type d \( -name __pycache__ -o -name .pytest_cache -o -name .mypy_cache -o -name .ruff_cache \) -prune -exec rm -rf {} +
