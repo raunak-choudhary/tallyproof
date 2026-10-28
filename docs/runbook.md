@@ -26,7 +26,7 @@ colima stop tallyproof                                  # when done for the day
 
 | Workload | Limit | Rule |
 |---|---|---|
-| Colima VM (Redpanda, Postgres, Redis, object store) | 2 CPUs, 3 GiB | Per-container memory limits in `compose.yaml`; Redpanda runs with `--smp 1 --memory 1G` |
+| Colima VM (Redpanda and Postgres today) | 2 CPUs, 3 GiB | Per-container memory limits in `infra/compose.yaml`; Redpanda runs with `--smp 1 --memory 1G` and Postgres with 128 MB of shared buffers. Idle, the two use about 220 MB |
 | Spark batch job | `local[3]`, driver memory 2 GiB, small shuffle partition count | Runs **only while the container stack is stopped** (`make data-build` checks and refuses otherwise) |
 | Raw data on disk | about 4 GB of zipped archives | CSV members are extracted one at a time, converted to Parquet, then deleted; never all at once |
 | Tests in CI | small committed sample (about 50k rows) | Full-size runs are local only |
@@ -62,19 +62,25 @@ cd frontend && pnpm install && pnpm dev   # browse and verify records locally
 
 `make data-build`, `data-quality`, and `data-gold` refuse to start while a Colima VM is running, because the laptop can't hold Spark and the container stack together.
 
-Coming with the streaming ledger:
+## Run the streaming stack
 
 ```bash
-cp .env.example .env
+cp .env.example .env       # then fill in the secret key and the four database passwords
+make keygen KEY=dev        # prints the value for CHECKPOINT_PUBLIC_KEY
 colima start tallyproof
-make up                    # Redpanda, Postgres, Redis, object storage, API, workers, web
-make data-replay           # stream gold events into Kafka
+make up                    # Redpanda and Postgres, then the topics; waits until both are healthy
+make ps                    # containers and their health
+make console               # optional broker console at http://localhost:8080
 ```
+
+`make` always talks to the `colima-tallyproof` Docker context, whatever context is active. Every port binds to 127.0.0.1. The API and workers run on the host from `backend/.venv` rather than in containers, which saves the VM's memory for the broker and database.
+
+On its first start, Postgres creates three roles from `infra/postgres/create-roles.sql`. Only those roles may connect, only the owner can create objects, and the analyst's sessions are read-only with a 3 second statement timeout. After changing a password in `.env`, run `make db-roles` to apply it. The topic script and the role script are both safe to run again.
 
 ## Health checks
 
 - `GET /healthz` answers as long as the process is up.
-- `GET /readyz` also checks the broker, the database, and the cache. Wait for it before replaying data.
+- `GET /readyz` also checks the database and the broker, and answers 503 naming whichever one is down. Wait for it before replaying data.
 
 ## Back up the release signing key
 
