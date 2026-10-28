@@ -115,3 +115,11 @@ def test_checkpoints_are_exported_timestamped_and_verifiable(migrated, tmp_path,
     tampered = verify(policy.export_path, verifier, rewritten)
     assert not tampered.ok
     assert "no longer matches checkpoint 2" in tampered.problems[0]
+
+
+def test_closing_picks_up_new_leaves_and_refuses_an_empty_batch(migrated):
+    cp = Checkpointer(SIGNER, 256, 60_000, clock=Clock())
+    with pytest.raises(CheckpointerError, match="no leaves"):
+        cp.close()
+    add_events(migrated, 3)
+    assert cp.close().tree_size == 3
