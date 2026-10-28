@@ -1,6 +1,6 @@
 import pytest
 
-from tallyproof_pipeline.settings import PipelineSettings, SettingsError, get_settings
+from tallyproof_pipeline.settings import REPO_ROOT, PipelineSettings, SettingsError, get_settings
 
 URLS = {
     "DATA_SOURCE_USASPENDING_FILES_URL": "https://files.example.gov/archive/",
@@ -33,3 +33,12 @@ def test_missing_required_values_name_the_variable(monkeypatch):
     with pytest.raises(SettingsError, match="DATA_SOURCE_USASPENDING_FILES_URL"):
         get_settings()
     get_settings.cache_clear()
+
+
+def test_relative_data_dir_is_anchored_to_the_repository_root(monkeypatch, tmp_path):
+    for name, value in URLS.items():
+        monkeypatch.setenv(name, value)
+    monkeypatch.setenv("DATA_DIR", "data")
+    monkeypatch.chdir(tmp_path)  # simulate running from another folder
+    settings = PipelineSettings(_env_file=None)
+    assert settings.data_dir == REPO_ROOT / "data"

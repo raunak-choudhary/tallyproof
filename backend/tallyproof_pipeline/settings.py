@@ -8,7 +8,7 @@ variable's name instead of failing later in a confusing way.
 from functools import lru_cache
 from pathlib import Path
 
-from pydantic import Field, HttpUrl, ValidationError
+from pydantic import Field, HttpUrl, ValidationError, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -37,6 +37,13 @@ class PipelineSettings(BaseSettings):
     spark_shuffle_partitions: int = Field(
         default=16, ge=1, validation_alias="SPARK_SHUFFLE_PARTITIONS"
     )
+
+    @field_validator("data_dir")
+    @classmethod
+    def _anchor_relative_data_dir(cls, value: Path) -> Path:
+        # Commands run from different folders (make changes into backend/), so a
+        # relative DATA_DIR is anchored to the repository root, never the cwd.
+        return value if value.is_absolute() else REPO_ROOT / value
 
     @property
     def bronze_dir(self) -> Path:
