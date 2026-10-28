@@ -27,7 +27,7 @@ endif
 SPARK_VERSION ?= 4.1
 export SPARK_VERSION
 
-.PHONY: help doctor venv deps deps-sync require-venv lint format typecheck test check audit vectors web-install web-lint web-typecheck web-test web-build web-check clean
+.PHONY: help doctor venv deps deps-sync require-venv lint format typecheck test check audit vectors web-install web-lint web-typecheck web-test web-build web-check data-fetch clean
 
 help: ## List available commands
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -76,6 +76,9 @@ audit: require-venv ## Scan pinned dependencies for known vulnerabilities
 
 vectors: require-venv ## Regenerate the shared cross-language test vectors
 	cd $(BACKEND) && .venv/bin/python -m tests.vectors_builder
+
+data-fetch: require-venv ## Download the configured fiscal years into data/bronze
+	cd $(BACKEND) && .venv/bin/python -m tallyproof_pipeline.acquire
 
 check: lint typecheck test ## Everything CI checks on every pull request
 
