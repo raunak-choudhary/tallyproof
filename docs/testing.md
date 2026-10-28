@@ -10,7 +10,7 @@ Tests are layered so the fast ones run constantly and the slow ones run only whe
 | Module | One Django app with its collaborators faked, against a test Postgres | pytest-django | Under 2 minutes | Every pull request |
 | Data pipeline | Spark jobs and Deequ checks on the committed sample of about 50k real rows | pytest, PySpark local mode | Under 3 minutes | Pull requests that touch the pipeline |
 | Integration | Real Redpanda and Postgres with pgvector, and object storage later | Testcontainers | Under 6 minutes | Pull requests that touch ingestion, the ledger, or infrastructure |
-| End to end | From gold events to a verified answer, with recorded LLM responses | pytest | Under 4 minutes | Every pull request on the smoke set, nightly on the full set |
+| End to end | Evaluation dataset through Redpanda, ingestion, projections, and the checkpointer, then questions through the API; every cited event is verified through the proof API. Model replies replay from `testdata/llm_recordings/e2e` (`E2E_RECORD=1` re-records) | pytest (`tests/integration/analyst/test_end_to_end.py`) | Under 10 seconds | Every pull request, in the integration job |
 | Frontend unit | Verification library and components | Vitest | Under 1 minute | Every pull request |
 | Cross-language | The same test vectors checked by Python and TypeScript | Shared files in `testdata/vectors` | Seconds | Every pull request |
 | Browser | Landing page, verify, tamper, analyst, and evaluation dashboard flows, with accessibility checks | Playwright, axe | Under 5 minutes | Pull requests that touch the frontend |
