@@ -35,6 +35,11 @@ convention = "google"
 "tests/**" = ["S101", "S311", "D", "ANN"]
 # Settings modules re-export the base settings with star imports by design.
 "config/settings/*.py" = ["F403", "F401"]
+# Django declares Meta options and migration operations as mutable class
+# attributes by design. Migrations are generated or hold SQL built only from
+# module constants, and are documented by their module docstrings.
+"apps/*/models.py" = ["RUF012", "D105", "D106"]
+"apps/*/migrations/*.py" = ["RUF012", "D", "E501", "S608"]
 
 [tool.mypy]
 python_version = "3.12"
@@ -60,7 +65,10 @@ DJANGO_SETTINGS_MODULE = "config.settings.test"
 testpaths = ["tests"]
 pythonpath = ["."]
 addopts = "-ra --strict-markers --strict-config"
-markers = ["spark: needs Java 17 and starts a local Spark session"]
+markers = [
+    "spark: needs Java 17 and starts a local Spark session",
+    "integration: needs Docker; starts real Postgres or Redpanda containers",
+]
 filterwarnings = [
     # py4j, the Python-to-JVM bridge Spark uses, leaves local sockets for the
     # garbage collector to close. Harmless, and not something this project controls.
