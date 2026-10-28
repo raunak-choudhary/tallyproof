@@ -9,11 +9,13 @@ Versions were checked against PyPI, npm, Docker Hub, and the official documentat
 | Language | Python | 3.12 | Supported by every library used here |
 | Web framework | Django LTS | 5.2 | Security support until April 2028, longer than any newer release ([ADR-0004](adr/0004-django-5-2-lts.md)) |
 | API | Django REST Framework, drf-spectacular | 3.18, 0.30 | OpenAPI generated from code |
-| WebSockets | Channels, channels-redis, Daphne | 4.3, 4.3, 4.2 | Live updates without polling |
+| WebSockets | Channels, channels-redis, Uvicorn, websockets | 4.3, 4.3, 0.54, 17.3 | Live updates without polling. Uvicorn replaced Daphne, whose Twisted dependency had open vulnerabilities ([ADR-0018](adr/0018-uvicorn-for-websockets.md)) |
+| WSGI server | gunicorn | 26.2 | Serves the REST API, separately from the WebSocket server |
 | Kafka client | confluent-kafka | 2.16 | Bundles librdkafka and ships Apple Silicon wheels |
-| Postgres driver | psycopg | 3.3 | Supports `COPY` for staged inserts |
+| Postgres driver | psycopg | 3.3 | Array parameters for batched inserts, and `LISTEN` for waking workers |
 | Settings | pydantic-settings | 2.16 | Typed, and fails fast on missing values |
-| Schemas | pydantic | 2.14 | Exports JSON Schema draft-07 |
+| Schemas | pydantic | 2.14 | Exports JSON Schema draft-07, registered in the Redpanda schema registry with backward compatibility |
+| XML parsing | defusedxml | 0.7 | Parses the eCFR policy text without XML entity attacks |
 | Logging | structlog | 26.1 | JSON logs with correlation IDs |
 | Canonical JSON | rfc8785 | 0.1 | RFC 8785, used by Sigstore ([ADR-0010](adr/0010-canonical-json-rfc8785.md)) |
 | Cryptography | cryptography | 50 | Ed25519 |
@@ -44,7 +46,7 @@ pytest 9, pytest-django 4.14, Hypothesis 6, testcontainers 4.15 (with the Redpan
 | Kafka-compatible broker | `docker.redpanda.com/redpandadata/redpanda:v26.2.6` |
 | Broker console | `docker.redpanda.com/redpandadata/console:v3.13.1` |
 | Postgres with pgvector | `pgvector/pgvector:0.8.7-pg16-trixie` |
-| Redis | 7.4 line |
+| Redis | `redis:7.4-alpine`, the WebSocket channel layer |
 | S3-compatible storage | SeaweedFS 4, since the MinIO community edition is no longer maintained ([ADR-0012](adr/0012-lake-sink-and-object-store.md)) |
 
 PostgreSQL 16 is supported until November 2028, which covers Django 5.2's support window, and it's available on Aurora PostgreSQL.

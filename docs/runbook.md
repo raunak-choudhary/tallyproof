@@ -45,15 +45,13 @@ Colima, Docker CLI, Python, Node, and their dependencies were already present be
 
 ## First run
 
-Working today:
-
 ```bash
 make venv                  # backend/.venv with pinned dependencies (make doctor shows the toolchain)
 make check                 # lint, strict type checks, tests
 make data-fetch            # download the configured fiscal years and record their hashes
-make data-build            # Spark: clean into silver and remove personal data
+make data-build            # Spark: clean into silver and remove personal data (skips files already built)
 make data-quality          # Deequ constraints on silver
-make data-gold             # build ledger events with the labeled anomaly overlay
+make data-gold             # build ledger events with the labeled anomaly overlay (SCENARIO=smoke|demo|full|volume)
 make data-sample           # refresh the committed 2,000-event sample from gold
 make keygen KEY=rel        # create the release signing key in secrets/
 make replay                # export the signed 2,000-event bundle to data/replay
@@ -61,6 +59,10 @@ cd frontend && pnpm install && pnpm dev   # browse and verify records locally
 ```
 
 `make data-build`, `data-quality`, and `data-gold` refuse to start while a Colima VM is running, because the laptop can't hold Spark and the container stack together.
+
+`DATA_FISCAL_YEARS` defaults to both FY2024 and FY2025. Each year is about 2 GB to download and about 20 minutes of Spark; set it to `[2025]` for a single year. Silver keeps a report per CSV file and skips any file it has already built, so adding a year doesn't redo the other one. Delete a file's report under `data/silver/_reports/` to force it.
+
+The scenario sets the size of the gold build: `smoke` is 2,000 events with 2 of each anomaly, `demo` 20,000 with 5, `full` (the default) a million with 25, and `volume` every transaction of both years with 100.
 
 ## Run the streaming stack
 
@@ -76,6 +78,23 @@ make console               # optional broker console at http://localhost:8080
 `make` always talks to the `colima-tallyproof` Docker context, whatever context is active. Every port binds to 127.0.0.1. The API and workers run on the host from `backend/.venv` rather than in containers, which saves the VM's memory for the broker and database.
 
 On its first start, Postgres creates three roles from `infra/postgres/create-roles.sql`. Only those roles may connect, only the owner can create objects, and the analyst's sessions are read-only with a 3 second statement timeout. After changing a password in `.env`, run `make db-roles` to apply it. The topic script and the role script are both safe to run again.
+
+### Workers
+
+`make demo` starts everything in the background and `make demo-stop` stops it. To run one piece in the foreground instead, each has its own target:
+
+| Target | What it runs |
+|---|---|
+| `make ingest` | Kafka consumer that appends to the ledger |
+| `make checkpointer` | Signs a checkpoint every 256 leaves or 2 seconds, and timestamps it |
+| `make project` | Journal, reconciliation breaks, and appended-event announcements |
+| `make relay` | Publishes outbox rows to Kafka |
+| `make fanout` | Forwards appended events and breaks to WebSocket clients |
+| `make stream` | WebSocket endpoint on port 8001 |
+
+### Policy corpus
+
+The FAR text the analyst can quote lives in `backend/corpus/far/`, one JSON Lines file per part plus a manifest of text hashes. `make policy-fetch` refreshes it from the latest eCFR edition; review the diff and commit it like code. `make policy-publish` sends it to the raw topic, where each section becomes a ledger leaf. Sections whose text hasn't changed are refused as duplicates, so publishing again is safe.
 
 ## Health checks
 
@@ -113,10 +132,36 @@ Checks that every witnessed checkpoint is consistent with the current log, that 
 ## Run the tamper demo locally
 
 ```bash
-DEMO_TAMPER_ENABLED=true make tamper LEVEL=1 EVENT=evt_...
+DEMO_TAMPER_ENABLED=true make tamper LEVEL=1 EVENT=evt_...   # edit one stored event
+DEMO_TAMPER_ENABLED=true make tamper LEVEL=2 EVENT=evt_...   # also rebuild the latest checkpoint, unsigned
+DEMO_TAMPER_ENABLED=true make tamper LEVEL=3 EVENT=evt_...   # and re-sign it with the local key
+DEMO_TAMPER_ENABLED=true make tamper RESTORE=1               # put everything back
 ```
 
-The tool refuses to run unless the settings are local and the database is on loopback.
+The tool refuses to run unless `DEMO_TAMPER_ENABLED` is set and the database is on loopback. It records the original rows in `var/demo/tamper-backup.json`, and refuses a second attack until the first is restored.
+
+## Derived state
+
+The journal and reconciliation breaks are rebuilt from the ledger, never edited.
+
+```bash
+make check-derived                     # recompute the journal and report any stored entry that differs
+make rebuild-derived VIEW=journal      # clear it; the running projections rebuild it from leaf 0
+make rebuild-derived VIEW=reconciliation
+```
+
+Rebuilding needs the owner role, because the derived tables are append-only to the app role. Do it after changing a reconciliation rule.
+
+## Dead letters and control totals
+
+```bash
+make dead-letters                      # list each rejected record and why
+make dead-letters EXPORT=fix.jsonl     # write the original records to a file
+make dead-letters REPLAY=fix.jsonl     # publish corrected records back to the raw topic
+make check-totals                      # every consumed message was appended, refused as a duplicate, or dead-lettered
+```
+
+`check-totals` reads the raw topic back and compares counts, amounts, and leaf hashes with the ledger per partition, and exits non-zero on any difference.
 
 ## Troubleshooting
 
