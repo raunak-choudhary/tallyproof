@@ -23,6 +23,10 @@ else
   PYTHON ?= python3.12
 endif
 
+# PyDeequ loads the Deequ build that matches this Spark line.
+SPARK_VERSION ?= 4.1
+export SPARK_VERSION
+
 .PHONY: help doctor venv deps deps-sync require-venv lint format typecheck test check audit vectors web-install web-lint web-typecheck web-test web-build web-check clean
 
 help: ## List available commands
