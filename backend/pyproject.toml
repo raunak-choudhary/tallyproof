@@ -38,7 +38,8 @@ convention = "google"
 python_version = "3.12"
 strict = true
 warn_unreachable = true
-files = ["tallyproof_core", "tests"]
+files = ["tallyproof_core", "tallyproof_pipeline", "tests"]
+plugins = ["pydantic.mypy"]
 
 [[tool.mypy.overrides]]
 module = ["tests.*"]
@@ -52,7 +53,7 @@ xfail_strict = true
 
 [tool.coverage.run]
 branch = true
-source = ["tallyproof_core"]
+source = ["tallyproof_core", "tallyproof_pipeline"]
 
 [tool.coverage.report]
 # The build fails if coverage of the core code drops below this.
