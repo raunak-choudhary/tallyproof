@@ -26,6 +26,7 @@ from pathlib import Path
 from django.db import connection, transaction
 
 from apps.ledger import timestamps
+from apps.ledger.models import Outbox
 from tallyproof_core.checkpoint import Checkpoint, Signer, key_id
 from tallyproof_core.ids import new_id
 from tallyproof_core.log_tree import LogTree
@@ -101,6 +102,7 @@ class Checkpointer:
         batch_max_age_ms: int,
         witness: WitnessPolicy | None = None,
         clock: Callable[[], float] = time.monotonic,
+        announce_topic: str | None = None,
     ) -> None:
         """Load the log and the newest checkpoint, and check they agree."""
         self.signer = signer
@@ -109,6 +111,7 @@ class Checkpointer:
         self.batch_max_age = batch_max_age_ms / 1000
         self.witness = witness
         self.clock = clock
+        self.announce_topic = announce_topic
         self.tree = LogTree()
         self.signed_size, self.signed_root = load_signed_head()
         self.waiting_since: float | None = None
@@ -173,6 +176,17 @@ class Checkpointer:
                 " checkpoint_note, key_id) VALUES (%s, %s, %s, %s, %s, %s)",
                 [signed.public_id, signed.start_index, size, root_hash, note, self.key_id],
             )
+            if self.announce_topic is not None:
+                Outbox.objects.create(
+                    topic=self.announce_topic,
+                    key=self.signer.name,
+                    payload={
+                        "batch_id": signed.public_id,
+                        "start_index": signed.start_index,
+                        "tree_size": size,
+                        "root_hash_hex": root_hash.hex(),
+                    },
+                )
         self.signed_size, self.signed_root, self.waiting_since = size, root_hash, None
         if self.witness is not None:
             self._export(signed)

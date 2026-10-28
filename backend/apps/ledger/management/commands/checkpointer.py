@@ -49,7 +49,11 @@ class Command(BaseCommand):
             env.ots_calendar_list if env.witness_ots_enabled else [],
         )
         checkpointer = Checkpointer(
-            signer, env.merkle_batch_max_size, env.merkle_batch_max_age_ms, witness
+            signer,
+            env.merkle_batch_max_size,
+            env.merkle_batch_max_age_ms,
+            witness,
+            announce_topic=env.kafka_topic_checkpoints,
         )
         log.info(
             "checkpointer started at %d leaves, %d signed",
