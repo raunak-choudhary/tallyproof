@@ -7,7 +7,7 @@ variable's name instead of failing later in a confusing way.
 
 from functools import lru_cache
 from pathlib import Path
-from typing import Literal, Self
+from typing import Annotated, Literal, Self
 
 from pydantic import Field, HttpUrl, ValidationError, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -48,6 +48,10 @@ class PipelineSettings(BaseSettings):
     fiscaldata_api_url: HttpUrl = Field(validation_alias="DATA_SOURCE_FISCALDATA_API_URL")
     ecfr_api_url: HttpUrl = Field(validation_alias="DATA_SOURCE_ECFR_API_URL")
     fiscal_years: list[int] = Field(default=[2025], validation_alias="DATA_FISCAL_YEARS")
+    outlay_fiscal_year: int = Field(default=2024, validation_alias="DATA_OUTLAY_FISCAL_YEAR")
+    outlay_quarters: list[Annotated[int, Field(ge=1, le=4)]] = Field(
+        default=[1], validation_alias="DATA_OUTLAY_QUARTERS"
+    )
     far_parts: list[int] = Field(default=[2, 4, 32, 43], validation_alias="POLICY_FAR_PARTS")
     policy_corpus_dir: Path = Field(
         default=REPO_ROOT / "backend" / "corpus" / "far", validation_alias="POLICY_CORPUS_DIR"

@@ -83,6 +83,8 @@ Every setting comes from environment variables, loaded through one typed setting
 | `DATA_SOURCE_FISCALDATA_API_URL` | for the live feed | | Base URL of the Treasury Fiscal Data API |
 | `DATA_SOURCE_ECFR_API_URL` | for the policy corpus | | Base URL of the eCFR versioner API, where the FAR text comes from |
 | `DATA_FISCAL_YEARS` | no | `2025` | Fiscal years to download; `2024,2025` for the full build |
+| `DATA_OUTLAY_FISCAL_YEAR` | no | `2024` | Fiscal year of the account-level outlay data; match it to the replayed slice |
+| `DATA_OUTLAY_QUARTERS` | no | `[1]` | Quarters of outlay data to download, one generated file each; the server can't build a whole year at once |
 | `POLICY_FAR_PARTS` | no | `[2, 4, 32, 43]` | FAR parts kept in the policy corpus |
 | `POLICY_CORPUS_DIR` | no | `backend/corpus/far` | Where the committed policy corpus lives |
 | `DATA_DOWNLOAD_MAX_MBPS` | no | `20` | Download speed cap |
