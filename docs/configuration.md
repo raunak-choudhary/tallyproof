@@ -22,6 +22,10 @@ Every setting comes from environment variables, loaded through one typed setting
 
 | Variable | Required | Default | Purpose |
 |---|---|---|---|
+| `POSTGRES_SUPERUSER_PASSWORD` | for the local stack | | Superuser password for the local container; only the role script uses it |
+| `DB_OWNER_PASSWORD` | for the local stack | | Password the role script gives `tallyproof_owner` |
+| `DB_APP_PASSWORD` | for the local stack | | Password the role script gives `tallyproof_app` |
+| `DB_ANALYST_PASSWORD` | for the local stack | | Password the role script gives `tallyproof_analyst` |
 | `DB_URL` | yes | | Connection for the application role |
 | `DB_OWNER_URL` | for migrations | | Owner role used only by `make migrate`; never given to the API or workers |
 | `DB_ANALYST_URL` | yes | | Read-only role for the analyst |
