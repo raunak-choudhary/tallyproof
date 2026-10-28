@@ -220,8 +220,8 @@ relay: require-venv require-colima ## Publish outbox rows to Kafka
 fanout: require-venv require-colima ## Forward ledger facts and breaks to WebSocket clients
 	cd $(BACKEND) && DJANGO_SETTINGS_MODULE=config.settings.local .venv/bin/python manage.py fanout
 
-stream: require-venv require-colima ## Serve the WebSocket endpoint on 127.0.0.1:8001
-	cd $(BACKEND) && DJANGO_SETTINGS_MODULE=config.settings.local .venv/bin/uvicorn config.asgi:application --host 127.0.0.1 --port 8001
+stream: require-venv require-colima ## Serve the WebSocket endpoint (STREAM_HOST, STREAM_PORT)
+	cd $(BACKEND) && DJANGO_SETTINGS_MODULE=config.settings.local .venv/bin/python manage.py stream
 
 check-derived: require-venv require-colima ## Recompute the journal from the ledger and report any difference
 	cd $(BACKEND) && DJANGO_SETTINGS_MODULE=config.settings.local .venv/bin/python manage.py check_derived

@@ -74,6 +74,13 @@ class AppSettings(BaseSettings):
     log_format: Literal["json", "console"] = Field(default="json", validation_alias="LOG_FORMAT")
 
     redis_url: str = Field(default="redis://127.0.0.1:6379/0", validation_alias="REDIS_URL")
+    stream_host: str = Field(default="127.0.0.1", validation_alias="STREAM_HOST")
+    stream_port: int = Field(default=8001, ge=1, le=65535, validation_alias="STREAM_PORT")
+    ws_max_connections_per_ip: int = Field(
+        default=5, ge=1, validation_alias="WS_MAX_CONNECTIONS_PER_IP"
+    )
+    ws_client_buffer: int = Field(default=100, ge=1, validation_alias="WS_CLIENT_BUFFER")
+    ws_max_message_bytes: int = Field(default=4096, ge=256, validation_alias="WS_MAX_MESSAGE_BYTES")
     kafka_topic_checkpoints: str = Field(
         default="ledger.checkpoints.v1", validation_alias="KAFKA_TOPIC_CHECKPOINTS"
     )

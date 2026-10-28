@@ -47,7 +47,7 @@ start checkpointer "$PY" manage.py checkpointer
 start project "$PY" manage.py project
 start relay "$PY" manage.py relay_outbox
 start fanout "$PY" manage.py fanout
-start stream "$ROOT/backend/.venv/bin/uvicorn" config.asgi:application --host 127.0.0.1 --port 8001
+start stream "$PY" manage.py stream
 for _ in $(seq 1 30); do
   curl -fs "$API/readyz" >/dev/null && break
   sleep 1
