@@ -39,6 +39,8 @@ from tallyproof_pipeline.settings import PipelineSettings, get_settings
 log = logging.getLogger(__name__)
 
 SOURCE = "usaspending.award_financial"
+SOURCE_GLOB = "FY*P01-P*_All_TAS_AccountBreakdownByAward_*.zip"
+"""Matches every downloaded award financial file in the bronze directory."""
 ENDPOINT = "download/accounts/"
 STATUS_ENDPOINT = "download/status"
 
