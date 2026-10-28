@@ -65,11 +65,13 @@ Two scoring rules keep the numbers honest. Every quality metric counts all answe
 make eval SET=smoke MODE=cached
 ```
 
-`SET` is `smoke` or `full`. `MODE` is `fake` (scripted responses), `cached` (stored responses), or `live` (real model calls).
+`SET` is `smoke`, `full`, `held_out`, or `all` (full plus held-out). `MODE` is `fake` (scripted responses), `cached` (recorded responses), or `live` (real model calls).
+
+Each run builds its own ledger in a throwaway Postgres container, with the same image, roles, and migrations as production. It loads the evaluation dataset and the FAR leaves, runs the journal and reconciliation projections, and signs one checkpoint with a key used only for evaluations. Every question then goes through the real pipeline as the read-only analyst role, and every cited event is checked the way a browser would: its bytes hash to its leaf and its inclusion proof verifies against the signed root. The runner lives in `backend/evals/runner.py` and needs Docker (Colima locally).
 
 The LLM client sits behind an interface with three implementations: a scripted fake, the real client, and a caching wrapper. The cache key is a hash of the model ID, prompt version, prompt bytes, and parameters, so changing a prompt invalidates exactly the entries it affects. Token and cost budgets per run stop the runner with a clear error before it overspends.
 
-Each run writes a machine-readable JSON report and a readable Markdown report, stores both as CI artifacts, and records the run for the dashboard.
+Each run writes a machine-readable JSON report and a readable Markdown report to `var/eval/<timestamp>/`, and CI keeps both as artifacts. The reports, not database rows, are the record of a run, since each run's database is thrown away; the dashboard reads them. Thresholds live in `backend/evals/thresholds.toml`, and the process exits non-zero when a gated metric falls below its threshold.
 
 ## In CI
 
