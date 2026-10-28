@@ -15,7 +15,7 @@ import random
 from collections import defaultdict
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import asdict, dataclass, field
-from datetime import timedelta
+from datetime import date, timedelta
 from decimal import Decimal
 from enum import StrEnum
 from pathlib import Path
@@ -25,6 +25,7 @@ from tallyproof_core.events import (
     EventType,
     ObligationAdjusted,
     ObligationRecorded,
+    OutlayReported,
 )
 from tallyproof_core.ids import new_id
 
@@ -38,6 +39,9 @@ class Anomaly(StrEnum):
     LATE_ARRIVAL = "late_arrival"
     INJECTION_DESCRIPTION = "injection_description"
     SCHEMA_INVALID = "schema_invalid"
+    ORPHAN_OUTLAY = "orphan_outlay"
+    OUTLAY_EXCEEDS_OBLIGATION = "outlay_exceeds_obligation"
+    RECIPIENT_BURST = "recipient_burst"
 
 
 INJECTION_TEXT = (
@@ -47,6 +51,13 @@ INJECTION_TEXT = (
 """A prompt-injection payload, including zero-width and right-to-left characters."""
 
 LATE_BY = timedelta(days=150)
+OUTLAY_AFTER = timedelta(days=45)
+"""How long after the award an injected outlay is reported."""
+BURST_SIZE = 8
+BURST_SPACING = timedelta(minutes=5)
+"""A burst is BURST_SIZE small new awards to one recipient, this far apart."""
+FALLBACK_TREASURY_ACCOUNT = "000-0000"
+"""Used for injected outlays only when the stream has no real outlay to borrow from."""
 
 
 @dataclass(frozen=True)
@@ -91,6 +102,13 @@ def positive_totals(events: Iterable[EventEnvelope]) -> dict[str, Decimal]:
     return totals
 
 
+def fiscal_period(day: date) -> tuple[int, int]:
+    """The federal fiscal year and period (month) a date falls in; FY starts October 1."""
+    if day.month >= 10:
+        return day.year + 1, day.month - 9
+    return day.year, day.month + 3
+
+
 def _rng(seed: int, name: str) -> random.Random:
     digest = hashlib.sha256(f"{seed}:{name}".encode()).digest()
     # Deliberately seeded: the overlay must be reproducible from its seed.
@@ -128,6 +146,9 @@ def plan(
         path, and the labels.
     """
     recorded = [e for e in pool if e.event_type is EventType.OBLIGATION_RECORDED]
+    accounts = sorted(
+        {e.payload.treasury_account for e in pool if isinstance(e.payload, OutlayReported)}
+    ) or [FALLBACK_TREASURY_ACCOUNT]
     if not recorded:
         raise ValueError("the overlay needs at least one obligation.recorded event")
     injected: list[EventEnvelope] = []
@@ -252,6 +273,95 @@ def plan(
         labels.append(
             Label(
                 Anomaly.DEOBLIGATION_EXCEEDS_AWARD,
+                copy.event_id,
+                copy.idempotency_key,
+                [source.event_id],
+            )
+        )
+
+    for n, source in enumerate(pick(Anomaly.RECIPIENT_BURST)):
+        assert isinstance(source.payload, ObligationRecorded)  # noqa: S101
+        burst: list[EventEnvelope] = []
+        for k in range(BURST_SIZE):
+            # Distinct amounts, so the burst is not also a set of semantic duplicates.
+            amount = Decimal("9400.00") + Decimal(n * BURST_SIZE + k) * Decimal("13.17")
+            payload = source.payload.model_copy(
+                update={
+                    "award_key": f"{source.payload.award_key}_B{n}{k:02d}",
+                    "piid": f"{source.payload.piid}B{n}{k:02d}",
+                    "amount": f"{amount:.2f}",
+                }
+            )
+            burst.append(
+                _copy(
+                    source,
+                    rng,
+                    idempotency_key=f"{source.idempotency_key}_B{n}{k:02d}",
+                    emitted_at=source.emitted_at + timedelta(hours=2) + k * BURST_SPACING,
+                    payload=payload.model_dump(mode="python"),
+                )
+            )
+        injected.extend(burst)
+        labels.append(
+            Label(
+                Anomaly.RECIPIENT_BURST,
+                burst[0].event_id,
+                burst[0].idempotency_key,
+                [source.event_id, *(e.event_id for e in burst[1:])],
+            )
+        )
+
+    def outlay(
+        source: EventEnvelope, award_key: str, cumulative: Decimal, key: str
+    ) -> EventEnvelope:
+        assert isinstance(source.payload, ObligationRecorded)  # noqa: S101
+        paid_on = source.payload.action_date + OUTLAY_AFTER
+        fiscal_year, period = fiscal_period(paid_on)
+        payload = OutlayReported(
+            award_key=award_key,
+            treasury_account=rng.choice(accounts),
+            fiscal_year=fiscal_year,
+            fiscal_period=period,
+            cumulative_outlay=f"{cumulative:.2f}",
+            period_outlay=f"{cumulative:.2f}",
+        )
+        return _copy(
+            source,
+            rng,
+            event_type=EventType.OUTLAY_REPORTED,
+            idempotency_key=key,
+            occurred_at=source.occurred_at + OUTLAY_AFTER,
+            emitted_at=source.emitted_at + OUTLAY_AFTER,
+            payload=payload.model_dump(mode="python"),
+        )
+
+    for n, source in enumerate(pick(Anomaly.ORPHAN_OUTLAY)):
+        assert isinstance(source.payload, ObligationRecorded)  # noqa: S101
+        # An award key shaped like the source's but never obligated anywhere.
+        orphan_key = f"{source.payload.award_key}_X{n}"
+        copy = outlay(
+            source,
+            orphan_key,
+            Decimal(source.payload.amount).copy_abs() + Decimal("500.00"),
+            f"{source.idempotency_key}_X{n}:outlay",
+        )
+        injected.append(copy)
+        labels.append(
+            Label(Anomaly.ORPHAN_OUTLAY, copy.event_id, copy.idempotency_key, [source.event_id])
+        )
+
+    for n, source in enumerate(pick(Anomaly.OUTLAY_EXCEEDS_OBLIGATION)):
+        assert isinstance(source.payload, ObligationRecorded)  # noqa: S101
+        # Above every positive amount on the award, so it exceeds net obligations
+        # whatever de-obligations, real or injected, came before it.
+        cumulative = positives[source.payload.award_key] + Decimal("1000.00")
+        copy = outlay(
+            source, source.payload.award_key, cumulative, f"{source.idempotency_key}_O{n}:outlay"
+        )
+        injected.append(copy)
+        labels.append(
+            Label(
+                Anomaly.OUTLAY_EXCEEDS_OBLIGATION,
                 copy.event_id,
                 copy.idempotency_key,
                 [source.event_id],

@@ -128,7 +128,9 @@ Injected anomalies are seeded and deterministic. Anomalies that occur naturally 
 | `late_arrival` | An event emitted long after it occurred, possibly after its period closed | Reconciliation watermark | `late_after_close` break, posted to the open period |
 | `injection_description` | Instructions aimed at the LLM inside a description field | Analyst defenses | Answer unaffected; measured in evaluation |
 | `schema_invalid` | A malformed event | Ingestion validation | Dead-letter topic |
-| `recipient_burst` | Many small obligations to one recipient in a short window | Heavy-hitter detection (later) | Flagged |
+| `recipient_burst` | Eight new small awards to one recipient, five minutes apart, each with a different amount | Heavy-hitter detection (later) | Flagged |
+
+Injected outlays borrow a Treasury account from a real outlay in the stream when there is one. Every label is injected in each build; the scenario (`DATA_SCENARIO`) sets how many of each and how many real events surround them.
 
 Periods are fiscal months. A period closes when the watermark, the latest event time seen minus `RECON_LATE_ARRIVAL_WATERMARK_HOURS`, passes its end. Late events post to the open period with a reference to the closed one; closed periods are never edited.
 

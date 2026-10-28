@@ -1,13 +1,24 @@
 import json
 from datetime import date, datetime, timedelta
 from decimal import Decimal
+from itertools import pairwise
 
 import pytest
 from pydantic import ValidationError
 
-from tallyproof_core.events import EventEnvelope, EventType
+from tallyproof_core.events import EventEnvelope, EventType, OutlayReported
 from tallyproof_pipeline.gold import conform
-from tallyproof_pipeline.overlay import INJECTION_TEXT, LATE_BY, Anomaly, inject, write_labels
+from tallyproof_pipeline.overlay import (
+    BURST_SIZE,
+    BURST_SPACING,
+    FALLBACK_TREASURY_ACCOUNT,
+    INJECTION_TEXT,
+    LATE_BY,
+    Anomaly,
+    fiscal_period,
+    inject,
+    write_labels,
+)
 
 
 def real_events(count: int = 40) -> list[EventEnvelope]:
@@ -92,7 +103,7 @@ def test_duplicate_delivery_reuses_the_idempotency_key_with_a_new_event_id(resul
 def test_deobligation_exceeds_everything_obligated_on_the_award(result):
     totals: dict[str, Decimal] = {}
     for e in result.events:
-        if e.event_type is EventType.CASH_MOVEMENT:
+        if e.event_type not in (EventType.OBLIGATION_RECORDED, EventType.OBLIGATION_ADJUSTED):
             continue
         key = e.payload.award_key
         totals[key] = totals.get(key, Decimal(0)) + Decimal(e.payload.amount)
@@ -149,3 +160,71 @@ def test_labels_are_written_as_sorted_json_lines(result, tmp_path):
     lines = path.read_text().splitlines()
     assert len(lines) == len(result.labels)
     assert list(json.loads(lines[0])) == sorted(json.loads(lines[0]))
+
+
+def test_orphan_outlays_name_awards_that_were_never_obligated(result):
+    obligated = {
+        e.payload.award_key
+        for e in result.events
+        if e.event_type in (EventType.OBLIGATION_RECORDED, EventType.OBLIGATION_ADJUSTED)
+    }
+    by_id = {e.event_id: e for e in result.events}
+    for label in result.labels:
+        if label.anomaly == Anomaly.ORPHAN_OUTLAY:
+            event = by_id[label.event_id]
+            assert event.event_type is EventType.OUTLAY_REPORTED
+            assert event.payload.award_key not in obligated
+            assert event.payload.treasury_account == FALLBACK_TREASURY_ACCOUNT
+
+
+def test_injected_outlays_borrow_a_real_treasury_account_when_one_exists():
+    real = real_events()
+    source = real[0]
+    outlay = EventEnvelope.model_validate(
+        {
+            **source.model_dump(mode="python"),
+            "event_id": source.event_id.replace("evt_0", "evt_2", 1),
+            "idempotency_key": "usaspending:outlay:A0:2025-04",
+            "event_type": "outlay.reported",
+            "payload": {
+                "award_key": "CONT_AWD_A0",
+                "treasury_account": "089-0222",
+                "fiscal_year": 2025,
+                "fiscal_period": 7,
+                "cumulative_outlay": "10.00",
+                "period_outlay": "10.00",
+            },
+        }
+    )
+    planned = inject([*real, outlay], seed=42, per_anomaly=2)
+    accounts = {
+        e.payload.treasury_account for e in planned.events if isinstance(e.payload, OutlayReported)
+    }
+    assert accounts == {"089-0222"}
+
+
+def test_a_recipient_burst_is_many_distinct_small_awards_to_one_recipient(result):
+    by_id = {e.event_id: e for e in result.events}
+    for label in result.labels:
+        if label.anomaly != Anomaly.RECIPIENT_BURST:
+            continue
+        source, *rest = label.related_event_ids
+        burst = [by_id[label.event_id], *(by_id[i] for i in rest)]
+        assert len(burst) == BURST_SIZE
+        assert {e.account_id for e in burst} == {by_id[source].account_id}
+        assert len({e.payload.award_key for e in burst}) == BURST_SIZE
+        assert len({e.payload.amount for e in burst}) == BURST_SIZE
+        gaps = {b.emitted_at - a.emitted_at for a, b in pairwise(burst)}
+        assert gaps == {BURST_SPACING}
+
+
+@pytest.mark.parametrize(
+    ("day", "expected"),
+    [
+        (date(2024, 10, 1), (2025, 1)),
+        (date(2025, 9, 30), (2025, 12)),
+        (date(2025, 1, 15), (2025, 4)),
+    ],
+)
+def test_fiscal_periods_start_in_october(day, expected):
+    assert fiscal_period(day) == expected
