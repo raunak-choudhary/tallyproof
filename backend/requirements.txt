@@ -1180,6 +1180,10 @@ six==1.17.0 \
     --hash=sha256:4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274 \
     --hash=sha256:ff70335d468e7eb6ec65b95b99d3a2836546063f63acc5171de367e834932a81
     # via python-dateutil
+sqlglot==30.23.0 \
+    --hash=sha256:34b5b62fa4cbf042ee6b9e829236577b2f8db4538dd20007de2aa5383c92e845 \
+    --hash=sha256:b5a645722cb4c6b649e9131b94830d9df9a557e87be63713179d848320f2baa1
+    # via -r requirements.in
 sqlparse==0.6.0 \
     --hash=sha256:113c35c75365ab9cc9c7231d68c6428fb11c085fc8e9eb1ad659b7ddbf6cd2b9 \
     --hash=sha256:b861c0288ce2fa56209a9a6412d2e066ac664b3873b89c26c9d8415e8e32996f

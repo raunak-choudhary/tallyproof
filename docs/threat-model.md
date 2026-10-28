@@ -39,7 +39,7 @@ The data is real public U.S. government spending, plus a labeled synthetic anoma
 
 ### The analyst's database access
 
-*Partly built. The read-only role, its 3 second timeout, and the curated `security_barrier` views exist, and an integration test shows the role refuses every write even with read-only mode switched off. The query compiler and the guard arrive with the rest of the analyst.*
+*Built: the read-only role, its 3 second timeout, the curated `security_barrier` views, the query compiler, and the guard (`backend/apps/analyst/sql_guard.py`). An integration test shows the role refuses every write even with read-only mode switched off, and a hostile-SQL corpus covers every guard rule below. Statement and lock timeouts beyond the 3 second statement limit, and the dedicated connection pool, arrive with the query endpoint.*
 
 Most numeric questions never produce free-form SQL. The model fills in a typed query spec, and the server compiles it into SQL it already knows is safe ([ADR-0014](adr/0014-constrained-query-ir.md)). The fallback path, which does accept model-written SQL, is treated as hostile input and checked at two layers.
 
@@ -51,7 +51,7 @@ At the database:
 
 In the query guard, which parses SQL with sqlglot before anything runs:
 
-- Exactly one `SELECT` statement. Anything else is rejected, including data-modifying CTEs.
+- Exactly one `SELECT` statement. Anything else is rejected, including set operations and data-modifying CTEs.
 - Allowlists for relations, columns, functions, operators, and cast targets. Schema-qualified names, `pg_*` and `information_schema` relations, `WITH RECURSIVE`, set-returning functions, `LATERAL`, locking clauses, and casts to `reg*` types are all rejected.
 - Joins need an equality predicate between allowlisted keys, so `ON true` doesn't sneak a cartesian product through.
 - Limits on AST depth and node count, plus an injected `LIMIT`.
