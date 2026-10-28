@@ -19,27 +19,31 @@ tallyproof/
     tallyproof_core/          plain Python, no Django
       canonical.py            RFC 8785 serialization
       hashing.py              leaf and node hashing with domain separation
-      merkle/                 log, inclusion proofs, consistency proofs
+      merkle.py, log_tree.py  inclusion and consistency proofs; cached tree for large logs
       checkpoint.py           C2SP signed checkpoints, Ed25519
+      events.py               event envelope and payload schemas
+      journal.py              double-entry lines for one event
+      reconciliation.py       reconciliation rules over the ordered log
       bloom.py                Bloom filter and its sizing math
       ids.py                  prefixed public IDs
       money.py                Decimal money
-    tallyproof_pipeline/      Spark jobs, also free of Django
-      acquire/                downloads with a source manifest
-      bronze_to_silver/       typing, cleaning, personal data removal, quarantine
-      quality/                Deequ constraints and metrics history
-      gold/                   conformed events and the anomaly overlay
-      replay/                 Kafka producer for gold events
-      live/                   Treasury daily statement connector
+    tallyproof_pipeline/      Spark jobs and producers, also free of Django
+      acquire.py              downloads with a source manifest
+      silver.py               typing, cleaning, personal data removal, quarantine
+      quality.py              Deequ constraints and metrics history
+      gold.py, overlay.py     conformed events and the labeled anomaly overlay
+      stream.py               Kafka producer for gold events
+      treasury.py             Treasury daily statement connector
+      policy.py               FAR sections from eCFR as policy events
+    corpus/far/               the committed FAR policy corpus and its manifest
+    schemas/                  the exported event JSON Schema
     apps/                     Django apps
-      events/                 event schemas, JSON Schema export, topic registry
-      ingestion/              consumer loop, validation, deduplication, dead letters
-      ledger/                 event store, Merkle log, checkpoints, proofs, outbox, journal
-      reconciliation/         matching rules and breaks
-      analyst/                query compiler, retrieval, composer, verifier, LLM client
-      evals/                  question sets, oracle, runner, metrics
-      realtime/               WebSocket fan-out
+      ingestion/              consumer loop, validation, deduplication, dead letters, schema registry
+      ledger/                 event store, Merkle log, checkpoints, proofs, projections, outbox, journal
+      reconciliation/         break records and their API
+      realtime/               WebSocket consumer and the fan-out worker
       health/                 /healthz and /readyz
+      analyst/, evals/        the AI analyst and its evaluation (next phase)
     tests/                    unit, module, integration, and end-to-end tests
   frontend/                   Next.js app
   infra/                      compose file, database role script, topic setup
@@ -95,6 +99,9 @@ EventEnvelope
 | `outlay.reported` | Account-level award financial data | award key, Treasury account, fiscal period, cumulative outlay, period outlay (derived) |
 | `cash.movement` | Treasury Daily Treasury Statement | record date, account, deposit or withdrawal, category, amount and its unit |
 | `source.registered` | The acquisition step | file name, URL, size, SHA-256, fetch time |
+| `policy.published` | One FAR section from eCFR | citation, section, title, edition date, full text |
+
+A policy event carries the whole section, so a quote can be checked against the proven leaf rather than against a copy served separately. Its idempotency key includes a hash of the text: an amended section becomes a new leaf, and republishing an unchanged one is refused as a duplicate.
 
 Outlays in the source are cumulative from the start of the fiscal year. The cleaning step derives each period's outlay as the difference from the previous period for the same award and account, and quarantines rows where that goes negative without a matching correction.
 
@@ -142,9 +149,11 @@ Topics are named `<domain>.<entity>.<stage>.v<major>`.
 |---|---|---|---|---|---|
 | `fin.events.raw.v1` | `account_id` | 6 | 7 days | replay producer, live connector | ingestion |
 | `fin.events.dlq.v1` | `account_id` | 1 | 30 days | ingestion | replay tool |
-| `ledger.appended.v1` | `account_id` | 6 | 7 days | outbox relay | reconciliation, journal, lake sink, realtime |
-| `ledger.checkpoints.v1` | log origin | 1 | compacted | checkpointer | realtime, witness export |
-| `recon.breaks.v1` | `account_id` | 3 | 7 days | reconciliation | realtime |
+| `ledger.appended.v1` | `account_id` | 6 | 7 days | outbox relay, from the `appended` projection | realtime fan-out, outside consumers |
+| `ledger.checkpoints.v1` | log origin | 1 | compacted | outbox relay, from the checkpointer | realtime fan-out, witnesses |
+| `recon.breaks.v1` | `account_id` | 3 | 7 days | outbox relay, from the `reconciliation` projection | realtime fan-out |
+
+The journal and reconciliation don't consume Kafka. They're projections that read the ledger in leaf order with a cursor stored in the same transaction as their output ([ADR-0019](adr/0019-projections-read-the-ledger.md)). Every message the relay publishes carries an `outbox-id` header, since delivery is at least once.
 
 Events are keyed by recipient because reconciliation works per award and recipient, so ordering matters there. Duplicates share a key, which puts them on the same partition, where the per-partition Bloom filter can see both. A recipient with a very large share of events can skew partitions. The load test reports partition balance.
 
@@ -243,7 +252,7 @@ erDiagram
   }
 ```
 
-Supporting tables: `merkle_log_head` (a single row holding the next leaf index), `consumer_offset`, `dedupe_rejection`, `outbox`, and `doc_chunk` with a 384-dimension embedding column.
+Supporting tables: `merkle_log_head` (a single row holding the next leaf index), `consumer_offset`, `dedupe_rejection`, `outbox`, `projection_cursor` (one row per projection), `break_event` (which events a break involves, and in what role), and, in the next phase, `doc_chunk` with a 384-dimension embedding column.
 
 Constraints worth knowing about:
 
@@ -320,6 +329,21 @@ The API returns proofs, never verdicts. There's no `"verified": true` anywhere. 
 
 ## Commands
 
-Workers run as Django management commands: `run_ingestion`, `run_checkpointer`, `run_outbox_relay`, `run_reconciliation`, `run_lake_sink`, `export_replay_bundle`, `export_witness`, and `tamper`. The last one is a demo tool and refuses to run outside a local setup.
+Workers run as Django management commands, each with a `make` target:
 
-The data pipeline runs through `make`: `data-fetch` downloads archives and records the manifest, `data-build` runs the Spark jobs, and `data-replay` streams gold events into Kafka.
+| Command | Make target | Job |
+|---|---|---|
+| `ingest` | `make ingest` | Consume the raw topic and append to the ledger |
+| `checkpointer` | `make checkpointer` | Sign checkpoints, export witness copies, request timestamps |
+| `project` | `make project` | Run the journal, reconciliation, and appended projections |
+| `relay_outbox` | `make relay` | Publish outbox rows to Kafka |
+| `fanout` | `make fanout` | Forward appended events, checkpoints, and breaks to WebSocket clients |
+| `check_derived`, `rebuild_derived` | `make check-derived`, `make rebuild-derived VIEW=` | Compare the journal with a fresh rebuild; clear a view so it's rebuilt |
+| `check_totals`, `dead_letters` | `make check-totals`, `make dead-letters` | Control totals between Kafka and the ledger; inspect and replay rejected records |
+| `register_schemas` | `make register-schemas` | Register the event schema with backward compatibility |
+| `verify_event`, `verify_witness` | `make verify-event`, `make verify-witness` | Check an event or the witness data from a terminal |
+| `tamper` | `make tamper` | The tamper demo. Refuses to run unless enabled and on a loopback database |
+
+The WebSocket endpoint is served separately, by Uvicorn (`make stream`).
+
+The data pipeline runs through `make`: `data-fetch` downloads archives and records the manifest, `data-build` runs the Spark jobs, `data-gold` builds events at a chosen scenario size, `data-replay` streams gold events into Kafka, `data-treasury` publishes Treasury statements, and `policy-fetch` and `policy-publish` maintain the FAR corpus.
