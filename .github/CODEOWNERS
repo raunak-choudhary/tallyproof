@@ -5,7 +5,7 @@
 /.circleci/              @raunak-choudhary
 /.github/                @raunak-choudhary
 /Makefile                @raunak-choudhary
-/witness/                @raunak-choudhary
+/frontend/public/replay/ @raunak-choudhary
 /backend/corpus/         @raunak-choudhary
 /evals/thresholds.toml   @raunak-choudhary
 /docs/adr/               @raunak-choudhary
