@@ -167,12 +167,14 @@ make check-totals                      # every consumed message was appended, re
 
 | Symptom | Where to look |
 |---|---|
-| Consumer lag keeps growing | Consumer group lag in the broker console, `make logs SVC=ingestion`, and the dead-letter rate |
-| Checkpoints aren't closing | That the checkpointer can read its key file, its logs, and the batch age setting |
-| Verify fails in the browser for an untouched event | `make vectors-check` compares canonical JSON between Python and TypeScript |
+| Consumer lag keeps growing | Consumer group lag in the broker console (`make console`), `var/demo/ingest.log`, and `make dead-letters` |
+| Checkpoints aren't closing | That the checkpointer can read its key file, `var/demo/checkpointer.log`, and `MERKLE_BATCH_MAX_AGE_MS` |
+| Verify fails in the browser for an untouched event | `make vectors-check` regenerates the shared vectors, fails if they changed, and runs the browser library against them |
+| Outbox messages aren't reaching Kafka | `var/demo/relay.log` reports pending messages and the oldest one's age after every batch |
+| A WebSocket client misses updates | It received a `facts_dropped` message: it fell behind and should re-read state over REST. Raise `WS_CLIENT_BUFFER` if it happens often |
+| WebSocket connections are refused with code 1013 | That IP reached `WS_MAX_CONNECTIONS_PER_IP` |
 | Many duplicate checks after a restart | The Bloom filter rebuild logged at partition assignment |
-| The analyst refuses everything | `LLM_PROVIDER`, the daily spend cap, and query guard rejections in the logs |
 | `make data-build` is slow or swapping | Stop the container stack and lower `SPARK_DRIVER_MEMORY` or `SPARK_MASTER` |
-| Control totals don't match | `make check-totals` names the stage and batch that disagree |
+| Control totals don't match | `make check-totals` names the partition and the count, amount, or leaf hash that disagrees |
 
-To follow one event through the system, search the logs for its `correlation_id`.
+Each background process started by `make demo` writes to `var/demo/<name>.log`; the containers' logs are under `make logs SERVICE=postgres` (or `redpanda`, `redis`). To follow one event through the system, search the logs for its `correlation_id`. `LOG_FORMAT=console` makes them easier to read while developing.
