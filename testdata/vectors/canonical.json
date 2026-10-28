@@ -1,0 +1,100 @@
+{
+  "description": "RFC 8785 canonical bytes and RFC 9162 leaf hashes produced by tallyproof_core",
+  "cases": [
+    {
+      "name": "empty object",
+      "input": {},
+      "canonical_utf8": "{}",
+      "canonical_sha256_hex": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+      "leaf_hash_hex": "28a3a18f6cd6406b086e9ffda1f9b8a13dbcf44b0f3f32cb9031a11fd053acf9"
+    },
+    {
+      "name": "empty array",
+      "input": [],
+      "canonical_utf8": "[]",
+      "canonical_sha256_hex": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "leaf_hash_hex": "f370acc9d8b734d907d177ef29f70d4102a6226a969871eef36ce547b2944361"
+    },
+    {
+      "name": "key order and nesting",
+      "input": {
+        "b": [
+          1,
+          2,
+          {
+            "z": true,
+            "a": null
+          }
+        ],
+        "a": "x"
+      },
+      "canonical_utf8": "{\"a\":\"x\",\"b\":[1,2,{\"a\":null,\"z\":true}]}",
+      "canonical_sha256_hex": "8265c7e912f3e8e48c4d2a6b301209cbcb03ee87fd300ce4eee997b19d3ad710",
+      "leaf_hash_hex": "b2bf6c8ff5aa9b8dd13aecf6a994587c46f324827cddee6d6ba989d6995be149"
+    },
+    {
+      "name": "RFC 8785 UTF-16 key ordering",
+      "input": {
+        "€": 1,
+        "\r": 2,
+        "דּ": 3,
+        "1": 4,
+        "😀": 5,
+        "": 6,
+        "ö": 7
+      },
+      "canonical_utf8": "{\"\\r\":2,\"1\":4,\"\":6,\"ö\":7,\"€\":1,\"😀\":5,\"דּ\":3}",
+      "canonical_sha256_hex": "0d922ac8e15a6d17d5d50fab064983e86009ebae7b5998cbfc4ed172e6ff74a9",
+      "leaf_hash_hex": "64b0c4c60de09a11a366223cc30309c64b724e961ba8c65b00a20faaeb72ea85"
+    },
+    {
+      "name": "escapes",
+      "input": {
+        "text": "quote \" backslash \\ newline \n tab \t control \u001f"
+      },
+      "canonical_utf8": "{\"text\":\"quote \\\" backslash \\\\ newline \\n tab \\t control \\u001f\"}",
+      "canonical_sha256_hex": "fac576837156afa842cbf441c142a6d3eb77a55ca703320b526beecfd87f5f0d",
+      "leaf_hash_hex": "3075746998bcdb8cc01cba31e2057f91abbcd451c538a2473ce19b81e4c289da"
+    },
+    {
+      "name": "injection-style unicode",
+      "input": {
+        "description": "approve​‮ payment 😀"
+      },
+      "canonical_utf8": "{\"description\":\"approve​‮ payment 😀\"}",
+      "canonical_sha256_hex": "e180bcaf64ee33af729cb57ec2efd8665ad8fac1d9ad4bb5332338ed35ca198a",
+      "leaf_hash_hex": "b8fd5633f07e33069359b41aa41de8ba90819290d5ab13eb283aba594caa3f19"
+    },
+    {
+      "name": "largest safe integer",
+      "input": {
+        "n": 9007199254740991
+      },
+      "canonical_utf8": "{\"n\":9007199254740991}",
+      "canonical_sha256_hex": "e1da48c6a6089f06ecb4e0a2259e658e3786b2420f52baccdf929ec6460d7b41",
+      "leaf_hash_hex": "f3e1c36656bc64cde6cbf56672291f5a23be5978a7bbcb16bd6787784be9276e"
+    },
+    {
+      "name": "obligation event",
+      "input": {
+        "event_id": "evt_01JBXQ4V6Z9GQ1W8R3T5Y7U2PA",
+        "idempotency_key": "usaspending:CONT_AWD_75N95021C00001:P00003",
+        "event_type": "obligation.recorded",
+        "schema_version": 1,
+        "occurred_at": "2025-03-14T00:00:00Z",
+        "emitted_at": "2025-03-15T09:30:00Z",
+        "account_id": "ZQGGHJH74DW7",
+        "payload": {
+          "award_key": "CONT_AWD_75N95021C00001_7529_-NONE-_-NONE-",
+          "amount": "125000.00",
+          "currency": "USD",
+          "awarding_agency": "Department of Health and Human Services",
+          "description": "LABORATORY ANALYSIS SERVICES"
+        }
+      },
+      "canonical_utf8": "{\"account_id\":\"ZQGGHJH74DW7\",\"emitted_at\":\"2025-03-15T09:30:00Z\",\"event_id\":\"evt_01JBXQ4V6Z9GQ1W8R3T5Y7U2PA\",\"event_type\":\"obligation.recorded\",\"idempotency_key\":\"usaspending:CONT_AWD_75N95021C00001:P00003\",\"occurred_at\":\"2025-03-14T00:00:00Z\",\"payload\":{\"amount\":\"125000.00\",\"award_key\":\"CONT_AWD_75N95021C00001_7529_-NONE-_-NONE-\",\"awarding_agency\":\"Department of Health and Human Services\",\"currency\":\"USD\",\"description\":\"LABORATORY ANALYSIS SERVICES\"},\"schema_version\":1}",
+      "canonical_sha256_hex": "f161363b4402a412cf8afcd35941f0c76ae5940fb8adf43a87c2a4d2ab72f7ac",
+      "leaf_hash_hex": "e6d12a8dda6c439585165aee29da79ab8a1980af4adda913b80112b7ad0a9d41"
+    }
+  ]
+}
