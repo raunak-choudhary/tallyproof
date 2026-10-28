@@ -101,3 +101,25 @@ def test_the_guards_refuse_unless_enabled_and_local():
     with pytest.raises(tamper.TamperRefusedError, match="loopback"):
         tamper.check_safe(True, "203.0.113.9")
     tamper.check_safe(True, "127.0.0.1")
+
+
+def test_level_4_is_not_detectable_before_the_next_external_timestamp(signed, tmp_path):
+    """The documented limit: with the key, and before any timestamp exists, it passes.
+
+    An attacker who also rewrites the witness copy before the checkpoint was
+    timestamped leaves nothing local to compare against. Only an external
+    timestamp of the original root, made earlier, would expose it, which is why
+    the exposure window is WITNESS_INTERVAL_SECONDS.
+    """
+    from apps.ledger import witness
+
+    database, events = signed
+    with database.connect("owner") as conn:
+        tamper.edit_event(conn, events[1].event_id, "999.00")
+        tamper.rebuild_checkpoint(conn, SIGNER)
+        tree, note, _ = state(conn)
+    rewritten = tmp_path / "checkpoints.jsonl"
+    rewritten.write_text(json.dumps({"note": note}) + "\n")
+    report = witness.verify(rewritten, VERIFIER, tree)
+    assert report.ok
+    assert report.timestamped == 0  # the one thing that is missing
