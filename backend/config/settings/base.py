@@ -17,6 +17,7 @@ INSTALLED_APPS = [
     "drf_spectacular",
     "apps.health",
     "apps.ledger",
+    "apps.ingestion",
 ]
 
 MIDDLEWARE = [
