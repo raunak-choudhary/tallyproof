@@ -43,3 +43,39 @@ def test_relative_data_dir_is_anchored_to_the_repository_root(monkeypatch, tmp_p
     monkeypatch.chdir(tmp_path)  # simulate running from another folder
     settings = PipelineSettings(_env_file=None)
     assert settings.data_dir == REPO_ROOT / "data"
+
+
+@pytest.mark.parametrize(
+    ("scenario", "events", "per_anomaly"),
+    [
+        ("smoke", 2_000, 2),
+        ("demo", 20_000, 5),
+        ("full", 1_000_000, 25),
+        ("volume", 15_000_000, 100),
+    ],
+)
+def test_a_scenario_sets_the_replay_size_and_anomaly_count(
+    monkeypatch, scenario, events, per_anomaly
+):
+    for name, value in URLS.items():
+        monkeypatch.setenv(name, value)
+    monkeypatch.setenv("DATA_SCENARIO", scenario)
+    settings = PipelineSettings(_env_file=None)
+    assert (settings.replay_slice_events, settings.overlay_per_anomaly) == (events, per_anomaly)
+
+
+def test_an_explicit_size_overrides_the_scenario(monkeypatch):
+    for name, value in URLS.items():
+        monkeypatch.setenv(name, value)
+    monkeypatch.setenv("DATA_SCENARIO", "smoke")
+    monkeypatch.setenv("OVERLAY_PER_ANOMALY", "7")
+    settings = PipelineSettings(_env_file=None)
+    assert (settings.replay_slice_events, settings.overlay_per_anomaly) == (2_000, 7)
+
+
+def test_an_unknown_scenario_is_refused(monkeypatch):
+    for name, value in URLS.items():
+        monkeypatch.setenv(name, value)
+    monkeypatch.setenv("DATA_SCENARIO", "huge")
+    with pytest.raises(ValueError, match="smoke"):
+        PipelineSettings(_env_file=None)

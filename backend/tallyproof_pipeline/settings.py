@@ -7,8 +7,9 @@ variable's name instead of failing later in a confusing way.
 
 from functools import lru_cache
 from pathlib import Path
+from typing import Literal, Self
 
-from pydantic import Field, HttpUrl, ValidationError, field_validator
+from pydantic import Field, HttpUrl, ValidationError, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -16,6 +17,22 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 
 class SettingsError(RuntimeError):
     """Raised when required configuration is missing or invalid."""
+
+
+Scenario = Literal["smoke", "demo", "full", "volume"]
+
+SCENARIOS: dict[str, tuple[int, int]] = {
+    "smoke": (2_000, 2),
+    "demo": (20_000, 5),
+    "full": (1_000_000, 25),
+    "volume": (15_000_000, 100),
+}
+"""Scenario name -> (events replayed from the lake, injected anomalies of each type).
+
+``smoke`` is small enough for CI, ``demo`` is what the local demo streams, ``full`` is
+the default evaluation build, and ``volume`` replays every transaction of both fiscal
+years (about 13 million) to measure throughput.
+"""
 
 
 class PipelineSettings(BaseSettings):
@@ -37,6 +54,7 @@ class PipelineSettings(BaseSettings):
     )
     download_max_mbps: float = Field(default=20.0, gt=0, validation_alias="DATA_DOWNLOAD_MAX_MBPS")
     overlay_seed: int = Field(default=42, validation_alias="OVERLAY_SEED")
+    scenario: Scenario = Field(default="full", validation_alias="DATA_SCENARIO")
     overlay_per_anomaly: int = Field(default=25, ge=1, validation_alias="OVERLAY_PER_ANOMALY")
     replay_slice_events: int = Field(
         default=1_000_000, ge=1, validation_alias="DATA_REPLAY_SLICE_EVENTS"
@@ -59,6 +77,16 @@ class PipelineSettings(BaseSettings):
     spark_shuffle_partitions: int = Field(
         default=16, ge=1, validation_alias="SPARK_SHUFFLE_PARTITIONS"
     )
+
+    @model_validator(mode="after")
+    def _size_from_scenario(self) -> Self:
+        # The scenario sets both sizes; an explicit setting for either one still wins.
+        events, per_anomaly = SCENARIOS[self.scenario]
+        if "replay_slice_events" not in self.model_fields_set:
+            self.replay_slice_events = events
+        if "overlay_per_anomaly" not in self.model_fields_set:
+            self.overlay_per_anomaly = per_anomaly
+        return self
 
     @field_validator("data_dir")
     @classmethod

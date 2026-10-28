@@ -86,10 +86,12 @@ Every setting comes from environment variables, loaded through one typed setting
 | `POLICY_FAR_PARTS` | no | `[2, 4, 32, 43]` | FAR parts kept in the policy corpus |
 | `POLICY_CORPUS_DIR` | no | `backend/corpus/far` | Where the committed policy corpus lives |
 | `DATA_DOWNLOAD_MAX_MBPS` | no | `20` | Download speed cap |
-| `DATA_REPLAY_SLICE_EVENTS` | no | `1000000` | Events replayed from the lake into Kafka |
+| `DATA_SCENARIO` | no | `full` | Build size: `smoke` (2,000 events, 2 of each anomaly), `demo` (20,000 and 5), `full` (1,000,000 and 25), or `volume` (15,000,000 and 100) |
+| `DATA_REPLAY_SLICE_EVENTS` | no | from the scenario | Events replayed from the lake into Kafka; overrides the scenario |
 | `DATA_REPLAY_RATE_PER_SEC` | no | `2000` | Replay speed; raised only for load testing |
 | `DATA_TREASURY_POLL_SECONDS` | no | `3600` | How often the live Treasury connector checks for a new daily statement |
 | `OVERLAY_SEED` | no | `42` | Seed for the injected anomalies |
+| `OVERLAY_PER_ANOMALY` | no | from the scenario | How many of each anomaly type to inject; overrides the scenario |
 | `SPARK_MASTER` | no | `local[3]` | Keeps Spark to three cores |
 | `SPARK_DRIVER_MEMORY` | no | `2g` | Keeps Spark within the laptop's memory budget |
 | `SPARK_SHUFFLE_PARTITIONS` | no | `16` | Kept small for a single machine |

@@ -128,8 +128,8 @@ data-build: require-venv require-no-containers ## Clean downloaded archives into
 data-quality: require-venv require-no-containers ## Run the Deequ data quality checks on silver
 	cd $(BACKEND) && .venv/bin/python -m tallyproof_pipeline.quality
 
-data-gold: require-venv require-no-containers ## Conform silver into ledger events with the anomaly overlay
-	cd $(BACKEND) && .venv/bin/python -m tallyproof_pipeline.gold
+data-gold: require-venv require-no-containers ## Conform silver into ledger events with the anomaly overlay (SCENARIO=smoke|demo|full|volume)
+	cd $(BACKEND) && $(if $(SCENARIO),DATA_SCENARIO=$(SCENARIO)) .venv/bin/python -m tallyproof_pipeline.gold
 
 data-sample: require-venv ## Refresh the committed real-data sample from gold
 	$(PY) -c "import gzip, itertools; src = gzip.open('data/gold/events.jsonl.gz', 'rt'); out = gzip.GzipFile('testdata/sample/gold_events_sample.jsonl.gz', 'wb', mtime=0); [out.write(line.encode()) for line in itertools.islice(src, 2000)]; out.close()"
