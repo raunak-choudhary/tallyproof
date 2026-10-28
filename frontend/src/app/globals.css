@@ -1,0 +1,75 @@
+@import "tailwindcss";
+
+/* Every color and timing is a token, defined for both themes from the first component. */
+:root {
+  --bg: #fbfaf7;
+  --bg-elevated: #ffffff;
+  --fg: #16181d;
+  --fg-muted: #5b6170;
+  --border: #e3e1da;
+  --accent: #1f5fbf;
+  --ok: #15803d;
+  --fail: #b42318;
+  --warn: #a15c07;
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --radius: 8px;
+  --dur-fast: 120ms;
+  --dur-base: 240ms;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1115;
+    --bg-elevated: #171a21;
+    --fg: #e8e9ec;
+    --fg-muted: #9aa1b0;
+    --border: #2a2f3a;
+    --accent: #7aa7ff;
+    --ok: #4ade80;
+    --fail: #f87171;
+    --warn: #fbbf24;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #0f1115;
+  --bg-elevated: #171a21;
+  --fg: #e8e9ec;
+  --fg-muted: #9aa1b0;
+  --border: #2a2f3a;
+  --accent: #7aa7ff;
+  --ok: #4ade80;
+  --fail: #f87171;
+  --warn: #fbbf24;
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-bg-elevated: var(--bg-elevated);
+  --color-fg: var(--fg);
+  --color-fg-muted: var(--fg-muted);
+  --color-border: var(--border);
+  --color-accent: var(--accent);
+  --color-ok: var(--ok);
+  --color-fail: var(--fail);
+  --color-warn: var(--warn);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0ms !important;
+    transition-duration: 0ms !important;
+  }
+}
