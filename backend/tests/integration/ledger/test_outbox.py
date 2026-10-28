@@ -5,7 +5,7 @@ from django.db import transaction
 
 from apps.ledger.append import append
 from apps.ledger.models import Outbox
-from apps.ledger.outbox import RelayError, relay_batch
+from apps.ledger.outbox import OutboxLag, RelayError, relay_batch
 from apps.ledger.projections import AppendedProjection, catch_up
 from tests.integration.ledger.test_append import deliveries, event
 
@@ -55,3 +55,16 @@ def test_a_rejected_batch_stays_unpublished_for_the_next_attempt(migrated):
         relay_batch(FakeProducer(reject=True))
     assert Outbox.objects.filter(published_at__isnull=True).count() == 2
     assert relay_batch(FakeProducer()) == 2
+
+
+def test_lag_counts_unpublished_messages_and_the_oldest_ones_age(migrated):
+    from apps.ledger.outbox import outbox_lag
+
+    assert outbox_lag() == OutboxLag(pending=0, oldest_seconds=None)
+    appended(3)
+    lag = outbox_lag()
+    assert lag.pending == 3
+    assert lag.oldest_seconds is not None
+    assert lag.oldest_seconds >= 0
+    relay_batch(FakeProducer())
+    assert outbox_lag().pending == 0

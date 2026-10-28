@@ -9,7 +9,7 @@ from confluent_kafka import Producer
 from django.core.management.base import BaseCommand
 from django.db import connection
 
-from apps.ledger.outbox import RelayError, relay_batch
+from apps.ledger.outbox import RelayError, outbox_lag, relay_batch
 from apps.ledger.projections import OUTBOX_CHANNEL
 from config.env import app_settings
 from config.logging import configure
@@ -59,7 +59,13 @@ class Command(BaseCommand):
                     log.warning("batch not published, retrying: %s", error)
                     published = 0
                 if published:
-                    log.info("published %d outbox messages", published)
+                    lag = outbox_lag()
+                    log.info(
+                        "published %d outbox messages; %d pending, oldest %.1f s",
+                        published,
+                        lag.pending,
+                        lag.oldest_seconds or 0.0,
+                    )
                     continue
                 for _ in listener.notifies(timeout=IDLE_WAIT_SECONDS, stop_after=1):
                     pass
