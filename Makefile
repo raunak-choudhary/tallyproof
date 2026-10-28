@@ -55,13 +55,14 @@ deps-sync: require-venv ## Make the virtual environment match the pinned files e
 	cd $(BACKEND) && .venv/bin/pip-sync --quiet requirements.txt requirements-dev.txt
 
 lint: require-venv ## Check style and formatting
-	cd $(BACKEND) && .venv/bin/ruff check . && .venv/bin/ruff format --check .
+	$(VENV)/bin/ruff check . && $(VENV)/bin/ruff format --check .
 
 format: require-venv ## Apply formatting and safe lint fixes
-	cd $(BACKEND) && .venv/bin/ruff format . && .venv/bin/ruff check --fix .
+	$(VENV)/bin/ruff format . && $(VENV)/bin/ruff check --fix .
 
 typecheck: require-venv ## Run mypy in strict mode
 	cd $(BACKEND) && .venv/bin/mypy
+	$(VENV)/bin/mypy --strict scripts
 
 test: require-venv ## Run the unit tests with coverage
 	cd $(BACKEND) && .venv/bin/pytest --cov --cov-report=term --cov-report=xml:coverage.xml
