@@ -1,0 +1,50 @@
+# Git hooks. Install once with:
+#   backend/.venv/bin/pre-commit install --hook-type pre-commit --hook-type commit-msg
+# Ruff and mypy run from the project virtual environment, so hooks use the
+# exact pinned versions instead of separate copies.
+default_install_hook_types: [pre-commit, commit-msg]
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: \.md$
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-toml
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: ["--maxkb=1024"]
+      - id: detect-private-key
+
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.1
+    hooks:
+      - id: gitleaks
+
+  - repo: https://github.com/compilerla/conventional-pre-commit
+    rev: v4.4.0
+    hooks:
+      - id: conventional-pre-commit
+        stages: [commit-msg]
+        args: [--strict, feat, fix, docs, test, refactor, perf, build, ci, chore, revert]
+
+  - repo: local
+    hooks:
+      - id: ruff-check
+        name: ruff check
+        entry: backend/.venv/bin/ruff check --force-exclude
+        language: system
+        types: [python]
+      - id: ruff-format
+        name: ruff format
+        entry: backend/.venv/bin/ruff format --check --force-exclude
+        language: system
+        types: [python]
+      - id: mypy
+        name: mypy (strict)
+        entry: bash -c 'cd backend && .venv/bin/mypy'
+        language: system
+        types: [python]
+        pass_filenames: false
