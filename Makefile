@@ -32,7 +32,7 @@ COMPOSE := docker --context colima-$(COLIMA_PROFILE) compose --env-file .env -f 
 SPARK_VERSION ?= 4.1
 export SPARK_VERSION
 
-.PHONY: help doctor venv deps deps-sync require-venv lint format typecheck test check audit vectors vectors-check web-install web-lint web-typecheck web-test web-build web-check web-audit web-live data-fetch data-outlays data-build data-build-outlays data-quality require-no-containers data-gold keygen replay data-sample test-integration coverage coverage-report require-colima up down reset ps logs db-roles migrate ingest checkpointer project relay fanout stream check-derived rebuild-derived check-totals dead-letters verify-witness data-replay data-treasury policy-fetch policy-publish demo demo-stop tamper schemas register-schemas verify-event console clean
+.PHONY: help doctor venv deps deps-sync require-venv lint format typecheck test check audit vectors vectors-check web-install web-lint web-typecheck web-test web-build web-check web-audit web-live data-fetch data-outlays data-build data-build-outlays data-quality data-profile require-no-containers data-gold keygen replay data-sample test-integration coverage coverage-report require-colima up down reset ps logs db-roles migrate ingest checkpointer project relay fanout stream check-derived rebuild-derived check-totals dead-letters verify-witness data-replay data-treasury policy-fetch policy-publish demo demo-stop tamper schemas register-schemas verify-event console clean
 
 help: ## List available commands
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -138,6 +138,9 @@ data-build-outlays: require-venv require-no-containers ## Spark: turn downloaded
 
 data-quality: require-venv require-no-containers ## Run the Deequ data quality checks on silver
 	cd $(BACKEND) && .venv/bin/python -m tallyproof_pipeline.quality
+
+data-profile: require-venv require-no-containers ## Null rates and amount distribution of silver, for the data profile
+	cd $(BACKEND) && .venv/bin/python -m tallyproof_pipeline.profile
 
 data-gold: require-venv require-no-containers ## Conform silver into ledger events with the anomaly overlay (SCENARIO=smoke|demo|full|volume)
 	cd $(BACKEND) && $(if $(SCENARIO),DATA_SCENARIO=$(SCENARIO)) .venv/bin/python -m tallyproof_pipeline.gold
