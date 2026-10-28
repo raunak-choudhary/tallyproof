@@ -12,6 +12,7 @@ from django.db import connection
 from apps.ledger.outbox import RelayError, relay_batch
 from apps.ledger.projections import OUTBOX_CHANNEL
 from config.env import app_settings
+from config.logging import configure
 
 log = logging.getLogger(__name__)
 IDLE_WAIT_SECONDS = 5.0
@@ -24,7 +25,7 @@ class Command(BaseCommand):
 
     def handle(self, *args: object, **options: object) -> None:
         """Run until SIGINT or SIGTERM."""
-        logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+        configure()
         stopping = False
 
         def stop(signum: int, frame: FrameType | None) -> None:

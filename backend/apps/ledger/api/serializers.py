@@ -23,6 +23,7 @@ class EventSerializer(serializers.ModelSerializer[LedgerEvent]):
             "account_id",
             "occurred_at",
             "ingested_at",
+            "correlation_id",
             "canonical",
             "leaf_hash_hex",
         ]

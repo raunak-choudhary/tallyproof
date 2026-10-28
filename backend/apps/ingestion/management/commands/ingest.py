@@ -1,6 +1,5 @@
 """``python manage.py ingest``: run the ingestion consumer until interrupted."""
 
-import logging
 import signal
 from types import FrameType
 
@@ -10,6 +9,7 @@ from django.core.management.base import BaseCommand
 from apps.ingestion.consumer import Ingestor, producer_for_dead_letters, run
 from apps.ingestion.dedupe import PartitionFilters
 from config.env import app_settings
+from config.logging import configure
 
 
 class Command(BaseCommand):
@@ -19,7 +19,7 @@ class Command(BaseCommand):
 
     def handle(self, *args: object, **options: object) -> None:
         """Run until SIGINT or SIGTERM, finishing the current batch first."""
-        logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+        configure()
         env = app_settings()
         stopping = False
 
