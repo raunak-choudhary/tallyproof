@@ -51,6 +51,17 @@ class Break:
         return f"{self.break_type}:{self.trigger_event_id}"
 
 
+def _involved(*pairs: tuple[str, str]) -> tuple[tuple[str, str], ...]:
+    """Each event once, in order: an award's first event can also be the one that breaks it."""
+    seen: set[str] = set()
+    unique = []
+    for event_id, role in pairs:
+        if event_id not in seen:
+            seen.add(event_id)
+            unique.append((event_id, role))
+    return tuple(unique)
+
+
 @dataclass
 class _Award:
     obligated: Decimal = Decimal(0)
@@ -135,7 +146,7 @@ class Reconciler:
                     award_key,
                     award.obligated,
                     f"obligations fall to {award.obligated} after this de-obligation",
-                    ((award.first_event_id, "award"), (event.event_id, "deobligation")),
+                    _involved((award.first_event_id, "award"), (event.event_id, "deobligation")),
                 )
             ]
         return []
@@ -164,7 +175,7 @@ class Reconciler:
                     award_key,
                     excess,
                     f"cumulative outlays exceed obligations by {excess}",
-                    ((award.first_event_id, "award"), (event.event_id, "outlay")),
+                    _involved((award.first_event_id, "award"), (event.event_id, "outlay")),
                 )
             ]
         return []
