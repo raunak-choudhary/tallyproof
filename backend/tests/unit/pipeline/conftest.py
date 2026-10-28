@@ -12,6 +12,7 @@ def spark_settings(tmp_path_factory):
         DATA_SOURCE_USASPENDING_FILES_URL="https://files.example.gov/",
         DATA_SOURCE_USASPENDING_API_URL="https://api.example.gov/",
         DATA_SOURCE_FISCALDATA_API_URL="https://fiscal.example.gov/",
+        DATA_SOURCE_ECFR_API_URL="https://ecfr.example.gov/api/versioner/v1/",
         SPARK_MASTER="local[1]",
         SPARK_DRIVER_MEMORY="1g",
         SPARK_SHUFFLE_PARTITIONS=1,

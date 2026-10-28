@@ -6,6 +6,7 @@ URLS = {
     "DATA_SOURCE_USASPENDING_FILES_URL": "https://files.example.gov/archive/",
     "DATA_SOURCE_USASPENDING_API_URL": "https://api.example.gov/v2/",
     "DATA_SOURCE_FISCALDATA_API_URL": "https://fiscal.example.gov/",
+    "DATA_SOURCE_ECFR_API_URL": "https://ecfr.example.gov/api/versioner/v1/",
 }
 
 
