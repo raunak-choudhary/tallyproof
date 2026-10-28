@@ -64,6 +64,10 @@ class AppSettings(BaseSettings):
         default=0.001, gt=0, lt=1, validation_alias="DEDUPE_TARGET_FPR"
     )
 
+    redis_url: str = Field(default="redis://127.0.0.1:6379/0", validation_alias="REDIS_URL")
+    kafka_topic_checkpoints: str = Field(
+        default="ledger.checkpoints.v1", validation_alias="KAFKA_TOPIC_CHECKPOINTS"
+    )
     kafka_schema_registry_url: str = Field(
         default="http://127.0.0.1:18081", validation_alias="KAFKA_SCHEMA_REGISTRY_URL"
     )

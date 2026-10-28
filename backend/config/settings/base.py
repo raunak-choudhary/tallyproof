@@ -15,11 +15,22 @@ INSTALLED_APPS = [
     "corsheaders",
     "rest_framework",
     "drf_spectacular",
+    "channels",
     "apps.health",
     "apps.ledger",
     "apps.ingestion",
     "apps.reconciliation",
+    "apps.realtime",
 ]
+
+# Live updates fan out through Redis. A client whose buffer is full misses
+# messages instead of slowing everyone down; it can catch up through the API.
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {"hosts": [ENV.redis_url], "capacity": 200, "expiry": 30},
+    }
+}
 
 # Rate-limit counters. Per process for now; a shared cache arrives with Redis.
 CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}}

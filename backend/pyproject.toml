@@ -53,6 +53,11 @@ plugins = ["pydantic.mypy", "mypy_django_plugin.main", "mypy_drf_plugin.main"]
 django_settings_module = "config.settings.test"
 
 [[tool.mypy.overrides]]
+# asgiref's test helpers are untyped.
+module = ["tests.unit.realtime.*"]
+disallow_untyped_calls = false
+
+[[tool.mypy.overrides]]
 # PyDeequ ships no type information.
 module = ["pydeequ", "pydeequ.*"]
 ignore_missing_imports = true
