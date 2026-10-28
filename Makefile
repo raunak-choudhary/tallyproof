@@ -32,7 +32,7 @@ COMPOSE := docker --context colima-$(COLIMA_PROFILE) compose --env-file .env -f 
 SPARK_VERSION ?= 4.1
 export SPARK_VERSION
 
-.PHONY: help doctor venv deps deps-sync require-venv lint format typecheck test check audit vectors web-install web-lint web-typecheck web-test web-build web-check web-audit data-fetch data-build data-quality require-no-containers data-gold keygen replay data-sample test-integration coverage coverage-report require-colima up down reset ps logs db-roles migrate ingest checkpointer verify-witness data-replay data-treasury demo demo-stop verify-event console clean
+.PHONY: help doctor venv deps deps-sync require-venv lint format typecheck test check audit vectors web-install web-lint web-typecheck web-test web-build web-check web-audit web-live data-fetch data-build data-quality require-no-containers data-gold keygen replay data-sample test-integration coverage coverage-report require-colima up down reset ps logs db-roles migrate ingest checkpointer verify-witness data-replay data-treasury demo demo-stop verify-event console clean
 
 help: ## List available commands
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -158,6 +158,11 @@ web-test: ## Run the web app's unit tests
 
 web-build: ## Build the static web app (needs the replay bundle and pinned key)
 	cd $(WEB) && pnpm run build
+
+web-live: ## Run the web app against the local live API, trusting the dev key from .env
+	cd $(WEB) && NEXT_PUBLIC_API_URL=http://127.0.0.1:8000 \
+		NEXT_PUBLIC_PINNED_VERIFIER_KEY="$$(grep '^CHECKPOINT_PUBLIC_KEY=' ../.env | cut -d= -f2-)" \
+		pnpm dev
 
 web-audit: ## Scan the web app's dependencies for known vulnerabilities
 	cd $(WEB) && pnpm audit --prod=false
