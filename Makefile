@@ -32,7 +32,7 @@ COMPOSE := docker --context colima-$(COLIMA_PROFILE) compose --env-file .env -f 
 SPARK_VERSION ?= 4.1
 export SPARK_VERSION
 
-.PHONY: help doctor venv deps deps-sync require-venv lint format typecheck test check audit vectors web-install web-lint web-typecheck web-test web-build web-check web-audit data-fetch data-build data-quality require-no-containers data-gold keygen replay data-sample test-integration require-colima up down reset ps logs db-roles migrate ingest data-replay console clean
+.PHONY: help doctor venv deps deps-sync require-venv lint format typecheck test check audit vectors web-install web-lint web-typecheck web-test web-build web-check web-audit data-fetch data-build data-quality require-no-containers data-gold keygen replay data-sample test-integration require-colima up down reset ps logs db-roles migrate ingest checkpointer verify-witness data-replay console clean
 
 help: ## List available commands
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -178,6 +178,12 @@ migrate: require-venv ## Apply database migrations as the owner role
 
 ingest: require-venv require-colima ## Run the ingestion consumer (Ctrl+C finishes the batch and stops)
 	cd $(BACKEND) && DJANGO_SETTINGS_MODULE=config.settings.local .venv/bin/python manage.py ingest
+
+checkpointer: require-venv require-colima ## Sign checkpoints as the log grows (Ctrl+C stops)
+	cd $(BACKEND) && DJANGO_SETTINGS_MODULE=config.settings.local .venv/bin/python manage.py checkpointer
+
+verify-witness: require-venv require-colima ## Check exported checkpoints against the key and the current log
+	cd $(BACKEND) && DJANGO_SETTINGS_MODULE=config.settings.local .venv/bin/python manage.py verify_witness
 
 data-replay: require-venv require-colima ## Stream gold events into Kafka (LIMIT=n RATE=per-second)
 	cd $(BACKEND) && .venv/bin/python -m tallyproof_pipeline.stream $(if $(LIMIT),--limit $(LIMIT)) $(if $(RATE),--rate $(RATE))
