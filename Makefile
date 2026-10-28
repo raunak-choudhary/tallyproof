@@ -32,7 +32,7 @@ COMPOSE := docker --context colima-$(COLIMA_PROFILE) compose --env-file .env -f 
 SPARK_VERSION ?= 4.1
 export SPARK_VERSION
 
-.PHONY: help doctor venv deps deps-sync require-venv lint format typecheck test check audit vectors web-install web-lint web-typecheck web-test web-build web-check web-audit data-fetch data-build data-quality require-no-containers data-gold keygen replay data-sample test-integration require-colima up down reset ps logs db-roles migrate console clean
+.PHONY: help doctor venv deps deps-sync require-venv lint format typecheck test check audit vectors web-install web-lint web-typecheck web-test web-build web-check web-audit data-fetch data-build data-quality require-no-containers data-gold keygen replay data-sample test-integration require-colima up down reset ps logs db-roles migrate ingest data-replay console clean
 
 help: ## List available commands
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -175,6 +175,12 @@ logs: require-colima ## Follow the stack's logs (SERVICE=postgres to pick one)
 
 migrate: require-venv ## Apply database migrations as the owner role
 	cd $(BACKEND) && DJANGO_SETTINGS_MODULE=config.settings.migrate .venv/bin/python manage.py migrate
+
+ingest: require-venv require-colima ## Run the ingestion consumer (Ctrl+C finishes the batch and stops)
+	cd $(BACKEND) && DJANGO_SETTINGS_MODULE=config.settings.local .venv/bin/python manage.py ingest
+
+data-replay: require-venv require-colima ## Stream gold events into Kafka (LIMIT=n RATE=per-second)
+	cd $(BACKEND) && .venv/bin/python -m tallyproof_pipeline.stream $(if $(LIMIT),--limit $(LIMIT)) $(if $(RATE),--rate $(RATE))
 
 db-roles: require-colima ## Re-run the database role script, for example after changing a password
 	$(COMPOSE) exec -T postgres bash /docker-entrypoint-initdb.d/10-roles.sh
