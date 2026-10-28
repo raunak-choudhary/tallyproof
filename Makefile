@@ -32,7 +32,7 @@ COMPOSE := docker --context colima-$(COLIMA_PROFILE) compose --env-file .env -f 
 SPARK_VERSION ?= 4.1
 export SPARK_VERSION
 
-.PHONY: help doctor venv deps deps-sync require-venv lint format typecheck test check audit vectors web-install web-lint web-typecheck web-test web-build web-check data-fetch data-build data-quality require-no-containers data-gold keygen replay data-sample require-colima up down reset ps logs db-roles console clean
+.PHONY: help doctor venv deps deps-sync require-venv lint format typecheck test check audit vectors web-install web-lint web-typecheck web-test web-build web-check data-fetch data-build data-quality require-no-containers data-gold keygen replay data-sample test-integration require-colima up down reset ps logs db-roles migrate console clean
 
 help: ## List available commands
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -63,8 +63,10 @@ deps: require-venv ## Recompile pinned requirement files after editing a .in fil
 deps-sync: require-venv ## Make the virtual environment match the pinned files exactly
 	cd $(BACKEND) && .venv/bin/pip-sync --quiet requirements.txt requirements-dev.txt
 
-lint: require-venv ## Check style and formatting
+lint: require-venv ## Check style, formatting, and that no model change lacks a migration
 	$(VENV)/bin/ruff check . && $(VENV)/bin/ruff format --check .
+	cd $(BACKEND) && DJANGO_SETTINGS_MODULE=config.settings.test \
+		.venv/bin/python -W ignore::RuntimeWarning manage.py makemigrations --check --dry-run
 
 format: require-venv ## Apply formatting and safe lint fixes
 	$(VENV)/bin/ruff format . && $(VENV)/bin/ruff check --fix .
@@ -74,7 +76,14 @@ typecheck: require-venv ## Run mypy in strict mode
 	$(VENV)/bin/mypy --strict scripts
 
 test: require-venv ## Run the unit tests with coverage
-	cd $(BACKEND) && .venv/bin/pytest --cov --cov-report=term --cov-report=xml:coverage.xml
+	cd $(BACKEND) && .venv/bin/pytest -m "not integration" --cov --cov-report=term --cov-report=xml:coverage.xml
+
+# Testcontainers talks to the Colima VM's Docker socket. Inside the VM the
+# socket lives at the standard path, which is what its cleanup container mounts.
+test-integration: require-venv require-colima ## Run integration tests against real containers
+	cd $(BACKEND) && DOCKER_HOST=unix://$$HOME/.colima/$(COLIMA_PROFILE)/docker.sock \
+		TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE=/var/run/docker.sock \
+		.venv/bin/pytest -m integration -p no:cacheprovider
 
 audit: require-venv ## Scan pinned dependencies for known vulnerabilities
 	cd $(BACKEND) && .venv/bin/pip-audit --strict --disable-pip -r requirements.txt -r requirements-dev.txt
@@ -154,6 +163,9 @@ ps: require-colima ## Show the stack's containers and health
 
 logs: require-colima ## Follow the stack's logs (SERVICE=postgres to pick one)
 	$(COMPOSE) logs -f --tail=100 $(SERVICE)
+
+migrate: require-venv ## Apply database migrations as the owner role
+	cd $(BACKEND) && DJANGO_SETTINGS_MODULE=config.settings.migrate .venv/bin/python manage.py migrate
 
 db-roles: require-colima ## Re-run the database role script, for example after changing a password
 	$(COMPOSE) exec -T postgres bash /docker-entrypoint-initdb.d/10-roles.sh
