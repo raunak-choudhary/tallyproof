@@ -7,3 +7,12 @@ id = "tallyproof-signing-key"
 description = "Tallyproof Ed25519 private signing key"
 regex = '''tallyproof-ed25519-private-v1:[A-Za-z0-9+/]{42,44}={0,2}'''
 keywords = ["tallyproof-ed25519-private-v1"]
+
+# USAspending award identifiers look random and often sit in fields named
+# "award_key", which trips the generic API key rule. They are public record
+# identifiers, not secrets, so only this exact format is allowed.
+[[allowlists]]
+description = "Public USAspending award and IDV identifiers"
+targetRules = ["generic-api-key"]
+regexTarget = "match"
+regexes = ['''(?:CONT|ASST)_(?:AWD|IDV)_[A-Za-z0-9_.-]+''']
