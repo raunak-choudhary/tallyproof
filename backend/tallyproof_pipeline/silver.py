@@ -268,8 +268,22 @@ def process_member(
     return report
 
 
+def member_done(settings: PipelineSettings, archive: Path, member: str) -> bool:
+    """Whether a member's silver Parquet and its report are both already written.
+
+    Adding a fiscal year then costs only the new archive, not a rerun of every year.
+    Delete the member's report to force it to be rebuilt.
+    """
+    stem = Path(member).stem
+    report = settings.silver_dir / "_reports" / archive.stem / f"{stem}.json"
+    written = (
+        settings.silver_dir / "contracts" / f"source={archive.stem}" / f"member={stem}" / "_SUCCESS"
+    )
+    return report.exists() and written.exists()
+
+
 def build_silver(settings: PipelineSettings) -> list[MemberReport]:  # pragma: no cover - full run
-    """Process every CSV member of every downloaded archive."""
+    """Process every CSV member of every downloaded archive that isn't built yet."""
     spark = spark_session(settings)
     reports = []
     try:
@@ -277,6 +291,9 @@ def build_silver(settings: PipelineSettings) -> list[MemberReport]:  # pragma: n
             with zipfile.ZipFile(archive) as bundle:
                 members = sorted(n for n in bundle.namelist() if n.endswith(".csv"))
             for member in members:
+                if member_done(settings, archive, member):
+                    log.info("already built %s / %s", archive.name, member)
+                    continue
                 log.info("processing %s / %s", archive.name, member)
                 reports.append(process_member(spark, settings, archive, member))
     finally:
