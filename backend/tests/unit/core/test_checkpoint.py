@@ -191,3 +191,16 @@ def test_oversized_notes_and_too_many_signatures_are_rejected():
 def test_public_key_must_be_32_bytes():
     with pytest.raises(CheckpointError, match="32 bytes"):
         Verifier(ORIGIN, b"\x00" * 31)
+
+
+def test_a_verifier_key_whose_base64_contains_a_plus_sign_parses():
+    # Only the first two "+" separate fields (C2SP signed-note); this key's base64 has one.
+    signer = Signer(
+        "eval.tallyproof.dev/log/v1",
+        Ed25519PrivateKey.from_private_bytes(hashlib.sha256(b"eval only").digest()),
+    )
+    vkey = signer.verifier_key()
+    assert vkey.count("+") > 2
+    checkpoint = Checkpoint(signer.name, 3, b"\x01" * 32)
+    note = signer.sign_checkpoint(checkpoint)
+    assert Verifier.from_verifier_key(vkey).verify_checkpoint(note) == checkpoint
