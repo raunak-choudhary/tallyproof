@@ -25,6 +25,7 @@ INSTALLED_APPS = [
 CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}}
 
 MIDDLEWARE = [
+    "config.middleware.CorrelationIdMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -46,6 +47,10 @@ TIME_ZONE = "UTC"
 LANGUAGE_CODE = "en-us"
 
 CORS_ALLOWED_ORIGINS = ENV.cors_origin_list
+CORS_EXPOSE_HEADERS = ["X-Correlation-ID"]
+
+# Logs are JSON lines configured in config.logging; Django adds nothing of its own.
+LOGGING_CONFIG = None
 
 REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",

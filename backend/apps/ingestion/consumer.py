@@ -27,6 +27,7 @@ from pydantic import ValidationError
 from apps.ingestion import dead_letter, offsets
 from apps.ingestion.dedupe import PartitionFilters
 from apps.ledger.append import Delivery, append
+from config.logging import bind_correlation_id
 from tallyproof_core.events import EventEnvelope
 
 log = logging.getLogger(__name__)
@@ -143,6 +144,10 @@ class Ingestor:
             try:
                 event = EventEnvelope.model_validate_json(raw or b"")
             except (ValidationError, ValueError) as error:
+                log.info(
+                    "dead-lettered",
+                    extra={"topic": topic, "partition": partition, "offset": offset},
+                )
                 self.sink.produce(
                     self.dead_letter_topic,
                     dead_letter.envelope(error, topic, partition, offset, raw),
@@ -160,6 +165,11 @@ class Ingestor:
             result = append(deliveries)
             offsets.commit(self.group, positions)
 
+        appended_ids = {event_id for event_id, _ in result.appended}
+        for delivery in deliveries:
+            if delivery.event.event_id in appended_ids:
+                bind_correlation_id(delivery.event.correlation_id)
+                log.debug("appended %s", delivery.event.event_id)
         duplicate_ids = {id(d) for d in result.duplicates}
         for delivery in deliveries:
             self.filters.record_outcome(delivery.bloom_said_seen, id(delivery) in duplicate_ids)
