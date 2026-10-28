@@ -7,6 +7,7 @@ import pytest
 from tallyproof_pipeline.silver import (
     PII_COLUMNS,
     SILVER_COLUMNS,
+    member_done,
     process_member,
     read_csv,
     transform,
@@ -139,7 +140,9 @@ def test_process_member_writes_parquet_and_a_report_and_removes_the_csv(
     archive = settings.data_dir / "FY2025_All_Contracts_Full_20261006.zip"
     with zipfile.ZipFile(archive, "w") as bundle:
         bundle.write(csv_path, csv_path.name)
+    assert not member_done(settings, archive, csv_path.name)
     report = process_member(spark, settings, archive, csv_path.name)
+    assert member_done(settings, archive, csv_path.name)
     assert report.rows_read == len(ROWS)
     assert report.rows_written == 3
     assert not (settings.work_dir / csv_path.name).exists()
