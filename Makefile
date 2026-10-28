@@ -32,7 +32,7 @@ COMPOSE := docker --context colima-$(COLIMA_PROFILE) compose --env-file .env -f 
 SPARK_VERSION ?= 4.1
 export SPARK_VERSION
 
-.PHONY: help doctor venv deps deps-sync require-venv lint format typecheck test check audit vectors web-install web-lint web-typecheck web-test web-build web-check web-audit data-fetch data-build data-quality require-no-containers data-gold keygen replay data-sample test-integration coverage coverage-report require-colima up down reset ps logs db-roles migrate ingest checkpointer verify-witness data-replay console clean
+.PHONY: help doctor venv deps deps-sync require-venv lint format typecheck test check audit vectors web-install web-lint web-typecheck web-test web-build web-check web-audit data-fetch data-build data-quality require-no-containers data-gold keygen replay data-sample test-integration coverage coverage-report require-colima up down reset ps logs db-roles migrate ingest checkpointer verify-witness data-replay data-treasury console clean
 
 help: ## List available commands
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -204,6 +204,9 @@ verify-witness: require-venv require-colima ## Check exported checkpoints agains
 
 data-replay: require-venv require-colima ## Stream gold events into Kafka (LIMIT=n RATE=per-second)
 	cd $(BACKEND) && .venv/bin/python -m tallyproof_pipeline.stream $(if $(LIMIT),--limit $(LIMIT)) $(if $(RATE),--rate $(RATE))
+
+data-treasury: require-venv require-colima ## Publish Treasury cash statements (SINCE=yyyy-mm-dd, FOLLOW=1 to keep checking)
+	cd $(BACKEND) && .venv/bin/python -m tallyproof_pipeline.treasury $(if $(SINCE),--since $(SINCE)) $(if $(FOLLOW),--follow)
 
 db-roles: require-colima ## Re-run the database role script, for example after changing a password
 	$(COMPOSE) exec -T postgres bash /docker-entrypoint-initdb.d/10-roles.sh
