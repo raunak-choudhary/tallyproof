@@ -6,6 +6,7 @@ import pytest
 from django.db import transaction
 from psycopg import errors
 
+from apps.analyst.sql_guard import VIEW_COLUMNS, guard
 from apps.ledger.append import Delivery, append
 from apps.ledger.projections import JournalProjection, catch_up
 from apps.reconciliation.projection import ReconciliationProjection
@@ -114,3 +115,24 @@ def test_the_analyst_cannot_write_even_with_read_only_mode_switched_off(migrated
             conn.execute("SET default_transaction_read_only = off")
             with pytest.raises((errors.InsufficientPrivilege, errors.ObjectNotInPrerequisiteState)):
                 conn.execute(sql)
+
+
+def test_the_guard_knows_exactly_the_columns_each_view_has(as_analyst):
+    columns: dict[str, set[str]] = {}
+    for view, column in query(
+        "SELECT table_name, column_name FROM information_schema.columns "
+        "WHERE table_schema = 'analyst'"
+    ):
+        columns.setdefault(view, set()).add(column)
+    for view, allowed in VIEW_COLUMNS.items():
+        assert columns[view] == allowed, view
+
+
+def test_guarded_sql_runs_as_the_analyst(ledger):
+    guarded = guard(
+        "SELECT o.awarding_agency, count(*) AS n FROM obligations o "
+        "JOIN awards a ON a.award_key = o.award_key GROUP BY o.awarding_agency",
+        max_rows=10,
+    )
+    (total,) = query("SELECT count(*) FROM obligations")[0]
+    assert query(guarded.sql) == [("Department of Energy", total)]

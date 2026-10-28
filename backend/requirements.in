@@ -24,3 +24,4 @@ channels>=4.3.2,<4.4           # WebSocket stream of ledger facts
 channels-redis>=4.3,<4.4       # channel layer shared across processes
 uvicorn>=0.54,<1               # ASGI server for the WebSocket endpoint (Daphne needs Twisted, which has open CVEs)
 websockets>=17.3,<18            # WebSocket protocol for uvicorn
+sqlglot==30.23.0             # parses fallback SQL into a tree the guard can inspect; pinned exactly, it releases often
