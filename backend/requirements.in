@@ -1,0 +1,2 @@
+# Direct runtime dependencies. Compile with `make deps`; never edit requirements.txt by hand.
+# Each workstream adds what it needs here, with a short reason.
