@@ -2,7 +2,7 @@
 
 Every setting comes from environment variables, loaded through one typed settings module, `backend/config/env.py`, built on pydantic-settings. If a required variable is missing, startup stops and names it. Each process checks only the secrets it actually uses, so the API never needs, and can't start with, the private signing key.
 
-`.env.example` lists every variable below with a short comment. Copy it to `.env`, which git ignores, and fill in the secrets. The values shown here are defaults or examples, never real secrets.
+`.env.example` lists every variable the code reads today, with a short comment. Copy it to `.env`, which git ignores, and fill in the secrets. The values shown here are defaults or examples, never real secrets. Rows marked *planned* belong to work that hasn't been built yet; nothing reads them until it is.
 
 ## Application and API
 
@@ -17,8 +17,11 @@ Every setting comes from environment variables, loaded through one typed setting
 | `DJANGO_SECURE_SSL_REDIRECT` | no | `false` | Redirect HTTP to HTTPS and mark cookies secure. Turn on wherever the API is served over HTTPS |
 | `DJANGO_HSTS_SECONDS` | no | `0` | Strict-Transport-Security max age. Preload stays off on purpose |
 | `TRUSTED_PROXY_COUNT` | no | `0` | Reverse proxies to trust when finding a client's IP |
-| `API_THROTTLE_ANON_QUERIES` | no | `10/min` | Rate limit for asking questions |
 | `API_THROTTLE_ANON_READS` | no | `300/min` | Rate limit for read endpoints |
+| `API_THROTTLE_ANON_QUERIES` | planned | `10/min` | Rate limit for asking the analyst questions |
+| `API_BASE_URL` | no | `http://127.0.0.1:8000` | Where command-line tools such as `make verify-event` reach the API |
+| `LOG_LEVEL` | no | `INFO` | `DEBUG`, `INFO`, `WARNING`, or `ERROR` |
+| `LOG_FORMAT` | no | `json` | `json` for one object per line, or `console` for reading while developing |
 
 ## Database
 
@@ -31,16 +34,15 @@ Every setting comes from environment variables, loaded through one typed setting
 | `DB_URL` | yes | | Connection for the application role |
 | `DB_OWNER_URL` | for migrations | | Owner role used only by `make migrate`; never given to the API or workers |
 | `DB_ANALYST_URL` | yes | | Read-only role for the analyst |
-| `DB_ANALYST_STATEMENT_TIMEOUT_MS` | no | `3000` | |
-| `DB_ANALYST_MAX_ROWS` | no | `1000` | |
-| `REDIS_URL` | yes | | Cache and WebSocket channel layer |
+| `DB_ANALYST_STATEMENT_TIMEOUT_MS` | planned | `3000` | Today the role script sets the analyst's 3 second timeout directly |
+| `DB_ANALYST_MAX_ROWS` | planned | `1000` | |
 
 ## Kafka and ingestion
 
 | Variable | Required | Default | Purpose |
 |---|---|---|---|
 | `KAFKA_BOOTSTRAP_SERVERS` | yes | | |
-| `KAFKA_SCHEMA_REGISTRY_URL` | no | | Schema registry for compatibility checks |
+| `KAFKA_SCHEMA_REGISTRY_URL` | no | `http://127.0.0.1:18081` | Schema registry for `make register-schemas` and compatibility checks |
 | `KAFKA_TOPIC_EVENTS_RAW` | no | `fin.events.raw.v1` | |
 | `KAFKA_TOPIC_EVENTS_DLQ` | no | `fin.events.dlq.v1` | |
 | `KAFKA_TOPIC_LEDGER_APPENDED` | no | `ledger.appended.v1` | |
@@ -60,11 +62,24 @@ Every setting comes from environment variables, loaded through one typed setting
 | `MERKLE_BATCH_MAX_AGE_MS` | no | `2000` | Longest a batch stays open |
 | `CHECKPOINT_SIGNING_KEY_FILE` | checkpointer only | | Path to the Ed25519 private key file. Only the checkpointer reads it |
 | `CHECKPOINT_PUBLIC_KEY` | yes | | Public key served at `/api/v1/log-key` |
-| `CHECKPOINT_KEY_ID` | yes | | Key ID with its class prefix: `dev-`, `ci-`, or `rel-` |
 | `WITNESS_EXPORT_PATH` | no | `var/witness/checkpoints.jsonl` | Local witness output, ignored by git |
 | `WITNESS_INTERVAL_SECONDS` | no | `3600` | Longest gap before a checkpoint is externally timestamped |
 | `WITNESS_OTS_ENABLED` | no | `true` | Timestamp checkpoint hashes with OpenTimestamps |
+| `WITNESS_OTS_CALENDARS` | no | the `a` and `b` OpenTimestamps pool calendars | Comma separated calendar URLs |
 | `DEMO_TAMPER_ENABLED` | no | `false` | Allows the local tamper demo tool to run |
+
+A checkpoint's key ID isn't configured: it's derived from the key's name and public key, as the C2SP signed-note format specifies, and it appears in `CHECKPOINT_PUBLIC_KEY`.
+
+## Live updates
+
+| Variable | Required | Default | Purpose |
+|---|---|---|---|
+| `REDIS_URL` | no | `redis://127.0.0.1:6379/0` | The WebSocket channel layer |
+| `STREAM_HOST` | no | `127.0.0.1` | Address the WebSocket server listens on |
+| `STREAM_PORT` | no | `8001` | Port the WebSocket server listens on |
+| `WS_MAX_CONNECTIONS_PER_IP` | no | `5` | Further connections from one IP are refused with code 1013 |
+| `WS_CLIENT_BUFFER` | no | `100` | Facts held for one client; past it the oldest are dropped and the client is told how many |
+| `WS_MAX_MESSAGE_BYTES` | no | `4096` | Largest WebSocket frame the server accepts |
 
 ## Reconciliation
 
@@ -98,9 +113,11 @@ Every setting comes from environment variables, loaded through one typed setting
 | `SPARK_DRIVER_MEMORY` | no | `2g` | Keeps Spark within the laptop's memory budget |
 | `SPARK_SHUFFLE_PARTITIONS` | no | `16` | Kept small for a single machine |
 | `SPARK_VERSION` | no | `4.1` | Tells PyDeequ which Deequ build to load |
-| `S3_ENDPOINT_URL`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_BUCKET_LAKE`, `S3_BUCKET_WITNESS` | for the lake | | Local S3-compatible storage. The keys are secrets |
+| `S3_ENDPOINT_URL`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_BUCKET_LAKE`, `S3_BUCKET_WITNESS` | planned, for the lake | | Local S3-compatible storage. The keys are secrets. Today the lake is Parquet under `data/` |
 
-## Analyst and LLM
+## Analyst and LLM (planned)
+
+These arrive with the analyst. Nothing reads them yet.
 
 | Variable | Required | Default | Purpose |
 |---|---|---|---|
@@ -117,26 +134,31 @@ Every setting comes from environment variables, loaded through one typed setting
 | `EMBEDDING_MODEL` | no | `BAAI/bge-small-en-v1.5` | |
 | `EMBEDDING_DIM` | no | `384` | |
 
-## Evaluation and logging
+## Evaluation (planned)
 
 | Variable | Required | Default | Purpose |
 |---|---|---|---|
 | `EVAL_MAX_USD_PER_RUN` | no | `1.00` | Spending limit per evaluation run |
 | `EVAL_THRESHOLDS_PATH` | no | `evals/thresholds.toml` | |
-| `LOG_LEVEL` | no | `INFO` | |
-| `LOG_FORMAT` | no | `json` | `json` or `console` |
 
 ## Frontend
 
 | Variable | Purpose |
 |---|---|
-| `NEXT_PUBLIC_API_URL` | API base URL. When set, the build includes the live page at `/live/`; when empty, only the static replay demo is built |
-| `NEXT_PUBLIC_WS_URL` | WebSocket base URL for live updates, once they arrive |
-| `NEXT_PUBLIC_REPLAY_BASE` | Path to the replay bundle |
+| `NEXT_PUBLIC_PINNED_VERIFIER_KEY` | The one public key the site trusts, compiled into the build. On GitHub Pages it comes from the repository variable `PINNED_VERIFIER_KEY` |
+| `NEXT_PUBLIC_API_URL` | API base URL. When set, the home page links the live page at `/live/`; when empty, only the static replay demo is offered |
+| `NEXT_PUBLIC_BASE_PATH` | Path the site is served under: empty locally, `/tallyproof` on GitHub Pages |
+| `NEXT_PUBLIC_REPLAY_BASE` | Where the replay bundle is served from; empty means `<base path>/replay` |
+| `NEXT_PUBLIC_BUILD_COMMIT`, `NEXT_PUBLIC_SOURCE_URL` | Set by the publishing workflow so every page names, and links, the commit it was built from |
+| `NEXT_PUBLIC_WS_URL` | planned: WebSocket base URL for live updates in the browser |
+
+The frontend reads its own `frontend/.env.example`, not the repository's `.env`.
 
 ## CI secrets
 
-Secrets live in three CircleCI contexts, never in configuration files. Each context is restricted to `main` and scheduled pipelines, so pull request pipelines receive none of them.
+CI needs no secrets today: every job runs on public code and generates any key it needs at runtime. The analyst and evaluation work will add three CircleCI contexts, never configuration files, each restricted to `main` and scheduled pipelines so pull request pipelines receive none of them. Publishing the demo site needs none either: the GitHub Pages workflow uses the built-in token and the public repository variable `PINNED_VERIFIER_KEY` ([ADR-0020](adr/0020-github-pages-for-the-demo-site.md)).
+
+Planned contexts:
 
 - `llm-eval`: `ANTHROPIC_API_KEY` (a dedicated key with its own spending limit), `LLM_ROUTER_MODEL`, `LLM_ANSWER_MODEL`.
 - `bot`: `GITHUB_BOT_TOKEN`, limited to pushing `bot/*` branches and opening pull requests. It can't push to `main`.
