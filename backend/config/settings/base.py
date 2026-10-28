@@ -18,6 +18,7 @@ INSTALLED_APPS = [
     "apps.health",
     "apps.ledger",
     "apps.ingestion",
+    "apps.reconciliation",
 ]
 
 # Rate-limit counters. Per process for now; a shared cache arrives with Redis.

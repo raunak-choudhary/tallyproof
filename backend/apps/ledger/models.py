@@ -179,3 +179,48 @@ class Outbox(models.Model):
 
     def __str__(self) -> str:
         return f"{self.topic} {self.key}"
+
+
+class JournalLine(models.Model):
+    """One side of a double-entry journal entry derived from an event (ADR-0013)."""
+
+    event = models.ForeignKey(LedgerEvent, on_delete=models.PROTECT, related_name="journal_lines")
+    leaf_index = models.BigIntegerField()
+    entry_id = models.TextField()
+    line_number = models.SmallIntegerField()
+    account = models.TextField()
+    debit = models.DecimalField(max_digits=19, decimal_places=4, default=0)
+    credit = models.DecimalField(max_digits=19, decimal_places=4, default=0)
+
+    class Meta:
+        db_table = "journal_line"
+        constraints = [
+            models.UniqueConstraint(fields=["entry_id", "line_number"], name="journal_line_unique"),
+            models.CheckConstraint(
+                condition=(Q(debit__gt=0) & Q(credit=0)) | (Q(credit__gt=0) & Q(debit=0)),
+                name="journal_line_one_side",
+            ),
+        ]
+        indexes = [models.Index(fields=["account", "leaf_index"], name="journal_line_account")]
+
+    def __str__(self) -> str:
+        return f"{self.entry_id}/{self.line_number} {self.account}"
+
+
+class ProjectionCursor(models.Model):
+    """How far a derived view (journal, reconciliation, outbox) has read the log."""
+
+    name = models.TextField(primary_key=True)
+    next_leaf_index = models.BigIntegerField(default=0)
+    updated_at = models.DateTimeField(db_default=Now())
+
+    class Meta:
+        db_table = "projection_cursor"
+        constraints = [
+            models.CheckConstraint(
+                condition=Q(next_leaf_index__gte=0), name="projection_cursor_gte_0"
+            )
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.name} -> {self.next_leaf_index}"
