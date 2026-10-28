@@ -13,7 +13,7 @@ import hashlib
 import json
 import random
 from collections import defaultdict
-from collections.abc import Sequence
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import asdict, dataclass, field
 from datetime import timedelta
 from decimal import Decimal
@@ -60,12 +60,35 @@ class Label:
 
 
 @dataclass
+class OverlayPlan:
+    """The anomalies to inject, already in arrival order, and their labels."""
+
+    injected: list[EventEnvelope]
+    invalid_records: list[dict[str, object]]
+    labels: list[Label]
+
+
+@dataclass
 class OverlayResult:
     """Events with anomalies mixed in, plus what was injected."""
 
     events: list[EventEnvelope]
     invalid_records: list[dict[str, object]]
     labels: list[Label]
+
+
+def arrival_key(event: EventEnvelope) -> tuple[object, str]:
+    """The order events arrive in: by emission time, ties broken by idempotency key."""
+    return (event.emitted_at, event.idempotency_key)
+
+
+def positive_totals(events: Iterable[EventEnvelope]) -> dict[str, Decimal]:
+    """Sum the positive obligation amounts per award."""
+    totals: dict[str, Decimal] = defaultdict(Decimal)
+    for event in events:
+        if isinstance(event.payload, ObligationRecorded | ObligationAdjusted):
+            totals[event.payload.award_key] += max(Decimal(event.payload.amount), Decimal(0))
+    return totals
 
 
 def _rng(seed: int, name: str) -> random.Random:
@@ -82,19 +105,29 @@ def _copy(event: EventEnvelope, rng: random.Random, **changes: object) -> EventE
     return EventEnvelope.model_validate(data)
 
 
-def inject(events: Sequence[EventEnvelope], *, seed: int, per_anomaly: int) -> OverlayResult:
-    """Mix labeled anomalies into a list of real events.
+def plan(
+    pool: Sequence[EventEnvelope],
+    award_totals: Mapping[str, Decimal],
+    *,
+    seed: int,
+    per_anomaly: int,
+) -> OverlayPlan:
+    """Plan labeled anomalies from a pool of real events.
+
+    Works without holding the whole stream in memory: it needs only a pool of real
+    events to copy from and the positive obligation total of each award.
 
     Args:
-        events: Real events in event-time order.
+        pool: Real events to build anomalies from; only obligation.recorded are used.
+        award_totals: Positive obligation total per award across the real stream.
         seed: Fixes which events are copied and every generated ID.
         per_anomaly: How many of each anomaly to inject.
 
     Returns:
-        All events (real and injected) in event-time order, malformed records
-        destined for the dead-letter topic, and the labels.
+        Injected events sorted by arrival, malformed records for the dead-letter
+        path, and the labels.
     """
-    recorded = [e for e in events if e.event_type is EventType.OBLIGATION_RECORDED]
+    recorded = [e for e in pool if e.event_type is EventType.OBLIGATION_RECORDED]
     if not recorded:
         raise ValueError("the overlay needs at least one obligation.recorded event")
     injected: list[EventEnvelope] = []
@@ -192,10 +225,9 @@ def inject(events: Sequence[EventEnvelope], *, seed: int, per_anomaly: int) -> O
 
     # De-obligations go last and are sized against every positive amount on the award,
     # real or injected, so "exceeds the award" stays true whatever else was added.
-    positives: dict[str, Decimal] = defaultdict(Decimal)
-    for event in [*events, *injected]:
-        if isinstance(event.payload, ObligationRecorded | ObligationAdjusted):
-            positives[event.payload.award_key] += max(Decimal(event.payload.amount), Decimal(0))
+    positives: dict[str, Decimal] = defaultdict(Decimal, award_totals)
+    for award, total in positive_totals(injected).items():
+        positives[award] += total
 
     for n, source in enumerate(pick(Anomaly.DEOBLIGATION_EXCEEDS_AWARD)):
         assert isinstance(source.payload, ObligationRecorded)  # noqa: S101
@@ -235,8 +267,17 @@ def inject(events: Sequence[EventEnvelope], *, seed: int, per_anomaly: int) -> O
             Label(Anomaly.SCHEMA_INVALID, None, record["idempotency_key"], [source.event_id])
         )
 
-    merged = sorted([*events, *injected], key=lambda e: (e.emitted_at, e.idempotency_key))
-    return OverlayResult(events=merged, invalid_records=invalid, labels=labels)
+    return OverlayPlan(sorted(injected, key=arrival_key), invalid, labels)
+
+
+def inject(events: Sequence[EventEnvelope], *, seed: int, per_anomaly: int) -> OverlayResult:
+    """Mix labeled anomalies into an in-memory list of real events.
+
+    Convenient for small inputs and tests. Large streams use :func:`plan` directly.
+    """
+    planned = plan(events, positive_totals(events), seed=seed, per_anomaly=per_anomaly)
+    merged = sorted([*events, *planned.injected], key=arrival_key)
+    return OverlayResult(merged, planned.invalid_records, planned.labels)
 
 
 def write_labels(labels: Sequence[Label], path: Path) -> None:
