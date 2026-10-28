@@ -48,3 +48,12 @@ Questions the IR cannot express may fall back to **guarded free SQL** (sqlglot A
 
 - More upfront design (metric catalog, entity fields). Started small: 4 metrics, 6 entities.
 - The guarded SQL path still needs the full hardening list, but it is no longer the primary path.
+
+## Implementation notes (2026-10-28)
+
+The catalog follows the federal data rather than the invoice and payment names above: the entities are `obligations`, `outlays`, `awards`, `breaks`, `cash_movements`, and `journal`, one per analyst view (`backend/apps/analyst/query_spec.py`). Two choices were made while building it:
+
+- Every compiled query is pinned to a checkpoint's tree size (`leaf_index < N`), so every row it reads is covered by that signed checkpoint and can be proven against it.
+- A grouped aggregate may be limited to its top groups ("which agency obligated the most"), which the original sketch allowed only for lists. Its evidence is every row of the returned groups.
+
+The only absence rule so far is outlays whose award has no recorded obligation.

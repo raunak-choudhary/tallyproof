@@ -1,18 +1,16 @@
 """The analyst's curated views: what they show, and what the role can never do."""
 
-from collections.abc import Iterator
 from decimal import Decimal
-from typing import Any
 
 import pytest
-from django.db import connection, transaction
+from django.db import transaction
 from psycopg import errors
 
 from apps.ledger.append import Delivery, append
 from apps.ledger.projections import JournalProjection, catch_up
 from apps.reconciliation.projection import ReconciliationProjection
 from tallyproof_pipeline.overlay import Anomaly, inject
-from tests.integration.conftest import Database
+from tests.integration.analyst.conftest import query
 from tests.unit.pipeline.test_overlay import cash_event, real_events
 
 pytestmark = pytest.mark.django_db
@@ -32,20 +30,6 @@ HIDDEN = {"canonical_bytes", "leaf_hash", "kafka_topic", "kafka_offset", "correl
 
 
 @pytest.fixture
-def as_analyst(migrated: Database) -> Iterator[None]:
-    """Let the test's own connection read with exactly the analyst's privileges.
-
-    The data the test appends is uncommitted, so only this connection can see it.
-    Membership is granted for the test and taken away again afterwards.
-    """
-    with migrated.connect("superuser") as conn:
-        conn.execute("GRANT tallyproof_analyst TO tallyproof_app")
-    yield
-    with migrated.connect("superuser") as conn:
-        conn.execute("REVOKE tallyproof_analyst FROM tallyproof_app")
-
-
-@pytest.fixture
 def ledger(as_analyst):
     result = inject([*real_events(), cash_event()], seed=42, per_anomaly=2)
     with transaction.atomic():
@@ -53,18 +37,6 @@ def ledger(as_analyst):
     catch_up(JournalProjection())
     catch_up(ReconciliationProjection())
     return result
-
-
-def query(sql: str, *params: str) -> list[tuple[Any, ...]]:
-    with connection.cursor() as cursor:
-        # SET ROLE doesn't apply the role's own settings, so pin its search path too.
-        cursor.execute("SET LOCAL ROLE tallyproof_analyst")
-        cursor.execute("SET LOCAL search_path = analyst")
-        cursor.execute(sql, params)
-        rows: list[tuple[Any, ...]] = cursor.fetchall()
-        cursor.execute("RESET ROLE")
-        cursor.execute("RESET search_path")
-    return rows
 
 
 def test_every_view_exists_and_exposes_citable_ids_but_no_internals(ledger):

@@ -41,6 +41,9 @@ convention = "google"
 "apps/*/models.py" = ["RUF012", "D105", "D106"]
 "apps/**/serializers.py" = ["RUF012", "D106"]
 "apps/*/migrations/*.py" = ["RUF012", "D", "E501", "S608"]
+# The query compiler builds SQL from catalog identifiers only; every value is a
+# bound parameter. Its unit tests pin the exact SQL it emits.
+"apps/analyst/compiler.py" = ["S608"]
 
 [tool.mypy]
 python_version = "3.12"
