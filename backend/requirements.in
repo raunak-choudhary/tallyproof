@@ -1,2 +1,5 @@
 # Direct runtime dependencies. Compile with `make deps`; never edit requirements.txt by hand.
 # Each workstream adds what it needs here, with a short reason.
+
+rfc8785>=0.1.4,<0.2     # RFC 8785 JSON canonicalization (Trail of Bits, used by Sigstore)
+cryptography>=50,<51    # Ed25519 signing and verification for checkpoints
