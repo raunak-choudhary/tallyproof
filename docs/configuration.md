@@ -14,6 +14,8 @@ Every setting comes from environment variables, loaded through one typed setting
 | `DJANGO_ALLOWED_HOSTS` | yes | | Comma separated |
 | `CORS_ALLOWED_ORIGINS` | yes | | The web app's origin |
 | `DATA_CLASSIFICATION` | yes | | Must be `public-no-pii`, or the API refuses to start |
+| `DJANGO_SECURE_SSL_REDIRECT` | no | `false` | Redirect HTTP to HTTPS and mark cookies secure. Turn on wherever the API is served over HTTPS |
+| `DJANGO_HSTS_SECONDS` | no | `0` | Strict-Transport-Security max age. Preload stays off on purpose |
 | `TRUSTED_PROXY_COUNT` | no | `0` | Reverse proxies to trust when finding a client's IP |
 | `API_THROTTLE_ANON_QUERIES` | no | `10/min` | Rate limit for asking questions |
 | `API_THROTTLE_ANON_READS` | no | `300/min` | Rate limit for read endpoints |
