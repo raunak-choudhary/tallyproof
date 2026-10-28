@@ -45,3 +45,4 @@ out/
 # Internal planning documents (local only: plan, traceability, decisions, research notes)
 internal/
 coverage.xml
+backend/test-results/
