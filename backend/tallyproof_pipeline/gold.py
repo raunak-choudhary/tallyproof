@@ -10,7 +10,7 @@ Each silver row becomes one validated :class:`~tallyproof_core.events.EventEnvel
   Any later modification becomes ``obligation.adjusted``; a negative amount there
   is a de-obligation.
 - ``occurred_at`` is the action date. ``emitted_at`` is when the government
-  reported the transaction, so late reporting shows up as a real gap between the
+  first reported the transaction, so late reporting shows up as a real gap between the
   two instead of something simulated.
 - Each award in the replayed slice also gets an ``outlay.reported`` event for every
   period it was paid in, from the outlay silver table when it has been built. An
@@ -84,7 +84,9 @@ def conform(row: Mapping[str, object], *, seed: int) -> EventEnvelope:
     action_date = row["action_date"]
     if not isinstance(action_date, date):
         raise TypeError(f"{key}: action_date must be a date, got {action_date!r}")
-    reported = row.get("last_modified_date") or row.get("initial_report_date") or action_date
+    # The first report, not the last edit: records are edited for years afterwards,
+    # and an edit time would make old transactions look reported late.
+    reported = row.get("initial_report_date") or row.get("last_modified_date") or action_date
     if isinstance(reported, datetime):
         # Silver stores report times as UTC wall-clock time without a zone.
         reported_at = reported if reported.tzinfo else reported.replace(tzinfo=UTC)
@@ -303,7 +305,7 @@ def replay_slice(silver: DataFrame, limit: int) -> DataFrame:
         )
         sliced = silver.where(F.col("action_date") < F.lit(cutoff)).unionByName(boundary_day)
     occurred = F.to_timestamp_ntz(F.date_format(F.col("action_date"), "yyyy-MM-dd HH:mm:ss"))
-    reported = F.coalesce(F.col("last_modified_date"), F.col("initial_report_date"), occurred)
+    reported = F.coalesce(F.col("initial_report_date"), F.col("last_modified_date"), occurred)
     return (
         sliced.select(*SLICE_COLUMNS)
         .withColumn("_emitted", F.greatest(reported, occurred))
