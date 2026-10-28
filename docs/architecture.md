@@ -2,7 +2,7 @@
 
 Tallyproof is a data pipeline with a verifiable ledger in the middle and an AI analyst on top. Real public spending data is cleaned in batch, streamed through Kafka into an append-only ledger, and committed to a Merkle log whose checkpoints are signed and timestamped outside the system. When the analyst answers a question, each value comes from a query and each claim carries a proof the reader's browser can check.
 
-The diagrams here are Mermaid drafts. Polished versions will replace them as the system is built.
+The diagrams are Mermaid and live in this file, so they change in the same commit as the code they describe.
 
 ## Overview
 
@@ -12,10 +12,11 @@ The diagrams here are Mermaid drafts. Polished versions will replace them as the
 4. The **ledger** is append-only. Each accepted event becomes a leaf in a Merkle log.
 5. The **checkpointer** closes a batch by size or time and signs a checkpoint (tree size and root hash) with Ed25519.
 6. **Witnesses** keep copies of checkpoints outside the database, and an external timestamp proves when each one existed.
-7. An **outbox relay** publishes appended events for downstream consumers: reconciliation, the journal, the lake sink, and the live UI.
-8. The **analyst** answers questions with values bound from compiled queries and quotes from policy documents. Every claim carries citations, and the client verifies them.
-9. **Evaluation** compares answers with exact expected results computed independently of the analyst.
-10. The **web app** runs against the live stack over WebSockets, or as a static replay of a recorded run that still verifies every proof in the browser.
+7. **Projections** read the ledger in leaf order and build derived state: the double-entry journal, reconciliation breaks, and an announcement for each appended event. Each projection keeps a cursor that moves in the same transaction as what it writes, so a crash never skips or repeats an event.
+8. An **outbox relay** publishes announcements to Kafka, and a **fan-out worker** pushes them to browsers over WebSockets.
+9. The **analyst** answers questions with values bound from compiled queries and quotes from policy documents. Every claim carries citations, and the client verifies them.
+10. **Evaluation** compares answers with exact expected results computed independently of the analyst.
+11. The **web app** runs against the live stack over WebSockets, or as a static replay of a recorded run that still verifies every proof in the browser.
 
 ## System context
 
@@ -48,21 +49,27 @@ ContainerQueue(rp, "Redpanda", "Kafka API", "Raw events, dead letters, appended 
 Container(ing, "Ingestion workers", "Python, confluent-kafka", "Validate, deduplicate, append, store offsets")
 ContainerDb(pg, "PostgreSQL 16 + pgvector", "SQL", "Ledger, Merkle log, checkpoints, journal, breaks, answers, embeddings")
 Container(ckpt, "Checkpointer", "Python worker", "Closes batches, signs checkpoints, requests timestamps")
-Container(relay, "Outbox relay", "Python worker", "Publishes appended events")
-Container(recon, "Reconciliation", "Python worker", "Matches outlays to obligations per award")
-Container(api, "API", "Django 5.2, DRF, Channels", "REST v1, WebSockets, proofs")
-Container(redis, "Redis", "Cache and channel layer", "")
+Container(proj, "Projections", "Python worker", "Journal, reconciliation breaks, appended-event announcements")
+Container(relay, "Outbox relay", "Python worker", "Publishes outbox rows to Kafka")
+Container(fan, "Fan-out", "Python worker", "Forwards ledger facts to the channel layer")
+Container(api, "API", "Django 5.2, DRF, gunicorn", "REST v1, proofs")
+Container(stream, "Stream server", "Channels on Uvicorn", "WebSocket endpoint")
+Container(redis, "Redis", "Channel layer", "")
 Container(web, "Web app", "Next.js", "Live and replay modes, verification in the browser")
 Rel(pipe, lake, "Writes Parquet")
 Rel(pipe, rp, "Replays gold events")
 Rel(rp, ing, "Consumes")
 Rel(ing, pg, "Append and offset in one transaction")
 Rel(ckpt, pg, "Reads leaves, writes checkpoints")
-Rel(relay, rp, "Publishes appended events")
-Rel(rp, recon, "Consumes appended events")
+Rel(proj, pg, "Reads leaves, writes derived rows and outbox rows")
+Rel(relay, pg, "Claims outbox rows")
+Rel(relay, rp, "Publishes appended events, breaks, checkpoints")
+Rel(rp, fan, "Consumes appended events and breaks")
+Rel(fan, redis, "Group send")
+Rel(stream, redis, "Subscribes")
 Rel(api, pg, "Reads; the analyst uses a read-only role")
-Rel(api, redis, "Cache and channel layer")
-Rel(web, api, "REST and WebSocket")
+Rel(web, api, "REST")
+Rel(web, stream, "WebSocket")
 ```
 
 ## Main flows
@@ -73,14 +80,26 @@ Kafka delivers at least once, so correctness comes from an idempotent, transacti
 
 1. A consumer polls up to `INGEST_MAX_BATCH` records from the raw events topic.
 2. Each record is validated against the schema for its event type and version. Invalid records go to the dead-letter topic with an error envelope, and the offset still advances so one bad message can't block a partition.
-3. Each idempotency key is checked against a per-partition Bloom filter and added to it right away, which also catches two copies inside a single poll. The batch is staged with `COPY` into a temporary table and moved with `INSERT ... SELECT ... ON CONFLICT (idempotency_key) DO NOTHING RETURNING`. The unique constraint is always the authority, and a duplicate never aborts the transaction ([ADR-0008](adr/0008-effectively-once-ingestion.md)).
+3. Each idempotency key is checked against a per-partition Bloom filter and added to it right away, which also catches two copies inside a single poll. The batch is passed as arrays and inserted with `INSERT ... SELECT FROM unnest(...) ON CONFLICT (idempotency_key) DO NOTHING RETURNING`. The unique constraint is always the authority, and a duplicate never aborts the transaction ([ADR-0008](adr/0008-effectively-once-ingestion.md)).
 4. Leaf indexes are assigned after the insert set is final, from a single-row counter updated in the same transaction. The row lock serializes writers, and a rollback restores the counter, so the log can't develop gaps. Postgres sequences aren't used, because `nextval` isn't transactional.
-5. The same transaction stores the consumer offset with `GREATEST(existing, new)` and a generation check, so a stale consumer after a rebalance can't move offsets backwards. Outbox rows are written in the same transaction.
+5. The same transaction stores the consumer offset with `GREATEST(existing, new)` and a generation check, so a stale consumer after a rebalance can't move offsets backwards. The commit sends a `ledger_appended` notification that wakes the checkpointer and the projections.
 6. After commit, the offset is also committed to Kafka for monitoring. On restart, consumers seek to the offsets stored in Postgres.
 
 ### Checkpointing
 
 A batch closes when `MERKLE_BATCH_MAX_SIZE` leaves have accumulated or `MERKLE_BATCH_MAX_AGE_MS` has passed, whichever comes first ([ADR-0003](adr/0003-merkle-batching-strategy.md)). Closing a batch computes the RFC 9162 root over the whole log, writes a C2SP checkpoint (origin, tree size, root), signs it, stores and publishes it, and requests an external timestamp for its hash ([ADR-0007](adr/0007-signed-checkpoints-and-witnessing.md)).
+
+### Projections and the outbox
+
+Derived state is never written by ingestion. Each projection (`appended`, `journal`, `reconciliation`) reads leaves after its cursor in `projection_cursor`, writes its rows, and moves the cursor in one transaction. Rebuilding one from scratch is a matter of clearing its rows and its cursor and running it again, which `make rebuild-derived` does and which gives identical results.
+
+Projections that announce something write an `outbox` row in the same transaction and send an `outbox_ready` notification. The relay claims rows with `SELECT ... FOR UPDATE SKIP LOCKED`, publishes them, and marks them sent. Delivery is at least once, so every message carries its outbox ID in a header for consumers to deduplicate. The checkpointer announces each signed checkpoint the same way.
+
+Nothing polls: the checkpointer, the projections, and the relay all wait on Postgres `LISTEN`, with a timeout only as a safety net.
+
+### Live stream
+
+The fan-out worker consumes `ledger.appended.v1` and `recon.breaks.v1` and sends small facts (event ID, leaf index, type, amount, or the break) to a Channels group through Redis. The stream server, Channels on Uvicorn, accepts WebSocket connections only when the `Origin` header names a host in `DJANGO_ALLOWED_HOSTS`, and forwards the group's messages. The channel layer drops messages for a client that can't keep up, so a browser that falls behind reconnects and reads current state over REST. The stream is for watching, not for proofs.
 
 ### From question to verified answer
 
@@ -124,7 +143,7 @@ Numeric questions go through a constrained query spec rather than free-form SQL,
 | `pipeline` | Downloads, Spark jobs, personal data removal, quality checks, anomaly overlay, Kafka replay | The ledger |
 | `events` | Event schemas, JSON Schema export, topic registry | Storage |
 | `ingestion` | Consumers, validation, deduplication, dead letters, offsets | Merkle math |
-| `ledger` | Event store, leaves, batches, checkpoints, proofs, outbox, journal | Reconciliation rules |
+| `ledger` | Event store, leaves, batches, checkpoints, proofs, projections, outbox, journal | Reconciliation rules |
 | `reconciliation` | Matching rules and break records | Ledger writes |
 | `analyst` | Query compiler, retrieval, answer composer, verifier, LLM client | Proof verification, which the client does |
 | `evals` | Question sets, oracle, runner, metrics, thresholds | Analyst internals |
@@ -164,13 +183,14 @@ The browser trusts two things: a release public key compiled into the web build,
 | 3 | Edit, rebuild, and re-sign with a stolen key | The consistency proof against the externally timestamped checkpoint fails |
 | 4 | All of the above, before the next external timestamp | Not detectable. The window is `WITNESS_INTERVAL_SECONDS`, and the README says so |
 
-The public demo walks through levels 1 to 3 in the browser, using a published demo key in a clearly labeled demo log. Level 4 is explained, not demonstrated.
+`make tamper LEVEL=1`, `2`, or `3` carries out each attack on a local ledger, and `make tamper RESTORE=1` puts it back; integration tests show each level is caught by the check in this table. The public demo walks through levels 1 to 3 in the browser, using a published demo key in a clearly labeled demo log. Level 4 is explained, not demonstrated.
 
 ## Known limits
 
 - **Completeness.** An inclusion proof shows a record is in the log. It doesn't show an aggregate used every relevant record. The query spec defines which records contribute to each answer shape and shows the filter in plain words, and the browser recomputes totals from the cited records. Until a Merkle-sum tree makes totals provable, aggregates are labeled "recomputed from N cited records," never "proven complete."
 - **Narrative text.** Quotes are checked exactly and numbers are bound, but the prose connecting them is scored by evaluation, not by cryptography.
 - **Source honesty.** The system proves a record is unchanged since ingestion. It can't prove the government recorded it correctly.
+- **Reconciliation on a slice.** The rules see only what's in the ledger. An award obligated before the replayed slice starts has no obligation on record, so its de-obligations and outlays look wrong. Break counts from real data are reported with that caveat, separately from the labeled anomalies.
 - **The lake versus the ledger.** The lake holds the full dataset. The verifiable ledger holds a replayed slice, a million events by default.
 
 ## Scaling
@@ -197,11 +217,13 @@ Only measured numbers get published, with hardware and configuration stated.
 | Redpanda down | No ingestion | `/readyz` fails, producers retry with backoff |
 | Postgres down | No ingestion or answers | `/readyz` fails, consumers pause |
 | LLM unavailable or over budget | No new answers | Typed refusal; cached answers and replay mode keep working |
-| Outbox relay behind | Downstream views are stale | Lag metric; the relay is idempotent by outbox ID |
+| Outbox relay behind | Downstream views are stale | Unsent rows wait in the outbox; consumers deduplicate by outbox ID |
+| A projection fails on an event | That projection stops at the event; the others continue | Its cursor didn't move, so it retries from the same leaf after the fix, or is rebuilt |
+| Redis down or a browser too slow | Live updates stop or skip | The stream is best effort; the browser reconnects and reads state over REST |
 | Lake sink behind | Lake trails the ledger | Control totals flag the gap; the sink resumes from its offsets |
 
 ## Deployment
 
-- **Local full stack:** Colima and `docker compose` from the command line bring up Redpanda, Postgres with pgvector, Redis, object storage, the API, the workers, and the web app. Spark runs separately, while the stack is stopped ([runbook.md](runbook.md)).
+- **Local full stack:** Colima and `docker compose` from the command line bring up Redpanda, Postgres with pgvector, and Redis. The API, the stream server, and the workers (ingestion, checkpointer, projections, relay, fan-out) run as host processes to save VM memory, and `make demo` starts them all. Spark runs separately, while the stack is stopped ([runbook.md](runbook.md)).
 - **Public demo:** a static Next.js export with a signed bundle of a recorded run. Verification happens in the browser and nothing needs a server ([ADR-0005](adr/0005-replay-mode-public-demo.md)).
 - **AWS mapping:** how each part would run on AWS is in [aws-reference-architecture.md](aws-reference-architecture.md).
