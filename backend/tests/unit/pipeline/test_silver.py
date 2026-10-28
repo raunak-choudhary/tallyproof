@@ -146,5 +146,5 @@ def test_process_member_writes_parquet_and_a_report_and_removes_the_csv(
     assert report.rows_read == len(ROWS)
     assert report.rows_written == 3
     assert not (settings.work_dir / csv_path.name).exists()
-    reports = list((settings.silver_dir / "_reports").rglob("*.json"))
+    reports = list((settings.silver_dir / "_reports" / archive.stem).glob("*.json"))
     assert len(reports) == 1
