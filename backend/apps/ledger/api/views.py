@@ -212,3 +212,35 @@ class ConsistencyProofView(APIView):
                 "second_note": second.checkpoint_note,
             }
         )
+
+
+class BatchConsistencyView(APIView):
+    """Proof that a batch's checkpoint extends the checkpoint before it."""
+
+    @extend_schema(responses=ConsistencyProofSerializer)
+    def get(self, request: Request, batch_id: str) -> Response:
+        """Return the consistency proof from the previous checkpoint to this batch's."""
+        batch = LedgerBatch.objects.filter(public_id=batch_id[:64]).first()
+        if batch is None:
+            raise not_found(f"Batch {batch_id[:64]}")
+        previous = (
+            LedgerBatch.objects.filter(tree_size__lt=batch.tree_size).order_by("-tree_size").first()
+        )
+        if previous is None:
+            raise Problem(
+                status.HTTP_409_CONFLICT,
+                "first-batch",
+                "No earlier checkpoint",
+                "This is the first checkpoint; there is nothing earlier to prove it extends.",
+            )
+        tree = proofs.tree_covering(batch.tree_size)
+        proof = tree.consistency_proof(previous.tree_size, batch.tree_size)
+        return Response(
+            {
+                "first_size": previous.tree_size,
+                "second_size": batch.tree_size,
+                "proof_hex": [node.hex() for node in proof],
+                "first_note": previous.checkpoint_note,
+                "second_note": batch.checkpoint_note,
+            }
+        )
