@@ -99,7 +99,9 @@ jobs:
             tar -xzf "/tmp/${tarball}" -C /tmp gitleaks
       - run:
           name: Scan the full history for secrets
-          command: /tmp/gitleaks git --config .gitleaks.toml --redact --verbose .
+          # Only this branch's history: by default gitleaks reads every fetched ref,
+          # which would judge other branches by this branch's rules.
+          command: /tmp/gitleaks git --config .gitleaks.toml --redact --verbose --log-opts="HEAD" .
 
   ci-gate:
     executor: python
