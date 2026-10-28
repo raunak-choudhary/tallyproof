@@ -30,6 +30,9 @@ def row(key: str, **values: str) -> dict[str, str]:
         federal_action_obligation="1250.50",
         action_date="2025-03-14",
         action_date_fiscal_year="2025",
+        # Real report times are timestamps with a UTC offset, not plain dates.
+        initial_report_date="2025-03-15 13:07:48+00",
+        last_modified_date="2025-03-20 04:28:07+00",
         awarding_agency_name="Department of Energy",
         recipient_uei="ZQGGHJH74DW7",
         recipient_name="ACME LABS INC",
@@ -54,6 +57,7 @@ ROWS = [
     row("T5", transaction_description='SPLIT "QUOTED"\nACROSS LINES, WITH COMMA'),
     row("T6", action_date="2025-13-45"),
     row("T7", federal_action_obligation="-500.00"),
+    row("T8", last_modified_date="not a time"),
 ]
 
 
@@ -120,6 +124,7 @@ def test_bad_rows_are_quarantined_with_reasons(result):
         "T3": "unparseable_federal_action_obligation",
         "T4": "missing_recipient_uei",
         "T6": "unparseable_action_date",
+        "T8": "unparseable_last_modified_date",
     }
     assert dropped["missing_recipient_uei"] == 1
 
@@ -129,6 +134,12 @@ def test_amounts_are_exact_decimals_including_negative(result):
     by_key = {r["contract_transaction_unique_key"]: r for r in silver}
     assert by_key["T1"]["federal_action_obligation"] == Decimal("1250.50")
     assert by_key["T7"]["federal_action_obligation"] == Decimal("-500.00")
+
+
+def test_report_timestamps_keep_their_time_of_day_in_utc(result):
+    silver, _, _ = result
+    by_key = {r["contract_transaction_unique_key"]: r for r in silver}
+    assert by_key["T1"]["last_modified_date"].isoformat() == "2025-03-20T04:28:07"
 
 
 def test_quoted_newlines_and_commas_parse_into_one_field(result):

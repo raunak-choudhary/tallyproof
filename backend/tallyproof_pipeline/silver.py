@@ -28,7 +28,7 @@ from pathlib import Path
 
 from pyspark.sql import Column, DataFrame, SparkSession
 from pyspark.sql import functions as F  # noqa: N812 - conventional alias
-from pyspark.sql.types import DateType, DecimalType, IntegerType, StringType
+from pyspark.sql.types import DateType, DecimalType, IntegerType, StringType, TimestampNTZType
 
 from tallyproof_pipeline.settings import PipelineSettings, get_settings
 
@@ -71,8 +71,11 @@ SILVER_COLUMNS: dict[str, object] = {
     "product_or_service_code": StringType(),
     "naics_code": StringType(),
     "naics_description": StringType(),
-    "initial_report_date": DateType(),
-    "last_modified_date": DateType(),
+    # Report times arrive as "2025-09-30 13:07:48+00" and are stored as UTC wall-clock
+    # time without a zone. PySpark converts zoned timestamps into the local time zone
+    # of whichever machine collects them, which would shift every event's time.
+    "initial_report_date": TimestampNTZType(),
+    "last_modified_date": TimestampNTZType(),
 }
 """Every column kept in silver, with its type. Nothing else survives."""
 
@@ -135,6 +138,14 @@ def _typed(column: str, data_type: object) -> Column:
         return raw.try_cast(data_type)
     if isinstance(data_type, DateType):
         return F.try_to_date(raw, "yyyy-MM-dd")
+    if isinstance(data_type, TimestampNTZType):
+        # Accept the source's "2025-09-30 13:07:48+00" and a plain date as a fallback,
+        # then keep the UTC wall-clock time (the session time zone is UTC).
+        instant = F.coalesce(
+            F.try_to_timestamp(raw, F.lit("yyyy-MM-dd HH:mm:ssx")),
+            F.try_to_timestamp(raw, F.lit("yyyy-MM-dd")),
+        )
+        return F.to_timestamp_ntz(F.date_format(instant, "yyyy-MM-dd HH:mm:ss"))
     if isinstance(data_type, IntegerType):
         return raw.try_cast(data_type)
     return raw
