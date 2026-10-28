@@ -9,6 +9,7 @@ receives, the private signing key; the checkpointer reads that separately.
 from decimal import Decimal
 from functools import lru_cache
 from pathlib import Path
+from typing import Literal
 
 from pydantic import Field, SecretStr, ValidationError, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -63,6 +64,11 @@ class AppSettings(BaseSettings):
     dedupe_target_fpr: float = Field(
         default=0.001, gt=0, lt=1, validation_alias="DEDUPE_TARGET_FPR"
     )
+
+    log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = Field(
+        default="INFO", validation_alias="LOG_LEVEL"
+    )
+    log_format: Literal["json", "console"] = Field(default="json", validation_alias="LOG_FORMAT")
 
     redis_url: str = Field(default="redis://127.0.0.1:6379/0", validation_alias="REDIS_URL")
     kafka_topic_checkpoints: str = Field(
