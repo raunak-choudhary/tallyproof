@@ -1,0 +1,110 @@
+"""Typed application settings loaded from the environment and ``.env``.
+
+Every environment-specific value comes from here: secrets, URLs, limits, and the
+log's signing details. A missing required variable stops startup with its name.
+Each process validates only what it uses, so the API never needs, and never
+receives, the private signing key; the checkpointer reads that separately.
+"""
+
+from functools import lru_cache
+from pathlib import Path
+
+from pydantic import Field, SecretStr, ValidationError, field_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+
+
+class ConfigurationError(RuntimeError):
+    """Raised when required configuration is missing or invalid."""
+
+
+class AppSettings(BaseSettings):
+    """Settings shared by the API and the background workers."""
+
+    model_config = SettingsConfigDict(
+        env_file=REPO_ROOT / ".env", env_file_encoding="utf-8", extra="ignore"
+    )
+
+    secret_key: SecretStr = Field(validation_alias="DJANGO_SECRET_KEY")
+    debug: bool = Field(default=False, validation_alias="DJANGO_DEBUG")
+    allowed_hosts: str = Field(validation_alias="DJANGO_ALLOWED_HOSTS")
+    cors_allowed_origins: str = Field(default="", validation_alias="CORS_ALLOWED_ORIGINS")
+    data_classification: str = Field(validation_alias="DATA_CLASSIFICATION")
+
+    db_url: SecretStr = Field(validation_alias="DB_URL")
+    db_owner_url: SecretStr | None = Field(default=None, validation_alias="DB_OWNER_URL")
+    db_analyst_url: SecretStr | None = Field(default=None, validation_alias="DB_ANALYST_URL")
+
+    kafka_bootstrap_servers: str = Field(validation_alias="KAFKA_BOOTSTRAP_SERVERS")
+    kafka_topic_events_raw: str = Field(
+        default="fin.events.raw.v1", validation_alias="KAFKA_TOPIC_EVENTS_RAW"
+    )
+    kafka_topic_events_dlq: str = Field(
+        default="fin.events.dlq.v1", validation_alias="KAFKA_TOPIC_EVENTS_DLQ"
+    )
+    kafka_consumer_group_ingest: str = Field(
+        default="ingest-v1", validation_alias="KAFKA_CONSUMER_GROUP_INGEST"
+    )
+    ingest_max_batch: int = Field(default=500, ge=1, validation_alias="INGEST_MAX_BATCH")
+    dedupe_expected_items: int = Field(
+        default=1_000_000, ge=1, validation_alias="DEDUPE_EXPECTED_ITEMS"
+    )
+    dedupe_target_fpr: float = Field(
+        default=0.001, gt=0, lt=1, validation_alias="DEDUPE_TARGET_FPR"
+    )
+
+    merkle_log_origin: str = Field(validation_alias="MERKLE_LOG_ORIGIN")
+    merkle_batch_max_size: int = Field(default=256, ge=1, validation_alias="MERKLE_BATCH_MAX_SIZE")
+    merkle_batch_max_age_ms: int = Field(
+        default=2000, ge=1, validation_alias="MERKLE_BATCH_MAX_AGE_MS"
+    )
+    checkpoint_public_key: str = Field(validation_alias="CHECKPOINT_PUBLIC_KEY")
+
+    @field_validator("data_classification")
+    @classmethod
+    def _public_data_only(cls, value: str) -> str:
+        # Every endpoint is public by design, which is only safe for public,
+        # PII-free data. Refuse to start with anything else (threat model).
+        if value != "public-no-pii":
+            raise ValueError("must be 'public-no-pii'; the API serves public data only")
+        return value
+
+    @property
+    def allowed_host_list(self) -> list[str]:
+        """``DJANGO_ALLOWED_HOSTS`` split on commas."""
+        return [h.strip() for h in self.allowed_hosts.split(",") if h.strip()]
+
+    @property
+    def cors_origin_list(self) -> list[str]:
+        """``CORS_ALLOWED_ORIGINS`` split on commas."""
+        return [o.strip() for o in self.cors_allowed_origins.split(",") if o.strip()]
+
+
+class CheckpointerSettings(AppSettings):
+    """Settings for the checkpointer, the only process that reads the private key."""
+
+    checkpoint_signing_key_file: Path = Field(validation_alias="CHECKPOINT_SIGNING_KEY_FILE")
+
+
+def _load[T: BaseSettings](model: type[T]) -> T:
+    try:
+        return model()
+    except ValidationError as error:
+        problems = ", ".join(
+            f"{'.'.join(str(p) for p in issue['loc'])} ({issue['msg']})" for issue in error.errors()
+        )
+        raise ConfigurationError(
+            f"Invalid or missing configuration: {problems}. See docs/configuration.md."
+        ) from error
+
+
+@lru_cache(maxsize=1)
+def app_settings() -> AppSettings:
+    """Load the shared settings once."""
+    return _load(AppSettings)
+
+
+def checkpointer_settings() -> CheckpointerSettings:
+    """Load the checkpointer's settings, including the signing key file path."""
+    return _load(CheckpointerSettings)
