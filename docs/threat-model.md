@@ -39,7 +39,7 @@ The data is real public U.S. government spending, plus a labeled synthetic anoma
 
 ### The analyst's database access
 
-*Built with the analyst. The controls below are the design; the read-only role and its 3 second timeout already exist.*
+*Partly built. The read-only role, its 3 second timeout, and the curated `security_barrier` views exist, and an integration test shows the role refuses every write even with read-only mode switched off. The query compiler and the guard arrive with the rest of the analyst.*
 
 Most numeric questions never produce free-form SQL. The model fills in a typed query spec, and the server compiles it into SQL it already knows is safe ([ADR-0014](adr/0014-constrained-query-ir.md)). The fallback path, which does accept model-written SQL, is treated as hostile input and checked at two layers.
 

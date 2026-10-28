@@ -274,9 +274,22 @@ The journal uses simplified budgetary accounting: an obligation moves funds from
 
 Roles are created by a script that runs the same way locally and in CI. Grants live in an idempotent migration with default privileges, so tables created later inherit them.
 
-### Analyst views (planned)
+### Analyst views
 
-These are built with the analyst: `analyst.obligations`, `analyst.outlays`, `analyst.awards` (one row per award with totals), `analyst.cash_movements`, `analyst.breaks`, and `analyst.journal`. Every view exposes `event_id`, so each answer can cite the records behind it. Raw bytes, Kafka coordinates, and internal IDs stay hidden, and free-text description columns appear only in a separate view the query compiler must request explicitly.
+The analyst role reads only these views in the `analyst` schema (`backend/apps/analyst/migrations/0001_views.py`):
+
+| View | One row per |
+|---|---|
+| `obligations` | Obligation or modification, with the award's agency and the federal fiscal year |
+| `obligation_descriptions` | Description text, kept apart because it comes from the source and may contain planted instructions |
+| `outlays` | Monthly outlay report |
+| `awards` | Award, with total obligated and total paid |
+| `cash_movements` | Treasury operating cash deposit or withdrawal, in millions |
+| `breaks` and `break_events` | Reconciliation break, and each event involved with its role |
+| `journal` | Journal line |
+| `policy_sections` | FAR section, without its text |
+
+Every view exposes `event_id` (or `break_id`) and `leaf_index`, so each answer can cite the records behind it. Raw bytes, Kafka coordinates, correlation IDs, and internal keys stay hidden. The views read `payload`, so what the analyst sees is exactly what the proof covers, and they are `security_barrier` views so a predicate the analyst supplies can't run ahead of the view's own filter.
 
 ## API
 
