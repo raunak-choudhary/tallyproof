@@ -140,8 +140,9 @@ def compile_spec(spec: QuerySpec, *, tree_size: int, max_rows: int) -> CompiledQ
         value_sql = f"SELECT {expr} AS value, count(*) AS row_count FROM {view} t WHERE {where}"
         if spec.metric in ("min_amount", "max_amount"):
             direction = "DESC" if spec.metric == "max_amount" else "ASC"
+            extra = "".join(f", t.{_quote(entity.fields[n].column)}" for n in spec.fields)
             evidence_sql = (
-                f"SELECT {citable}{amount_column} FROM {view} t WHERE {where} "
+                f"SELECT {citable}{amount_column}{extra} FROM {view} t WHERE {where} "
                 f"ORDER BY {amount} {direction}, {leaf} LIMIT 1"
             )
         else:

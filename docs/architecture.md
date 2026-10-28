@@ -47,7 +47,7 @@ Container(pipe, "Data pipeline", "PySpark 4.1, Deequ", "Bronze, silver, gold; pe
 ContainerDb(lake, "Lake", "Parquet on local disk; Iceberg on S3-compatible storage later", "Full cleaned dataset")
 ContainerQueue(rp, "Redpanda", "Kafka API", "Raw events, dead letters, appended events, breaks, checkpoints")
 Container(ing, "Ingestion workers", "Python, confluent-kafka", "Validate, deduplicate, append, store offsets")
-ContainerDb(pg, "PostgreSQL 16 + pgvector", "SQL", "Ledger, Merkle log, checkpoints, journal, breaks, answers, embeddings")
+ContainerDb(pg, "PostgreSQL 16 + pgvector", "SQL", "Ledger, Merkle log, checkpoints, journal, breaks, answers")
 Container(ckpt, "Checkpointer", "Python worker", "Closes batches, signs checkpoints, requests timestamps")
 Container(proj, "Projections", "Python worker", "Journal, reconciliation breaks, appended-event announcements")
 Container(relay, "Outbox relay", "Python worker", "Publishes outbox rows to Kafka")
