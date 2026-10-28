@@ -27,7 +27,7 @@ endif
 SPARK_VERSION ?= 4.1
 export SPARK_VERSION
 
-.PHONY: help doctor venv deps deps-sync require-venv lint format typecheck test check audit vectors web-install web-lint web-typecheck web-test web-build web-check data-fetch data-build data-quality require-no-containers clean
+.PHONY: help doctor venv deps deps-sync require-venv lint format typecheck test check audit vectors web-install web-lint web-typecheck web-test web-build web-check data-fetch data-build data-quality require-no-containers data-gold keygen replay clean
 
 help: ## List available commands
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -90,6 +90,15 @@ data-build: require-venv require-no-containers ## Clean downloaded archives into
 
 data-quality: require-venv require-no-containers ## Run the Deequ data quality checks on silver
 	cd $(BACKEND) && .venv/bin/python -m tallyproof_pipeline.quality
+
+data-gold: require-venv require-no-containers ## Conform silver into ledger events with the anomaly overlay
+	cd $(BACKEND) && .venv/bin/python -m tallyproof_pipeline.gold
+
+keygen: require-venv ## Create a signing key in secrets/ (KEY=dev or KEY=rel)
+	cd $(BACKEND) && .venv/bin/python -m tallyproof_pipeline.keygen $(or $(KEY),dev)
+
+replay: require-venv ## Export a signed demo bundle from gold to data/replay
+	cd $(BACKEND) && .venv/bin/python -m tallyproof_pipeline.replay_bundle
 
 check: lint typecheck test ## Everything CI checks on every pull request
 
