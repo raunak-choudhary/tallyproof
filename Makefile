@@ -32,7 +32,7 @@ COMPOSE := docker --context colima-$(COLIMA_PROFILE) compose --env-file .env -f 
 SPARK_VERSION ?= 4.1
 export SPARK_VERSION
 
-.PHONY: help doctor venv deps deps-sync require-venv lint format typecheck test check audit vectors web-install web-lint web-typecheck web-test web-build web-check web-audit web-live data-fetch data-build data-quality require-no-containers data-gold keygen replay data-sample test-integration coverage coverage-report require-colima up down reset ps logs db-roles migrate ingest checkpointer project relay fanout stream check-derived rebuild-derived check-totals dead-letters verify-witness data-replay data-treasury policy-fetch policy-publish demo demo-stop tamper schemas register-schemas verify-event console clean
+.PHONY: help doctor venv deps deps-sync require-venv lint format typecheck test check audit vectors web-install web-lint web-typecheck web-test web-build web-check web-audit web-live data-fetch data-outlays data-build data-quality require-no-containers data-gold keygen replay data-sample test-integration coverage coverage-report require-colima up down reset ps logs db-roles migrate ingest checkpointer project relay fanout stream check-derived rebuild-derived check-totals dead-letters verify-witness data-replay data-treasury policy-fetch policy-publish demo demo-stop tamper schemas register-schemas verify-event console clean
 
 help: ## List available commands
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -121,6 +121,9 @@ require-no-containers:
 	@if command -v colima >/dev/null 2>&1 && colima list 2>/dev/null | grep -q Running; then \
 		echo "A Colima VM is running. Stop it first (colima stop tallyproof): Spark and the"; \
 		echo "container stack never run together on an 8 GB machine."; exit 1; fi
+
+data-outlays: require-venv ## Download account-level outlay data (DATA_OUTLAY_FISCAL_YEAR, DATA_OUTLAY_QUARTERS)
+	cd $(BACKEND) && .venv/bin/python -m tallyproof_pipeline.outlays
 
 data-build: require-venv require-no-containers ## Clean downloaded archives into silver Parquet with Spark
 	cd $(BACKEND) && .venv/bin/python -m tallyproof_pipeline.silver
