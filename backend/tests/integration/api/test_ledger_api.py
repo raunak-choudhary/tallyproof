@@ -128,3 +128,17 @@ def test_anonymous_reads_are_rate_limited(client, migrated, monkeypatch):
     monkeypatch.setattr(AnonRateThrottle, "THROTTLE_RATES", {"anon": "2/min"})
     statuses = [client.get("/api/v1/log-key").status_code for _ in range(3)]
     assert statuses == [200, 200, 429]
+
+
+def test_a_batch_proves_it_extends_the_previous_checkpoint(client, signed_log):
+    batches = client.get("/api/v1/checkpoints").json()["results"]
+    newest, oldest = batches[0], batches[-1]
+    body = client.get(f"/api/v1/batches/{newest['batch_id']}/consistency").json()
+    first = VERIFIER.verify_checkpoint(body["first_note"])
+    second = VERIFIER.verify_checkpoint(body["second_note"])
+    proof = [bytes.fromhex(h) for h in body["proof_hex"]]
+    assert verify_consistency(
+        first.tree_size, second.tree_size, first.root_hash, second.root_hash, proof
+    )
+    assert client.get(f"/api/v1/batches/{oldest['batch_id']}/consistency").status_code == 409
+    assert client.get("/api/v1/batches/bat_nope/consistency").status_code == 404
