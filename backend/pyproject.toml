@@ -55,5 +55,7 @@ branch = true
 source = ["tallyproof_core"]
 
 [tool.coverage.report]
+# The build fails if coverage of the core code drops below this.
+fail_under = 85
 show_missing = true
 skip_covered = true
