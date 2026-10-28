@@ -8,6 +8,10 @@ executors:
     docker:
       - image: cimg/python:3.12.9
     resource_class: small
+  node:
+    docker:
+      - image: cimg/node:22.23.4
+    resource_class: small
 
 commands:
   setup-python:
@@ -105,12 +109,33 @@ jobs:
           # which would judge other branches by this branch's rules.
           command: /tmp/gitleaks git --config .gitleaks.toml --redact --verbose --log-opts="HEAD" .
 
+  web-checks:
+    executor: node
+    steps:
+      - checkout
+      - run:
+          name: Use the pnpm version pinned in package.json
+          command: sudo corepack enable && corepack install --global pnpm@10.34.1
+      - restore_cache:
+          keys:
+            - pnpm-v1-{{ checksum "frontend/pnpm-lock.yaml" }}
+      - run:
+          name: Install locked dependencies
+          command: make web-install
+      - save_cache:
+          key: pnpm-v1-{{ checksum "frontend/pnpm-lock.yaml" }}
+          paths:
+            - ~/.local/share/pnpm/store
+      - run:
+          name: Lint, type-check, and test the web app
+          command: make web-check
+
   ci-gate:
     executor: python
     steps:
       - run:
           name: All required checks passed
-          command: echo "Lint, types, tests, audit, commit messages, and secret scan all passed."
+          command: echo "Backend and web checks, audit, commit messages, and secret scan all passed."
 
 workflows:
   checks:
@@ -121,6 +146,7 @@ workflows:
       - dependency-audit
       - commit-messages
       - secret-scan
+      - web-checks
       - ci-gate:
           requires:
             - lint
@@ -129,3 +155,4 @@ workflows:
             - dependency-audit
             - commit-messages
             - secret-scan
+            - web-checks
