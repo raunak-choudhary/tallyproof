@@ -212,6 +212,8 @@ def from_query(
             evidence.add_slot("count", int(row_count), "number of records", cite)
         return evidence
     if spec.shape in ("list", "lookup"):
+        if spec.shape == "list" and spec.limit is not None and len(evidence_rows) >= spec.limit:
+            evidence.filter_words += "; more records may match"
         for n, row in enumerate(evidence_rows, start=1):
             # Row numbers, not IDs: some IDs differ between runs, and prompts must not.
             cite = evidence.add_citation([row], f"{entity.words}, row {n}")
@@ -440,10 +442,18 @@ def render(sentences: Sequence[str], evidence: Evidence, quotes: Sequence[Quote]
 
     def one(sentence: str) -> str:
         present = set(CITE.findall(sentence))
+        # When a sentence's values come from more than one citation (several groups,
+        # say), each value is marked with its own, so none reads as another's.
+        mixed = len({evidence.slots[s].citation for s in SLOT.findall(sentence)} - {None}) > 1
 
         def fill(match: re.Match[str]) -> str:
             slot = evidence.slots[match.group(1)]
-            if slot.citation and slot.citation not in present:
+            marked = CITE.match(sentence, match.end() + 1) or CITE.match(sentence, match.end())
+            if (
+                slot.citation
+                and (mixed or slot.citation not in present)
+                and not (marked and marked.group(1) == slot.citation)
+            ):
                 present.add(slot.citation)
                 return f"{slot.rendered()} [[{slot.citation}]]"
             return slot.rendered()

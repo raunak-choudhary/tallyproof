@@ -286,11 +286,15 @@ def _expand_breaks(evidence: Evidence, executor: Executor) -> None:
     for label, cite in list(evidence.citations.items()):
         _, rows = executor.run(
             "SELECT event_id, leaf_index FROM analyst.break_events "
-            "WHERE break_id = ANY(%s) ORDER BY leaf_index",
-            [list(cite.event_ids)],
+            "WHERE break_id = ANY(%s) AND leaf_index < %s ORDER BY leaf_index",
+            [list(cite.event_ids), evidence.tree_size],
         )
         evidence.citations[label] = type(cite)(
-            label, tuple(r[0] for r in rows), tuple(int(r[1]) for r in rows), cite.words
+            label,
+            tuple(r[0] for r in rows),
+            tuple(int(r[1]) for r in rows),
+            cite.words,
+            cite.sample_of,
         )
 
 
@@ -322,7 +326,12 @@ def _gather(
     )
     if compiled.group_column and len(values) > MAX_LIST_ROWS:
         return "too_broad"
-    _, rows = executor.run(compiled.evidence_sql, compiled.evidence_params)
+    evidence_params = compiled.evidence_params
+    if compiled.group_column:
+        # Each returned group cites its own records, sharing the citation cap.
+        groups = [row[0] for row in values]
+        evidence_params = [*evidence_params, groups, max(1, models.max_rows // max(1, len(groups)))]
+    _, rows = executor.run(compiled.evidence_sql, evidence_params)
     if len(rows) >= compiled.evidence_limit and spec.shape != "list":
         if spec.shape == "lookup":
             return "ambiguous"
