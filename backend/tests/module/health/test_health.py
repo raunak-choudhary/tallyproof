@@ -1,4 +1,5 @@
 import pytest
+from django.core.cache import cache
 from django.test import Client
 
 from apps.health import checks
@@ -7,6 +8,13 @@ from apps.health import checks
 @pytest.fixture
 def client():
     return Client()
+
+
+@pytest.fixture(autouse=True)
+def fresh_cache():
+    cache.clear()
+    yield
+    cache.clear()
 
 
 def test_healthz_answers_without_touching_dependencies(client, monkeypatch):
@@ -38,3 +46,11 @@ def test_openapi_schema_is_served(client):
     response = client.get("/api/v1/schema/")
     assert response.status_code == 200
     assert b"Tallyproof API" in response.content
+
+
+def test_readyz_checks_dependencies_at_most_once_every_few_seconds(client, monkeypatch):
+    calls: list[str] = []
+    monkeypatch.setattr(checks, "CHECKS", {"broker": lambda: calls.append("broker")})
+    for _ in range(20):
+        assert client.get("/readyz").status_code == 200
+    assert calls == ["broker"]
