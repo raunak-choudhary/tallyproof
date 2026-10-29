@@ -80,6 +80,9 @@ jobs:
       - run:
           name: Lint and formatting
           command: make lint
+      - run:
+          name: Documentation site builds with no broken links
+          command: make docs-build
 
   typecheck:
     executor: python
