@@ -177,7 +177,8 @@ def _observe(answer: Any, integrity: Integrity, tokens: int, elapsed_ms: int) ->
     if evidence is not None and final is not None and answer.status == "answered":
         text = " ".join(final.sentences)
         used = [str(evidence.slots[s].value) for s in SLOT.findall(text) if s in evidence.slots]
-        for label in CITE.findall(text):
+        # The rendered text carries a citation for every value it shows.
+        for label in CITE.findall(answer.text):
             if label in evidence.citations:
                 cited.update(evidence.citations[label].event_ids)
             elif label in evidence.sources:

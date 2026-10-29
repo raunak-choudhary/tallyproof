@@ -241,6 +241,8 @@ contract number such as 70ABCD24P00012 is a piid filter. "Largest" or "smallest"
 is an aggregate with max_amount or min_amount, plus the fields that name the record.
 Payments are outlays; obligations and modifications are obligations. A question about
 a specific contract, modification, or amount is never a refusal, however it's worded.
+A change or modification number such as P00003 is a modification_number filter on
+obligations, together with the piid of the contract it changes.
 
 Examples (the agencies and numbers here are made up):
 - "Total obligations for Department of Energy in FY2023?" ->

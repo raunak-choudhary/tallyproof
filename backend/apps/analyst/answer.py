@@ -295,7 +295,26 @@ def verify(draft: Draft, evidence: Evidence, question: str) -> Verdict:
     return Verdict(tuple(dict.fromkeys(problems)), tuple(kept), free)
 
 
-def render(sentences: Sequence[str], evidence: Evidence) -> str:
-    """Fill slots with their values. Citation markers stay for the reader to open."""
-    text = " ".join(sentences)
-    return SLOT.sub(lambda m: evidence.slots[m.group(1)].rendered(), text)
+def render(sentences: Sequence[str], evidence: Evidence, quotes: Sequence[Quote] = ()) -> str:
+    """Fill slots with their values, and make sure every value shows its citation.
+
+    A value is bound to the records behind it, so if the model left a value's
+    citation out of its sentence, the marker is added right after the value. An
+    answer made only of quotes shows the quotes.
+    """
+    if not sentences and quotes:
+        return " ".join(f'"{q.text}" [[{q.source}]]' for q in quotes)
+
+    def one(sentence: str) -> str:
+        present = set(CITE.findall(sentence))
+
+        def fill(match: re.Match[str]) -> str:
+            slot = evidence.slots[match.group(1)]
+            if slot.citation and slot.citation not in present:
+                present.add(slot.citation)
+                return f"{slot.rendered()} [[{slot.citation}]]"
+            return slot.rendered()
+
+        return SLOT.sub(fill, sentence)
+
+    return " ".join(one(s) for s in sentences)
