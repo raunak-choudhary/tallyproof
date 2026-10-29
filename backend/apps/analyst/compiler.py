@@ -14,7 +14,7 @@ from dataclasses import dataclass, field
 from datetime import date
 from decimal import Decimal
 
-from apps.analyst.query_spec import CATALOG, Entity, QuerySpec, parse_value
+from apps.analyst.query_spec import CATALOG, MAX_LIST_ROWS, Entity, QuerySpec, parse_value
 
 Param = str | int | Decimal | date | list[str] | list[int] | list[Decimal] | list[date]
 
@@ -124,7 +124,8 @@ def compile_spec(spec: QuerySpec, *, tree_size: int, max_rows: int) -> CompiledQ
             # Records whose group is unknown (a modification whose award falls before
             # the slice has no agency) aren't a group; leave them out, and say so.
             where = f"{where} AND {group} IS NOT NULL"
-            top = f" LIMIT {int(spec.limit)}" if spec.limit else ""
+            # Unranked, fetch one group past the cap so the pipeline can tell it was hit.
+            top = f" LIMIT {int(spec.limit) if spec.limit else MAX_LIST_ROWS + 1}"
             order = "DESC" if spec.descending else "ASC"
             value_sql = (
                 f"SELECT {group} AS grp, {expr} AS value, count(*) AS row_count FROM {view} t "

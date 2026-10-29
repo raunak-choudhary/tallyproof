@@ -7,6 +7,7 @@ from typing import Any
 
 from apps.analyst.llm import Budget, BudgetedClient, FakeClient, LLMRequest
 from apps.analyst.pipeline import Models, ask
+from apps.analyst.query_spec import MAX_LIST_ROWS
 from apps.analyst.retrieval import Chunk, Hit, PolicyLeaf
 
 MODELS = Models(router="router-m", answer="answer-m", max_output_tokens=400, max_rows=100)
@@ -329,3 +330,20 @@ def test_lookups_and_absence_lists_over_the_cap_still_refuse():
         models=small, agencies=[], tree_size=50,
     )  # fmt: skip
     assert answer.refusal == "too_broad"
+
+
+def test_too_many_groups_is_too_broad():
+    by_agency = {**SUM_SPEC, "filters": [], "group_by": "awarding_agency"}
+    fake = FakeClient(model(**{
+        "router.v2": json.dumps({"category": "numeric_aggregate", "spec": by_agency}),
+    }))  # fmt: skip
+
+    class ManyGroups(Database):
+        def run(self, sql: str, params: Sequence[Any]) -> tuple[list[str], list[tuple[Any, ...]]]:
+            if "GROUP BY" in sql:
+                groups = [(f"Agency {n}", Decimal(n), 1) for n in range(MAX_LIST_ROWS + 1)]
+                return ["grp", "value", "row_count"], groups
+            return super().run(sql, params)
+
+    answer = run("Total awarded by every agency?", fake, ManyGroups())
+    assert (answer.status, answer.refusal) == ("refused", "too_broad")
