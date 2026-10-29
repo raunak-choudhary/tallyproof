@@ -4,6 +4,20 @@ This file is maintained by [release-please](https://github.com/googleapis/releas
 
 Version 0.1.0 is the minimum viable product. It covers a streaming ledger of real federal spending events in an append-only Postgres log, RFC 9162 Merkle proofs against Ed25519-signed checkpoints that are timestamped externally, verification of any record in the browser, double-entry journal and reconciliation projections that find planted anomalies, and an analyst whose every number is bound to records the reader can prove, measured against an exact oracle.
 
+## [0.1.1](https://github.com/raunak-choudhary/tallyproof/compare/v0.1.0...v0.1.1) (2026-10-29)
+
+
+### Fixes
+
+* **core:** refuse and remove contact details in event descriptions ([b9e683f](https://github.com/raunak-choudhary/tallyproof/commit/b9e683fe27769589d056f8998150cb67a5b39b86))
+* **evals:** rebuild the evaluation dataset without contact details ([40e4f99](https://github.com/raunak-choudhary/tallyproof/commit/40e4f99424eff879f296c3f83bcc30603ae9b108))
+
+
+### Documentation
+
+* describe the contact-detail scrub and the review that found the gap ([539bcea](https://github.com/raunak-choudhary/tallyproof/commit/539bcea16a264ddee10158e4ff0dd4f1a5e684e3))
+* name the MVP scope in the changelog and the tagged commit ([422cbce](https://github.com/raunak-choudhary/tallyproof/commit/422cbce6f349dd0cdd86058480a525abfe0e2b87)), closes [#111](https://github.com/raunak-choudhary/tallyproof/issues/111)
+
 ## 0.1.0 (2026-10-29)
 
 
