@@ -10,8 +10,6 @@ ALLOWED = [
     "HAVING count(*) > 2 ORDER BY mean DESC LIMIT 3",
     "SELECT o.piid, sum(p.period_outlay) AS paid FROM obligations o "
     "JOIN outlays p ON p.award_key = o.award_key GROUP BY o.piid",
-    "SELECT o.piid FROM obligations o LEFT JOIN awards a USING (award_key) "
-    "WHERE a.total_outlays > 0",
     "WITH big AS (SELECT * FROM obligations WHERE amount > 1000000) SELECT count(*) FROM big",
     "SELECT piid FROM obligations o WHERE NOT EXISTS "
     "(SELECT 1 FROM outlays p WHERE p.award_key = o.award_key)",
@@ -38,6 +36,8 @@ HOSTILE = [
     ("SELECT * FROM analyst.obligations", Rejection.RELATION),
     ("SELECT * FROM pg_catalog.pg_roles", Rejection.RELATION),
     ("SELECT * FROM pg_shadow", Rejection.RELATION),
+    # Award totals add up leaves past any checkpoint, so the fallback can't read them
+    ("SELECT event_id, leaf_index, total_obligated FROM awards", Rejection.RELATION),
     ("SELECT * FROM information_schema.tables", Rejection.RELATION),
     ("SELECT description FROM obligation_descriptions", Rejection.RELATION),
     ("SELECT 1", Rejection.RELATION),
@@ -162,6 +162,20 @@ def test_every_view_is_pinned_to_the_checkpoint():
         max_rows=10,
         tree_size=7,
     ).sql
-    assert nested.count("< 7") == 2
+    # Both leaves, and both award records because piid is an award field.
+    assert nested.count("< 7") == 4
     breaks = guard("SELECT break_id, break_type FROM breaks", max_rows=10, tree_size=9).sql
     assert "found_at_leaf_index < 9" in breaks
+
+
+def test_award_columns_pin_the_award_record_too():
+    sql = guard(
+        "SELECT o.awarding_agency, count(*) AS n FROM obligations o "
+        "JOIN outlays p ON p.award_key = o.award_key GROUP BY o.awarding_agency",
+        max_rows=10,
+        tree_size=500,
+    ).sql
+    assert "COALESCE(o.award_leaf_index, -1) < 500" in sql
+    assert "COALESCE(p.award_leaf_index, -1) < 500" in sql
+    plain = guard("SELECT sum(amount) FROM obligations", max_rows=10, tree_size=500).sql
+    assert "award_leaf_index" not in plain
