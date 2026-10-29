@@ -159,19 +159,15 @@ Events are keyed by recipient because reconciliation works per award and recipie
 
 ## Database
 
-PostgreSQL 16 with pgvector. The diagram shows the whole design. The ledger, batch, journal, break, outbox, and answer tables exist today; the evaluation tables arrive with the evaluation runner. Policy documents are `policy.published` events rather than a table of their own, and an answer stores its claims and citations as JSON on its own row (`analyst_answer`, append-only), so the diagram's `CLAIM` and `CITATION` boxes describe that JSON rather than separate tables.
+PostgreSQL 16 with pgvector. The diagram shows every table that holds data; supporting tables are listed below it. Policy documents are `policy.published` events rather than a table of their own. An answer keeps its values, citations, and quotes as JSON on its own append-only row. Evaluation runs are recorded as reports, not rows ([evaluation](evaluation.md#running-evaluations)).
 
 ```mermaid
 erDiagram
-  LEDGER_EVENT ||--o{ JOURNAL_LINE : "derives"
   LEDGER_EVENT }o--|| LEDGER_BATCH : "sealed by"
+  LEDGER_EVENT ||--o{ JOURNAL_LINE : "derives"
   RECON_BREAK ||--o{ BREAK_EVENT : "lists"
   LEDGER_EVENT ||--o{ BREAK_EVENT : "involved in"
-  ANSWER ||--o{ CLAIM : "contains"
-  CLAIM ||--o{ CITATION : "cites"
-  CITATION }o--o| LEDGER_EVENT : "event"
-  CITATION }o--o| POLICY_DOCUMENT : "document"
-  EVAL_RUN ||--o{ EVAL_RESULT : "has"
+  ANALYST_ANSWER }o..o{ LEDGER_EVENT : "cites, by public ID in body"
   LEDGER_EVENT {
     bigint id PK
     text public_id UK
@@ -180,6 +176,7 @@ erDiagram
     text event_type
     text account_id
     timestamptz occurred_at
+    timestamptz emitted_at
     timestamptz ingested_at
     bytea canonical_bytes "source of truth"
     bytea leaf_hash
@@ -193,62 +190,52 @@ erDiagram
     bigint id PK
     text public_id UK
     bigint start_index
-    bigint tree_size
+    bigint tree_size UK
     bytea root_hash
-    text checkpoint_body
-    bytea signature
+    text checkpoint_note "C2SP signed note"
     text key_id
     timestamptz closed_at
   }
   JOURNAL_LINE {
     bigint id PK
     bigint event_id FK
+    bigint leaf_index
     text entry_id
-    text account_code
+    smallint line_number
+    text account
     numeric debit
     numeric credit
   }
   RECON_BREAK {
     bigint id PK
     text public_id UK
+    text dedupe_key UK
     text break_type
+    text award_key
     numeric amount_delta
+    text detail
+    bigint leaf_index "event that triggered it"
     timestamptz detected_at
   }
-  POLICY_DOCUMENT {
+  BREAK_EVENT {
     bigint id PK
-    text public_id UK
-    int version
-    bigint leaf_index UK
+    bigint recon_break_id FK
+    bigint event_id FK
+    text role
   }
-  ANSWER {
+  ANALYST_ANSWER {
     bigint id PK
     text public_id UK
     text question
     text status
-    text refusal_reason
-  }
-  CLAIM {
-    bigint id PK
-    text public_id UK
-    text kind
-    jsonb query_spec
-    jsonb bound_values
-  }
-  CITATION {
-    bigint id PK
-    bigint leaf_index
-  }
-  EVAL_RUN {
-    bigint id PK
-    text public_id UK
-    jsonb metrics
-    text git_sha
-  }
-  EVAL_RESULT {
-    bigint id PK
-    text question_id
-    jsonb scores
+    text category
+    text refusal
+    text text
+    bigint tree_size "checkpoint the answer is pinned to"
+    text assurance
+    text filter_words
+    jsonb body "slots, citations, quotes, model versions"
+    timestamptz created_at
   }
 ```
 
@@ -313,12 +300,7 @@ All endpoints except the health checks are under `/api/v1/` and return JSON. The
 | GET | `/healthz` | Liveness, no dependencies |
 | GET | `/readyz` | Checks the database and the broker; 503 names whichever is down |
 
-Planned with the analyst and evaluation work:
-
-| Method | Path | Purpose |
-|---|---|---|
-| GET | `/api/v1/policy-documents/{document_id}` | A policy section and its leaf index |
-| GET | `/api/v1/eval-runs`, `/api/v1/eval-runs/{run_id}` | Evaluation runs and their per-question results |
+A policy section is an ordinary event, so it's fetched and proven through `/api/v1/events/{event_id}` like any other. Evaluation results are published as static reports with the site, not served by the API.
 
 Live updates stream over the WebSocket at `/ws/v1/stream`, served separately by `make stream`: appended events, signed checkpoints, and breaks. A client that falls behind receives `{"kind": "facts_dropped", "count": n}` and should re-read state over REST.
 
