@@ -28,7 +28,7 @@ from apps.analyst.answer import (
 )
 from apps.analyst.compiler import compile_spec
 from apps.analyst.llm import BudgetExceededError, LLMClient, LLMError, LLMRequest, Message
-from apps.analyst.query_spec import CATALOG
+from apps.analyst.query_spec import CATALOG, MAX_LIST_ROWS
 from apps.analyst.retrieval import Hit
 from apps.analyst.router import Route, route
 from apps.analyst.sql_guard import GuardError, guard
@@ -308,6 +308,8 @@ def _gather(
     values = (
         executor.run(compiled.value_sql, compiled.value_params)[1] if compiled.value_sql else []
     )
+    if compiled.group_column and len(values) > MAX_LIST_ROWS:
+        return "too_broad"
     _, rows = executor.run(compiled.evidence_sql, compiled.evidence_params)
     if len(rows) >= compiled.evidence_limit and spec.shape != "list":
         if spec.shape == "lookup":

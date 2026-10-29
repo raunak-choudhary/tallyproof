@@ -5,7 +5,7 @@ import pytest
 from pydantic import ValidationError
 
 from apps.analyst.compiler import compile_spec
-from apps.analyst.query_spec import CATALOG, QuerySpec
+from apps.analyst.query_spec import CATALOG, MAX_LIST_ROWS, QuerySpec
 
 
 def spec(**kwargs: object) -> QuerySpec:
@@ -84,6 +84,12 @@ def test_a_grouped_top_n_ranks_groups_and_cites_their_rows():
     assert 't."awarding_agency" IS NOT NULL' in q.value_sql
     assert 't."awarding_agency" IS NOT NULL' in q.evidence_sql
     assert q.words.endswith("leaving out records with no awarding agency")
+
+
+def test_an_unranked_grouping_fetches_one_group_past_the_cap():
+    q = compile_spec(hhs(group_by="awarding_agency"), tree_size=5, max_rows=10)
+    assert q.value_sql is not None
+    assert q.value_sql.endswith(f"LIMIT {MAX_LIST_ROWS + 1}")
 
 
 def test_min_and_max_cite_the_extreme_row():
