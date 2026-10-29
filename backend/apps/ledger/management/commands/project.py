@@ -6,10 +6,10 @@ from types import FrameType
 
 import psycopg
 from django.core.management.base import BaseCommand
-from django.db import DatabaseError, connection
+from django.db import connection
 
 from apps.ledger.append import APPENDED_CHANNEL
-from apps.ledger.projections import AppendedProjection, JournalProjection, Projection, step
+from apps.ledger.projections import AppendedProjection, JournalProjection, Projection, run_round
 from apps.reconciliation.projection import ReconciliationProjection
 from config.env import app_settings
 from config.logging import configure
@@ -50,16 +50,7 @@ class Command(BaseCommand):
         ) as listener:
             listener.execute(f"LISTEN {APPENDED_CHANNEL}")
             while not stopping:
-                read = 0
-                for projection in projections:
-                    # Each step is one transaction: a failure leaves nothing half-written,
-                    # and the other projections keep going while this one is retried.
-                    try:
-                        read += step(projection)
-                    except DatabaseError:
-                        log.exception(
-                            "projection %s failed; retrying on the next wake-up", projection.name
-                        )
+                read = run_round(projections)
                 if read:
                     log.info("projected %d events", read)
                     continue

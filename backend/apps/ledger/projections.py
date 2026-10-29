@@ -8,14 +8,17 @@ log alone.
 """
 
 import json
+import logging
 from collections.abc import Sequence
 from typing import Protocol
 
-from django.db import connection, transaction
+from django.db import DatabaseError, connection, transaction
 
 from apps.ledger.models import JournalLine, LedgerEvent, Outbox
 from tallyproof_core.events import EventEnvelope
 from tallyproof_core.journal import entry_for
+
+log = logging.getLogger(__name__)
 
 OUTBOX_CHANNEL = "outbox_ready"
 """Postgres notification channel that wakes the outbox relay."""
@@ -69,6 +72,21 @@ def step(projection: Projection, batch_size: int = 500) -> int:
             # Delivered only on commit; wakes the relay if this step wrote outbox rows.
             cursor.execute("SELECT pg_notify(%s, %s)", [OUTBOX_CHANNEL, projection.name])
     return len(events)
+
+
+def run_round(projections: Sequence[Projection], batch_size: int = 500) -> int:
+    """Step each projection once. Returns how many events they read in all.
+
+    Each step is its own transaction, so a projection that fails leaves nothing
+    half-written, and the others keep going while it is retried next round.
+    """
+    read = 0
+    for projection in projections:
+        try:
+            read += step(projection, batch_size)
+        except DatabaseError:
+            log.exception("projection %s failed; retrying on the next round", projection.name)
+    return read
 
 
 def catch_up(projection: Projection, batch_size: int = 500) -> int:
