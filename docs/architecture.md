@@ -126,9 +126,10 @@ A->>V: No free numbers, every slot bound, every claim cited
 V-->>A: Accept, or refuse with a reason
 A-->>W: Answer with claims, values, citations, and the filter in plain words
 U->>W: Click Verify on a citation
-W->>A: GET /api/v1/events/{event_id}/proof
+W->>A: GET /api/v1/events/{event_id}/proof?tree_size=N
 A-->>W: Event bytes, leaf index, audit path, signed checkpoint
 W->>W: Hash the leaf, walk the path, check the signature with the pinned key
+W->>W: Check the record, leaf, and checkpoint are the ones the answer cited
 W-->>U: Verified, or the exact check that failed
 ```
 
