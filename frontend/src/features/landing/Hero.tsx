@@ -60,7 +60,7 @@ export function Hero({ firstEventId }: { firstEventId: string | null }) {
             </Link>
           )}
           <Link
-            href={process.env.NEXT_PUBLIC_API_URL ? "/ask/" : "/live/"}
+            href={process.env.NEXT_PUBLIC_API_URL ? "/ask/" : "/ledger/"}
             className={cn(buttonVariants({ variant: "ghost" }), "rounded-full px-5")}
           >
             {process.env.NEXT_PUBLIC_API_URL ? "Ask the ledger" : "Open the ledger"}

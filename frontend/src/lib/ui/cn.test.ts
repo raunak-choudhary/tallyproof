@@ -59,7 +59,7 @@ describe("nav", () => {
     expect(isActive("/", "/")).toBe(true);
     expect(isActive("/", "/ask/")).toBe(false);
     expect(isActive("/ask/", "/ask")).toBe(true);
-    expect(isActive("/live/", "/live/")).toBe(true);
-    expect(isActive("/live/", "/ledger/events/evt_1/")).toBe(false);
+    expect(isActive("/ledger/", "/ledger/")).toBe(true);
+    expect(isActive("/ledger/", "/ledger/events/evt_1/")).toBe(true);
   });
 });
