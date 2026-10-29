@@ -275,3 +275,34 @@ def test_ordinary_text_is_unchanged_by_as_data():
     from apps.analyst.llm import as_data
 
     assert as_data("Spending < $5 and > $1 in FY2024?") == "Spending < $5 and > $1 in FY2024?"
+
+
+@pytest.mark.parametrize(
+    ("url", "ok"),
+    [
+        ("https://api.groq.com/openai/v1/", True),
+        ("http://127.0.0.1:11434/v1/", True),
+        ("http://localhost:8080/v1/", True),
+        ("http://api.groq.com/openai/v1/", False),
+        ("ftp://api.example/", False),
+    ],
+)
+def test_the_provider_url_must_be_https_off_this_machine(url, ok):
+    values = {
+        "LLM_PROVIDER": "openai_compatible", "LLM_BASE_URL": url,
+        "LLM_API_KEY": SecretStr("k"), "LLM_ANSWER_MODEL": "m",
+    }  # fmt: skip
+    if ok:
+        assert settings_from(values).llm_base_url == url
+    else:
+        with pytest.raises(ValueError, match="https"):
+            settings_from(values)
+
+
+def test_debug_mode_is_refused_with_a_real_provider():
+    from config.env import ConfigurationError, refuse_debug_with_real_provider
+
+    refuse_debug_with_real_provider(debug=False, provider="openai_compatible")
+    refuse_debug_with_real_provider(debug=True, provider="fake")
+    with pytest.raises(ConfigurationError, match="DJANGO_DEBUG"):
+        refuse_debug_with_real_provider(debug=True, provider="openai_compatible")
