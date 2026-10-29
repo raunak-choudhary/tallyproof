@@ -178,4 +178,4 @@ On 2026-10-29 two independent reviews went over the analyst and the API: one tri
 
 A second pass the same day, by a separate security reviewer over the merged code (`apps/analyst`, `apps/ledger/api`, and `config`), found three more: numbers rebuilt from the filter's digit groups, values from another row or under another name in fallback SQL, and a crash on a model reply that was valid JSON but not an object. All three are fixed, each with a test that reproduced it first.
 
-This document was signed off against commit `622b5a8` and, after the second pass, against the commit that tags `v0.1.0`.
+This document was signed off against commit `622b5a8` and, after the second pass, against `f91eb77`, the commit tagged `v0.1.0`.
