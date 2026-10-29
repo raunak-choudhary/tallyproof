@@ -134,3 +134,18 @@ def test_the_stream_command_serves_with_limits_from_settings(monkeypatch):
             "log_level": "info",
         }
     ]
+
+
+def test_the_stream_server_serves_no_http():
+    from config.asgi import application
+
+    async def scenario() -> None:
+        scope = {"type": "http", "method": "GET", "path": "/api/v1/queries", "headers": []}
+        client = ApplicationCommunicator(application, scope)
+        await client.send_input({"type": "http.request", "body": b"", "more_body": False})
+        start = await client.receive_output(timeout=2)
+        assert (start["type"], start["status"]) == ("http.response.start", 404)
+        body = await client.receive_output(timeout=2)
+        assert body["type"] == "http.response.body"
+
+    async_to_sync(scenario)()
