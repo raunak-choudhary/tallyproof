@@ -117,20 +117,20 @@ A checkpoint's key ID isn't configured: it's derived from the key's name and pub
 
 ## Analyst and model provider
 
-The analyst calls its model through one client that speaks the OpenAI chat-completions protocol, which Google Gemini, Groq, OpenRouter, Together, and a local Ollama all serve. The first live provider is Gemini's free tier. Switching providers means changing these settings, not code.
+The analyst calls its model through one client that speaks the OpenAI chat-completions protocol, which Groq, Google Gemini, OpenRouter, Together, and a local Ollama all serve. The live provider is Groq's free tier with `openai/gpt-oss-120b`: about 1,000 requests a day and 8,000 tokens a minute, enough for one full evaluation a day. Gemini's free tier was tried first but allows only 20 requests a day per model. Switching providers means changing these settings, not code.
 
 | Variable | Required | Default | Purpose |
 |---|---|---|---|
 | `LLM_PROVIDER` | no | `fake` | `fake` (scripted answers, no network) or `openai_compatible` |
-| `LLM_BASE_URL` | with the real provider | | The provider's OpenAI-compatible endpoint. Gemini: `https://generativelanguage.googleapis.com/v1beta/openai/` |
+| `LLM_BASE_URL` | with the real provider | | The provider's OpenAI-compatible endpoint. Groq: `https://api.groq.com/openai/v1`; Gemini: `https://generativelanguage.googleapis.com/v1beta/openai/` |
 | `LLM_API_KEY` | with the real provider | | Secret. Sent only in the Authorization header, never logged |
 | `LLM_ANSWER_MODEL` | with the real provider | | Model ID for composing answers; never hardcoded |
 | `LLM_ROUTER_MODEL` | no | the answer model | Model ID for query specs |
 | `LLM_JUDGE_MODEL` | no | the answer model | Model ID for the narrative-faithfulness judge |
-| `LLM_REASONING_EFFORT` | no | the provider's default | `none`, `minimal`, `low`, `medium`, or `high`. Gemini counts thinking against the output limit, so its default can cut answers short; `low` is recommended |
+| `LLM_REASONING_EFFORT` | no | the provider's default | `none`, `minimal`, `low`, `medium`, or `high`. Thinking counts against the output limit on Gemini and gpt-oss, so a provider's default can cut answers short; `low` is recommended |
 | `LLM_TIMEOUT_SECONDS` | no | `30` | Per request |
 | `LLM_MAX_RETRIES` | no | `3` | Retries for rate limits and server errors, with backoff |
-| `LLM_REQUESTS_PER_MINUTE` | no | `10` | Client-side pacing, kept under the free tier's limit |
+| `LLM_REQUESTS_PER_MINUTE` | no | `10` | Client-side pacing. On Groq's free tier the binding limit is 8,000 tokens a minute, so evaluations run with `4` |
 | `LLM_MAX_INPUT_TOKENS` | no | `8000` | Per request |
 | `LLM_MAX_OUTPUT_TOKENS` | no | `1200` | Per request |
 | `LLM_RUN_MAX_REQUESTS` | no | `1500` | Per evaluation run; the run stops before passing it |

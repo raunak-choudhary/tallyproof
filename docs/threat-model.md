@@ -143,7 +143,7 @@ Python dependencies are pinned with hashes through pip-tools, and frontend depen
 
 Per-request token caps, run budgets, response caching, and rate limits bound the cost. A run that would pass its budget stops before the call, with a clear error, instead of producing a surprise bill.
 
-The first live provider is Google Gemini's free tier, whose terms let Google use prompts and responses to improve its products. Prompts contain only public USAspending records and FAR text, so nothing private leaves the system. A deployment that handled private data would use a paid tier, whose terms exclude that use, and say so here.
+The live provider is Groq's free tier running `openai/gpt-oss-120b`, chosen after Gemini's free tier turned out to allow only 20 requests a day per model. Prompts contain only public USAspending records and FAR text, so whatever a provider's terms allow it to do with them, nothing private leaves the system. A deployment that handled private data would use a paid tier whose terms rule out training on customer data, and say so here.
 
 ## Accepted residual risks
 
