@@ -20,7 +20,13 @@ const VIEWPORTS = [
   { name: "desktop", width: 1920, height: 1080 },
 ] as const;
 
-const PAGES = ["/", "/ask/", "/live/", "/ledger/events/evt_01J92P0V00ZQSM7FGKNG6F5228/"] as const;
+const PAGES = [
+  "/",
+  "/ask/",
+  "/live/",
+  "/ledger/",
+  "/ledger/events/evt_01J92P0V00ZQSM7FGKNG6F5228/",
+] as const;
 const THEMES = ["light", "dark"] as const;
 
 async function noSidewaysScroll(page: Page, label: string) {
