@@ -1,0 +1,7 @@
+# The documentation site's build tools, on their own so the Pages build installs
+# only these. Compile with `make deps`; requirements-dev.in includes this file.
+-c requirements.txt
+mkdocs>=1.6,<2                  # static site generator for docs/
+mkdocs-material>=9.8,<10        # theme, search, and Mermaid diagrams
+mkdocstrings>=1.0,<2            # API reference pages from docstrings
+mkdocstrings-python>=2.0,<3     # the Python handler, read statically with griffe
