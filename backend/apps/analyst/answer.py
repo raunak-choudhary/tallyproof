@@ -9,7 +9,8 @@ slot and no citation is dropped rather than shown.
 """
 
 import re
-from collections.abc import Sequence
+import unicodedata
+from collections.abc import Iterator, Sequence
 from dataclasses import dataclass, field
 from datetime import date
 from decimal import Decimal
@@ -26,7 +27,32 @@ SLOT = re.compile(r"\{\{\s*(s\d+)\s*\}\}")
 CITE = re.compile(r"\[\[\s*([cq]\d+)\s*\]\]")
 DIGITS = re.compile(r"\d+")
 TOKEN_WITH_DIGIT = re.compile(r"[$A-Za-z0-9][A-Za-z0-9.,$%/_-]*\d[A-Za-z0-9.,%/_-]*|\d")
-SENTENCE_END = re.compile(r"(?<=[.!?])\s+(?=[A-Z\[{\"(])")
+BOUNDARY = re.compile(r"(?<=[.!?;])\s+")
+STARTS_SENTENCE = re.compile(r"[A-Z\[{\"(]")
+ABBREVIATIONS = frozenset(
+    {"no", "nos", "vs", "etc", "inc", "co", "corp", "dept", "jr", "sr", "st", "mr", "ms",
+     "mrs", "dr", "fig", "sec", "secs", "approx", "e.g", "i.e", "u.s", "u.s.c", "cf"}
+)  # fmt: skip
+"""Words a period can end without ending the sentence, when a lowercase word follows."""
+
+NUMBER_WORDS = {
+    "two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7, "eight": 8, "nine": 9,
+    "ten": 10, "eleven": 11, "twelve": 12, "thirteen": 13, "fourteen": 14, "fifteen": 15,
+    "sixteen": 16, "seventeen": 17, "eighteen": 18, "nineteen": 19, "twenty": 20,
+    "thirty": 30, "forty": 40, "fifty": 50, "sixty": 60, "seventy": 70, "eighty": 80,
+    "ninety": 90, "dozen": 12, "hundred": 100, "thousand": 1000, "million": 10**6,
+    "billion": 10**9, "trillion": 10**12,
+}  # fmt: skip
+"""Number words the model might use to state a value it wasn't given. "One" is left
+out: it reads as a pronoun far more often than as a count ("no one", "one of")."""
+NUMBER_WORD = re.compile(r"\b(" + "|".join(NUMBER_WORDS) + r")\b", re.IGNORECASE)
+NUMERIC_SLOT_KINDS = frozenset({"money", "count"})
+SCALE_AFTER = re.compile(
+    r"\{\{\s*(s\d+)\s*\}\}(?:[0-9%]|\s*(?:k|m|bn|mn|thousand|million|billion|trillion)\b)",
+    re.IGNORECASE,
+)
+SIGN_BEFORE = re.compile(r"[0-9+\-\u2212]\{\{\s*(s\d+)\s*\}\}")
+JOINED = re.compile(r"\{\{\s*(s\d+)\s*\}\}[.,]?(?=\{\{)")
 
 
 @dataclass(frozen=True)
@@ -278,11 +304,70 @@ def _normalize(text: str) -> str:
     return " ".join(text.split())
 
 
-def _allowed_digits(question: str, evidence: Evidence) -> set[str]:
-    allowed = set(DIGITS.findall(question))
+def _allowed_digits(evidence: Evidence) -> set[str]:
+    """Digits prose may use: those in the filter shown with the answer, and FAR section numbers.
+
+    Digits from the question aren't allowed as such: a question can say anything, so
+    one of its numbers may appear only when the compiled filter shows it to the reader.
+    """
+    allowed = set(DIGITS.findall(evidence.filter_words))
     for source in evidence.sources.values():
         allowed.update(DIGITS.findall(source.section))
     return allowed
+
+
+def _clauses(template: str) -> Iterator[str]:
+    """Split a template into the sentences and clauses that each need their own claim.
+
+    A boundary is ``;`` or a sentence end. After ``.``, ``!``, or ``?`` a lowercase word
+    starts a new sentence too, unless the period ends a common abbreviation.
+    """
+    start = 0
+    for match in BOUNDARY.finditer(template):
+        before = template[start : match.start()]
+        after = template[match.end() : match.end() + 1]
+        if not before.endswith(";") and not STARTS_SENTENCE.match(after):
+            word = before.rsplit(None, 1)[-1].rstrip(".").lower() if before.strip() else ""
+            if word in ABBREVIATIONS or len(word) == 1:
+                continue
+        yield template[start : match.start()]
+        start = match.end()
+    yield template[start:]
+
+
+def _numeral_problems(prose: str, allowed: set[str]) -> list[str]:
+    """Numbers written as words or as numerals other than ASCII digits."""
+    problems = []
+    for word in NUMBER_WORD.findall(prose):
+        if str(NUMBER_WORDS[word.lower()]) not in allowed:
+            problems.append(f"free_number:{word}")
+    for char in prose:
+        if (
+            not char.isascii()
+            and not char.isdigit()
+            and unicodedata.numeric(char, None) is not None
+        ):
+            problems.append(f"free_number:{char}")
+    return problems
+
+
+def _slot_problems(sentence: str, evidence: Evidence) -> list[str]:
+    """A numeric value scaled, extended, signed, or run into another value."""
+
+    def numeric(label: str) -> bool:
+        slot = evidence.slots.get(label)
+        return slot is not None and slot.kind in NUMERIC_SLOT_KINDS
+
+    problems = [
+        f"slot_modified:{m.group(1)}"
+        for pattern in (SCALE_AFTER, SIGN_BEFORE)
+        for m in pattern.finditer(sentence)
+        if numeric(m.group(1))
+    ]
+    problems += [
+        f"slot_joined:{m.group(1)}" for m in JOINED.finditer(sentence) if numeric(m.group(1))
+    ]
+    return problems
 
 
 def _quoted_digits(cites: Sequence[str], quotes: Sequence[Quote]) -> set[str]:
@@ -295,13 +380,13 @@ def _quoted_digits(cites: Sequence[str], quotes: Sequence[Quote]) -> set[str]:
     return {d for q in quotes if q.source in cites for d in DIGITS.findall(q.text)}
 
 
-def verify(draft: Draft, evidence: Evidence, question: str) -> Verdict:
+def verify(draft: Draft, evidence: Evidence) -> Verdict:
     """Check a draft against the evidence. Problems are short codes the model can fix."""
     problems: list[str] = []
-    allowed = _allowed_digits(question, evidence)
+    allowed = _allowed_digits(evidence)
     free = 0
     kept: list[str] = []
-    for sentence in SENTENCE_END.split(draft.template.strip()):
+    for sentence in _clauses(draft.template.strip()):
         slots = SLOT.findall(sentence)
         cites = CITE.findall(sentence)
         for label in slots:
@@ -317,6 +402,10 @@ def verify(draft: Draft, evidence: Evidence, question: str) -> Verdict:
             if not set(DIGITS.findall(token)) <= sentence_allowed:
                 free += 1
                 problems.append(f"free_number:{token}")
+        numerals = _numeral_problems(prose, sentence_allowed)
+        free += len(numerals)
+        problems += numerals
+        problems += _slot_problems(sentence, evidence)
         if slots or cites:
             kept.append(sentence.strip())
     for quote in draft.quotes:

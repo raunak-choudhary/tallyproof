@@ -7,11 +7,9 @@ from apps.analyst.answer import Draft, Evidence, Quote, QuoteSource, from_query,
 from apps.analyst.compiler import compile_spec
 from apps.analyst.query_spec import QuerySpec
 
-QUESTION = "What did State obligate in FY2024?"
-
 
 def evidence() -> Evidence:
-    e = Evidence(filter_words="obligations where awarding agency is State")
+    e = Evidence(filter_words="obligations where awarding agency is State and fiscal year is 2024")
     cite = e.add_citation([("evt_a", 1), ("evt_b", 2)], "the 2 records counted")
     e.add_slot("money", Decimal("375597.44"), "total", cite)
     e.add_slot("count", 2, "number of records", cite)
@@ -33,17 +31,51 @@ def evidence() -> Evidence:
         ("State obligated {{s1}} [[c7]].", ("unknown_citation:c7",)),
         ("Nothing to cite here.", ("no_claims",)),
         ("It was ~375k [[c1]].", ("free_number:375k",)),
+        # Number words count as numbers.
+        ("State obligated {{s1}} across fifteen awards [[c1]].", ("free_number:fifteen",)),
+        (
+            "Spending was two hundred thousand [[c1]].",
+            ("free_number:two", "free_number:hundred", "free_number:thousand"),
+        ),
+        # A value can't be scaled, extended, signed, or joined to another.
+        ("State obligated {{s1}} million [[c1]].", ("free_number:million", "slot_modified:s1")),
+        ("State obligated {{s1}}k [[c1]].", ("slot_modified:s1",)),
+        ("State obligated {{s1}}0 [[c1]].", ("free_number:0", "slot_modified:s1")),
+        ("State obligated -{{s1}} [[c1]].", ("slot_modified:s1",)),
+        ("State obligated {{s2}}{{s1}} [[c1]].", ("slot_joined:s2",)),
+        ("State obligated {{s2}}.{{s1}} [[c1]].", ("slot_joined:s2",)),
+        ("It had {{s2}} records, {{s1}} in all [[c1]].", ()),
+        # Numerals beyond ASCII digits.
+        ("State obligated ½ of it [[c1]].", ("free_number:½",)),
+        ("State obligated \u0663 times [[c1]].", ("free_number:\u0663",)),
+        # Digits from the question are allowed only when the filter shows them.
+        ("State obligated {{s1}} in FY2024 [[c1]].", ()),
+        ("The total was 987654321 [[c1]].", ("free_number:987654321",)),
     ],
 )
 def test_the_verifier_finds_free_numbers_and_unbound_labels(template, problems):
-    assert verify(Draft(template), evidence(), QUESTION).problems == problems
+    assert verify(Draft(template), evidence()).problems == problems
+
+
+def test_clauses_after_a_semicolon_or_a_lowercase_start_stand_alone():
+    verdict = verify(
+        Draft(
+            "State obligated {{s1}} [[c1]]; the agency also broke the law. "
+            "the CFO approved it. Spending at the U.S. level was {{s2}} records [[c1]]."
+        ),
+        evidence(),
+    )
+    assert verdict.ok
+    assert verdict.sentences == (
+        "State obligated {{s1}} [[c1]];",
+        "Spending at the U.S. level was {{s2}} records [[c1]].",
+    )
 
 
 def test_sentences_without_a_slot_or_citation_are_dropped():
     verdict = verify(
         Draft("State obligated {{s1}} [[c1]]. The CFO approved every award. Ask again later."),
         evidence(),
-        QUESTION,
     )
     assert verdict.ok
     assert verdict.sentences == ("State obligated {{s1}} [[c1]].",)
@@ -54,12 +86,10 @@ def test_quotes_must_be_exact_substrings_of_the_leaf_ignoring_line_breaks():
     good = Quote(
         "q1", "A bilateral modification is a contract modification signed by both parties."
     )
-    assert verify(Draft("FAR 43.103 says [[q1]].", (good,)), evidence(), QUESTION).ok
+    assert verify(Draft("FAR 43.103 says [[q1]].", (good,)), evidence()).ok
     bent = Quote("q1", "A bilateral modification is signed by both parties.")
-    assert verify(Draft("It says [[q1]].", (bent,)), evidence(), QUESTION).problems == (
-        "quote_mismatch:q1",
-    )
-    assert verify(Draft("It says [[q1]].", (Quote("q4", "x"),)), evidence(), QUESTION).problems == (
+    assert verify(Draft("It says [[q1]].", (bent,)), evidence()).problems == ("quote_mismatch:q1",)
+    assert verify(Draft("It says [[q1]].", (Quote("q4", "x"),)), evidence()).problems == (
         "unknown_citation:q4",
     )
 
@@ -143,15 +173,15 @@ def test_a_number_from_the_regulation_needs_the_quote_that_holds_it():
     )
     e.sources["q2"] = QuoteSource("q2", "evt_far2", 10, "4.101", "Signatures.", "x", "y")
     paraphrase = Draft("Change orders use Standard Form 30 [[q1]].")
-    assert verify(paraphrase, e, QUESTION).problems == ("free_number:30",)
+    assert verify(paraphrase, e).problems == ("free_number:30",)
     quoted = Draft(
         "Change orders use Standard Form 30 [[q1]].", (Quote("q1", "issued on Standard Form 30"),)
     )
-    assert verify(quoted, e, QUESTION).ok
+    assert verify(quoted, e).ok
     wrong_source = Draft(
         "Change orders use Standard Form 30 [[q2]].", (Quote("q1", "issued on Standard Form 30"),)
     )
-    assert "free_number:30" in verify(wrong_source, e, QUESTION).problems
+    assert "free_number:30" in verify(wrong_source, e).problems
 
 
 def test_every_value_shown_carries_its_citation():
