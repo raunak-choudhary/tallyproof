@@ -26,7 +26,8 @@ Assurance = Literal["filter_shown", "lower_assurance", "policy"]
 
 SLOT = re.compile(r"\{\{\s*(s\d+)\s*\}\}")
 CITE = re.compile(r"\[\[\s*([cq]\d+)\s*\]\]")
-DIGITS = re.compile(r"\d+")
+NUMBER = re.compile(r"[0-9][0-9,]*(?:\.[0-9]+)?")
+"""A number as written: digits, thousands commas, and an optional decimal part."""
 TOKEN_WITH_DIGIT = re.compile(r"[$A-Za-z0-9][A-Za-z0-9.,$%/_-]*\d[A-Za-z0-9.,%/_-]*|\d")
 BOUNDARY = re.compile(r"(?<=[.!?;])\s+")
 STARTS_SENTENCE = re.compile(r"[A-Z\[{\"(]")
@@ -309,15 +310,22 @@ def _normalize(text: str) -> str:
     return " ".join(text.split())
 
 
-def _allowed_digits(evidence: Evidence) -> set[str]:
-    """Digits prose may use: those in the filter shown with the answer, and FAR section numbers.
+def _numbers(text: str) -> set[Decimal]:
+    """Every number written in ``text``, by value: "1,000.00" and "1000" are the same."""
+    return {Decimal(found.replace(",", "")) for found in NUMBER.findall(text)}
 
-    Digits from the question aren't allowed as such: a question can say anything, so
-    one of its numbers may appear only when the compiled filter shows it to the reader.
+
+def _allowed_numbers(evidence: Evidence) -> set[Decimal]:
+    """Numbers prose may use: those in the filter shown with the answer, and FAR section numbers.
+
+    Whole numbers are compared, not digit groups, so "1,000,000,000.00" doesn't pass
+    because "1,000.00" is in the filter. Numbers from the question aren't allowed as
+    such: a question can say anything, so one of its numbers may appear only when the
+    compiled filter shows it to the reader.
     """
-    allowed = set(DIGITS.findall(evidence.filter_words))
+    allowed = _numbers(evidence.filter_words)
     for source in evidence.sources.values():
-        allowed.update(DIGITS.findall(source.section))
+        allowed |= _numbers(source.section)
     return allowed
 
 
@@ -340,11 +348,11 @@ def _clauses(template: str) -> Iterator[str]:
     yield template[start:]
 
 
-def _numeral_problems(prose: str, allowed: set[str]) -> list[str]:
+def _numeral_problems(prose: str, allowed: set[Decimal]) -> list[str]:
     """Numbers written as words or as numerals other than ASCII digits."""
     problems = []
     for word in NUMBER_WORD.findall(prose):
-        if str(NUMBER_WORDS[word.lower()]) not in allowed:
+        if Decimal(NUMBER_WORDS[word.lower()]) not in allowed:
             problems.append(f"free_number:{word}")
     for char in prose:
         if (
@@ -375,20 +383,20 @@ def _slot_problems(sentence: str, evidence: Evidence) -> list[str]:
     return problems
 
 
-def _quoted_digits(cites: Sequence[str], quotes: Sequence[Quote]) -> set[str]:
+def _quoted_numbers(cites: Sequence[str], quotes: Sequence[Quote]) -> set[Decimal]:
     """Numbers a sentence may repeat because it cites a source it also quotes.
 
     A rate or a form number from the regulation is allowed only when the answer gives
     the passage that holds it word for word, so the reader sees it in the source's own
     words and the quote itself is checked against the leaf.
     """
-    return {d for q in quotes if q.source in cites for d in DIGITS.findall(q.text)}
+    return {n for q in quotes if q.source in cites for n in _numbers(q.text)}
 
 
 def verify(draft: Draft, evidence: Evidence) -> Verdict:
     """Check a draft against the evidence. Problems are short codes the model can fix."""
     problems: list[str] = []
-    allowed = _allowed_digits(evidence)
+    allowed = _allowed_numbers(evidence)
     free = 0
     kept: list[str] = []
     for sentence in _clauses(draft.template.strip()):
@@ -402,9 +410,10 @@ def verify(draft: Draft, evidence: Evidence) -> Verdict:
             if label not in known:
                 problems.append(f"unknown_citation:{label}")
         prose = CITE.sub(" ", SLOT.sub(" ", sentence))
-        sentence_allowed = allowed | _quoted_digits(cites, draft.quotes)
+        sentence_allowed = allowed | _quoted_numbers(cites, draft.quotes)
         for token in TOKEN_WITH_DIGIT.findall(prose):
-            if not set(DIGITS.findall(token)) <= sentence_allowed:
+            foreign = any(c.isdigit() and not c.isascii() for c in token)
+            if foreign or not _numbers(token) <= sentence_allowed:
                 free += 1
                 problems.append(f"free_number:{token}")
         for inline in INLINE_QUOTE.findall(prose):
