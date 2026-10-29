@@ -41,7 +41,7 @@ make -C "$ROOT" --no-print-directory migrate
 make -C "$ROOT" --no-print-directory register-schemas
 
 step "Services"
-start api "$ROOT/backend/.venv/bin/gunicorn" config.wsgi --workers 2 --bind 127.0.0.1:8000
+start api "$ROOT/backend/.venv/bin/gunicorn" config.wsgi -c config/gunicorn_conf.py --bind 127.0.0.1:8000
 start ingest "$PY" manage.py ingest
 start checkpointer "$PY" manage.py checkpointer
 start project "$PY" manage.py project
