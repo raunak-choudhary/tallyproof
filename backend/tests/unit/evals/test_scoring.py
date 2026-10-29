@@ -122,3 +122,13 @@ def test_quote_faithfulness_counts_only_answers_that_quote():
     assert cited_only.quotes_faithful is None
     assert metrics([quoted, cited_only])["quote_faithfulness"] == 1.0
     assert metrics([quoted, bad])["quote_faithfulness"] == 0.5
+
+
+def test_policy_citations_are_scored_by_section_within_the_subpart():
+    expected = Expected(
+        section="43.201", must_cite=frozenset({"43.201"}), may_cite=frozenset({"43.201", "43.202"})
+    )
+    good = score("P", "q", "policy", True, expected, observed(sections_cited=["43.201", "43.202"]))
+    assert (good.cited, good.cited_correct, good.cited_allowed) == (2, 1, 2)
+    stray = score("P", "q", "policy", True, expected, observed(sections_cited=["43.201", "4.101"]))
+    assert metrics([good, stray])["citation_precision"] == 0.75

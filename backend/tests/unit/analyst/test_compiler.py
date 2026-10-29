@@ -115,6 +115,8 @@ def test_absence_names_its_rule():
         max_rows=10,
     )
     assert "NOT EXISTS (SELECT 1 FROM analyst.obligations b" in q.evidence_sql
+    assert q.evidence_sql.count("%s") == 2  # the rule looks only at leaves the checkpoint covers
+    assert q.evidence_params == [5, 5]
     assert q.words == "outlay reports with no recorded obligation for their award"
 
 

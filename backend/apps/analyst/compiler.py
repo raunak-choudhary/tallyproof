@@ -37,8 +37,8 @@ _METRIC_WORDS = {
 
 ABSENCE_RULES = {
     "outlay_without_recorded_award": (
-        "NOT EXISTS (SELECT 1 FROM analyst.obligations b "
-        "WHERE b.award_key = t.award_key AND b.event_type = 'obligation.recorded')",
+        "NOT EXISTS (SELECT 1 FROM analyst.obligations b WHERE b.award_key = t.award_key "
+        "AND b.event_type = 'obligation.recorded' AND b.leaf_index < %s)",
         "with no recorded obligation for their award",
     ),
 }
@@ -189,4 +189,6 @@ def compile_spec(spec: QuerySpec, *, tree_size: int, max_rows: int) -> CompiledQ
         f"SELECT {citable}, t.award_key{amount} FROM {view} t "
         f"WHERE {where} AND {rule} ORDER BY {leaf} LIMIT {limit}"
     )
-    return CompiledQuery(spec.shape, f"{subject} {rule_words}", evidence_sql, params, limit)
+    return CompiledQuery(
+        spec.shape, f"{subject} {rule_words}", evidence_sql, [*params, tree_size], limit
+    )

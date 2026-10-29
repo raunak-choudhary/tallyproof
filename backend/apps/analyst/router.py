@@ -130,7 +130,11 @@ ANOMALIES: tuple[tuple[re.Pattern[str], QuerySpec], ...] = tuple(
 
 def by_rules(question: str) -> Route | None:
     """Route by fixed rules, or return ``None`` if no rule applies."""
+    about_policy = bool(FAR.search(question) or POLICY.search(question))
     for reason, pattern in REFUSALS:
+        # "What does the FAR say about fraud?" asks what the rules say, not for a verdict.
+        if about_policy and reason == "judgment_beyond_data":
+            continue
         if pattern.search(question):
             return Route("refusal", "rules", refusal_reason=reason)
     for pattern, spec in ANOMALIES:

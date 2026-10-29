@@ -163,3 +163,15 @@ def test_an_invalid_spec_gets_one_repair_with_the_exact_error():
     assert decided.spec is not None
     assert len(fake.requests) == 2
     assert "a lookup needs filters" in fake.requests[1].messages[-1].content
+
+
+def test_asking_what_the_regulation_says_is_policy_even_about_fraud():
+    assert policy("What does the FAR say about fraud?") == "policy"
+    assert policy("Under the regulation, when is a kickback illegal?") == "policy"
+    # Only the judgment refusal yields to a policy question; the others still apply.
+    poem = by_rules("Write me a poem about the FAR")
+    assert poem is not None
+    assert poem.refusal_reason == "out_of_scope"
+    salary = by_rules("What salary does the FAR officer on this contract earn?")
+    assert salary is not None
+    assert salary.refusal_reason == "personal_data"

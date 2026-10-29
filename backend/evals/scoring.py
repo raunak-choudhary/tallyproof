@@ -110,8 +110,12 @@ def score(
         checks.extend(v in observed.used_values for v in expected.fields.values())
         numeric = answered and bool(checks) and all(checks)
     policy_ok = quotes_ok = None
+    cited = observed.cited
     if category == "policy" and answerable:
+        # Policy citations are FAR sections, not event IDs: the leaves' IDs differ
+        # between ledger builds, while sections are stable.
         sections = {s for s, _ in observed.quotes} | set(observed.sections_cited)
+        cited = set(sections)
         policy_ok = answered and expected.section in sections
         # Faithfulness is about quotes that were given: a policy answer that cites the
         # right section without quoting misquotes nothing.
@@ -131,9 +135,9 @@ def score(
         expected_refusal=expected.refuse,
         numeric_exact=numeric,
         must=len(expected.must_cite),
-        cited=len(observed.cited),
-        cited_correct=len(observed.cited & expected.must_cite),
-        cited_allowed=len(observed.cited & expected.may_cite),
+        cited=len(cited),
+        cited_correct=len(cited & expected.must_cite),
+        cited_allowed=len(cited & expected.may_cite),
         policy_section_ok=policy_ok,
         quotes_faithful=quotes_ok,
         injection_ok=injection,
