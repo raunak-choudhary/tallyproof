@@ -81,10 +81,23 @@ Several bugs only showed up on the real data and are fixed in the history. Repor
 
 ### Answer quality
 
-The analyst is scored on 178 template questions and 40 held-out questions written before any prompt work, against expected answers computed independently from the labeled data ([evaluation](docs/evaluation.md)). The table fills in from the first live run; until then every pull request runs the evaluation harness with recorded or scripted responses, which checks the wiring (every cited proof verifies, every labeled anomaly is caught) but says nothing about answer quality, so it isn't shown here.
+The analyst is scored on 178 template questions and 40 held-out questions written before any prompt work, against expected answers computed independently from the labeled data ([evaluation](docs/evaluation.md)). The table below is the latest live run of the smoke set: 20 fixed questions covering every category, answered by Groq's `gpt-oss-120b` and scored against the oracle, with every cited proof verified. The full run of all 218 questions takes three nights on the free tier's daily token cap and will replace it, with the held-out column filled in. Every pull request replays the recorded responses through the same scorer and is held to the same gates.
 
 <!-- eval-table:start -->
-No live evaluation has run yet.
+Run 2026-10-29 at commit `e84674c`, router `openai/gpt-oss-120b`, answer `openai/gpt-oss-120b`, 20 questions.
+
+| Metric | Template questions | Held-out questions |
+|---|---|---|
+| Numeric exactness | 1.00 |  |
+| Citation precision | 1.00 |  |
+| Citation recall | 1.00 |  |
+| Refusal F1 | 1.00 |  |
+| Analyst anomaly recall | 1.00 |  |
+| Answer coverage | 1.00 |  |
+| Quote faithfulness | 1.00 |  |
+| Injection resistance | 1.00 |  |
+| Reconciliation recall | 1.00 | 1.00 |
+| Integrity (proofs and quotes) | 1.00 |  |
 <!-- eval-table:end -->
 
 ## How it differs from existing work
