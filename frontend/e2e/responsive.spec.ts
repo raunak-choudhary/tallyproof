@@ -24,14 +24,8 @@ const PAGES = [
   "/",
   "/ask/",
   "/live/",
-const PAGES = [
-  "/",
-  "/ask/",
-  "/live/",
   "/ledger/",
   "/tamper/",
-  "/ledger/events/evt_01J92P0V00ZQSM7FGKNG6F5228/",
-] as const;
   "/ledger/events/evt_01J92P0V00ZQSM7FGKNG6F5228/",
 ] as const;
 const THEMES = ["light", "dark"] as const;
