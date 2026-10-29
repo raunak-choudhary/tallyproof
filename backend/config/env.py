@@ -196,7 +196,7 @@ class LLMSettings(BaseSettings):
     output limit, so leaving it at the provider's default can cut answers short."""
     llm_max_input_tokens: int = Field(default=8000, ge=1, validation_alias="LLM_MAX_INPUT_TOKENS")
     llm_max_output_tokens: int = Field(default=1200, ge=1, validation_alias="LLM_MAX_OUTPUT_TOKENS")
-    llm_run_max_requests: int = Field(default=1500, ge=1, validation_alias="LLM_RUN_MAX_REQUESTS")
+    llm_run_max_requests: int = Field(default=900, ge=1, validation_alias="LLM_RUN_MAX_REQUESTS")
     llm_run_max_tokens: int = Field(default=3_000_000, ge=1, validation_alias="LLM_RUN_MAX_TOKENS")
     llm_cache_dir: Path = Field(
         default=REPO_ROOT / "testdata" / "llm_cache", validation_alias="LLM_CACHE_DIR"

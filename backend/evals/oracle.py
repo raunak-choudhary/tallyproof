@@ -56,6 +56,12 @@ class Record:
     fields: dict[str, Any]
 
 
+def _subpart(section: str) -> str:
+    """``43.201`` and ``43.202`` are both in subpart ``43.2``; ``4.705-1`` is in ``4.7``."""
+    part, rest = section.split(".", 1)
+    return f"{part}.{rest[0]}"
+
+
 def _fiscal_year(day: date) -> int:
     return day.year + (1 if day.month >= 10 else 0)
 
@@ -141,7 +147,7 @@ class Oracle:
         if kind == "refuse":
             return Expected(refuse=expect["reason"])
         if kind == "policy":
-            return Expected(section=expect["section"])
+            return self._policy(expect["section"])
         if kind == "anomalies":
             return self._anomalies(expect)
         rows = self._select(expect)
@@ -189,6 +195,16 @@ class Oracle:
         if kind == "list":
             return Expected(count=len(rows), must_cite=ids, may_cite=ids)
         raise ValueError(f"unknown expect kind {kind!r}")
+
+    def _policy(self, section: str) -> Expected:
+        """The section a policy answer must cite; neighbours in its subpart may be cited too.
+
+        A question about change orders in general (43.201) is fairly answered with
+        43.202 alongside, so the subpart (43.2) bounds what counts as precise.
+        """
+        subpart = _subpart(section)
+        neighbours = frozenset(s for s in self.sections if _subpart(s) == subpart)
+        return Expected(section=section, must_cite=frozenset({section}), may_cite=neighbours)
 
     def _anomalies(self, expect: dict[str, Any]) -> Expected:
         labels = [x for x in self.labels if x["anomaly"] == expect["anomaly"] and x["event_id"]]

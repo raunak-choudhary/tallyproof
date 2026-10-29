@@ -63,6 +63,7 @@ commands:
       - run:
           name: Evaluate << parameters.set >> in << parameters.mode >> mode
           command: make eval SET=<< parameters.set >> MODE=<< parameters.mode >>
+          no_output_timeout: 30m
       - save_cache:
           key: embeddings-v1-{{ checksum "backend/corpus/far/manifest.json" }}
           paths:

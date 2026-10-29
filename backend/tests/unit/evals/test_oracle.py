@@ -77,3 +77,11 @@ def test_the_committed_question_sets_match_a_rebuild(oracle, tmp_path):
     assert golden.write(oracle, smoke, full) == (20, 178)
     assert smoke.read_text() == golden.SMOKE.read_text()
     assert full.read_text() == golden.FULL.read_text()
+
+
+def test_policy_questions_allow_the_sections_subpart(oracle):
+    expected = oracle.expected({"kind": "policy", "section": "43.201"})
+    assert expected.must_cite == {"43.201"}
+    assert {"43.201", "43.202", "43.204"} <= expected.may_cite
+    assert "43.103" not in expected.may_cite
+    assert "4.705-1" in oracle.expected({"kind": "policy", "section": "4.705-1"}).may_cite

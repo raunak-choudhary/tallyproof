@@ -6,6 +6,7 @@ REPORT = {
     "label": "quality run",
     "run_at": "2026-10-29T03:00:00+00:00",
     "models": {"router": "r-model", "answer": "a-model"},
+    "commit": "abc1234def",
     "metrics": {"questions": 218, "reconciliation_recall": 1.0},
     "by_set": {
         "full": {"numeric_exactness": 0.96, "integrity": 1.0},
@@ -15,7 +16,7 @@ REPORT = {
 
 
 def test_a_quality_run_renders_template_and_held_out_columns():
-    block = table(REPORT, "abc1234def")
+    block = table(REPORT)
     assert block.startswith(START)
     assert block.endswith(END)
     assert "commit `abc1234`" in block

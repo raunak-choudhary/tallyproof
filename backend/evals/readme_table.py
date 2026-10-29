@@ -7,6 +7,8 @@ for a measured result.
 Usage::
 
     python -m evals.readme_table var/eval/<run>/report.json
+
+The commit comes from the report, which records what it measured.
 """
 
 import json
@@ -37,8 +39,9 @@ class NotAQualityRunError(ValueError):
     """The report is a harness check and must not be published."""
 
 
-def table(report: dict[str, Any], commit: str) -> str:
+def table(report: dict[str, Any], commit: str | None = None) -> str:
     """The Markdown block that goes between the README markers."""
+    commit = commit or str(report.get("commit", "unknown"))
     if report["label"] != "quality run":
         raise NotAQualityRunError("only quality runs go in the README")
     sets = report["by_set"]
@@ -75,8 +78,7 @@ def update(readme: str, block: str) -> str:
 def main() -> None:  # pragma: no cover - thin command-line wrapper
     """Write the table from one report into README.md."""
     report = json.loads(Path(sys.argv[1]).read_text())
-    commit = sys.argv[2] if len(sys.argv) > 2 else "unknown"
-    README.write_text(update(README.read_text(), table(report, commit)))
+    README.write_text(update(README.read_text(), table(report)))
 
 
 if __name__ == "__main__":  # pragma: no cover

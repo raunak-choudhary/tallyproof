@@ -14,6 +14,9 @@ thresholds; integrity is held in every mode.
 
 import argparse
 import json
+import os
+import shutil
+import subprocess
 import sys
 import time
 from collections.abc import Callable
@@ -256,6 +259,23 @@ def ask_all(
     return results
 
 
+def _commit() -> str:
+    """The commit being measured: CI's, or the working tree's HEAD."""
+    sha = os.environ.get("CIRCLE_SHA1")
+    if sha:
+        return sha
+    try:
+        git = shutil.which("git")
+        if git is None:
+            return "unknown"
+        out = subprocess.run(  # noqa: S603 - fixed arguments, resolved executable
+            [git, "rev-parse", "HEAD"], capture_output=True, text=True, check=True, timeout=10
+        )
+        return out.stdout.strip()
+    except (OSError, subprocess.SubprocessError):
+        return "unknown"
+
+
 def report(
     results: list[tuple[str, Result]],
     mode: str,
@@ -278,6 +298,7 @@ def report(
         gap = round(a - b, 4) if a is not None and b is not None else None
     return {
         "run_at": datetime.now(UTC).isoformat(timespec="seconds"),
+        "commit": _commit(),
         "mode": mode,
         "label": "harness check" if harness_check else "quality run",
         "cache_misses": meter.misses,

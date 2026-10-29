@@ -133,7 +133,7 @@ The analyst calls its model through one client that speaks the OpenAI chat-compl
 | `LLM_REQUESTS_PER_MINUTE` | no | `10` | Client-side pacing. On Groq's free tier the binding limit is 8,000 tokens a minute, so evaluations run with `4` |
 | `LLM_MAX_INPUT_TOKENS` | no | `8000` | Per request |
 | `LLM_MAX_OUTPUT_TOKENS` | no | `1200` | Per request |
-| `LLM_RUN_MAX_REQUESTS` | no | `1500` | Per evaluation run; the run stops before passing it |
+| `LLM_RUN_MAX_REQUESTS` | no | `900` | Per evaluation run; the run stops before passing it. Kept under Groq's 1,000 a day |
 | `LLM_RUN_MAX_TOKENS` | no | `3000000` | Per evaluation run |
 | `LLM_CACHE_DIR` | no | `testdata/llm_cache` | Recorded responses, committed so CI can replay them without a key |
 | `ANALYST_MAX_INFLIGHT` | planned | `4` | Concurrent analyst requests |
