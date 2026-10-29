@@ -142,6 +142,7 @@ cd frontend && pnpm install && pnpm dev   # open the site and verify records
 | System architecture and the tamper-detection model | [architecture.md](docs/architecture.md) |
 | Schemas, Kafka topics, database, and API | [backend-design.md](docs/backend-design.md) |
 | How answer quality is measured | [evaluation.md](docs/evaluation.md) |
+| What was scaled down for one laptop and free tiers, and how to run the real thing | [limitations.md](docs/limitations.md) |
 | What the full FY2025 build produced | [data-profile.md](docs/data-profile.md) |
 | Threat model and security controls | [threat-model.md](docs/threat-model.md) |
 | Testing approach | [testing.md](docs/testing.md) |

@@ -186,6 +186,8 @@ The browser trusts one thing today: a release public key compiled into the web b
 
 ## Known limits
 
+What was scaled down to run on one laptop and free tiers, and how to run each part at full scale, is in [limitations](limitations.md). The limits below are about the design itself.
+
 - **Completeness.** An inclusion proof shows a record is in the log. It doesn't show an aggregate used every relevant record. The query spec defines which records contribute to each answer shape and shows the filter in plain words, and the browser recomputes totals from the cited records. Until a Merkle-sum tree makes totals provable, aggregates are labeled "recomputed from N cited records," never "proven complete."
 - **Narrative text.** Quotes are checked exactly and numbers are bound, but the prose connecting them is scored by evaluation, not by cryptography.
 - **Source honesty.** The system proves a record is unchanged since ingestion. It can't prove the government recorded it correctly.
