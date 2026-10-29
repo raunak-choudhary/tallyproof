@@ -1,0 +1,6 @@
+{
+  "router_model": "openai/gpt-oss-120b",
+  "answer_model": "openai/gpt-oss-120b",
+  "max_output_tokens": 1200,
+  "reasoning_effort": "low"
+}
