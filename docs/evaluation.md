@@ -37,7 +37,7 @@ The smoke set has 20 fixed questions that cover every category (`backend/evals/q
 
 ### Held-out questions
 
-A frozen set of 40 free-form questions (`backend/evals/questions/held_out.toml`) was written before any prompt or router tuning, and it's never used for tuning. A test pins the file's hash, so changing a question has to be deliberate. Part of it is written by someone other than the author. Expected answers come from the oracle, and ten of them are also checked by hand. Every report shows the gap between template and held-out scores. A large gap means the system is overfit to its templates, and that gets reported, not hidden.
+A frozen set of 40 free-form questions (`backend/evals/questions/held_out.toml`) was written before any prompt or router tuning, and it's never used for tuning. A test pins the file's hash, so changing a question has to be deliberate. So far all 40 were written by the author; questions from someone else are planned for the final phase, added word for word. Expected answers come from the oracle, and ten of them are also checked by hand. Every report shows the gap between template and held-out scores. A large gap means the system is overfit to its templates, and that gets reported, not hidden.
 
 ## Metrics
 
