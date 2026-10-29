@@ -152,3 +152,40 @@ def test_a_total_over_the_cap_keeps_the_full_total_and_labels_its_sample(client,
     assert citation["meaning"] == "the first 10 of the 29 records counted, in log order"
     leaves = [e["leaf_index"] for e in citation["events"]]
     assert leaves == sorted(leaves)
+
+
+def test_an_address_past_its_daily_budget_is_refused_without_a_model_call(client):
+    from apps.analyst import limits
+
+    seal()
+    limits.spend("127.0.0.1", 10**9)
+    body = client.post(
+        "/api/v1/queries", {"question": "How much did HHS obligate?"}, "application/json"
+    ).json()
+    assert (body["status"], body["refusal"]["code"]) == ("refused", "budget_exceeded")
+
+
+def test_answers_spend_from_the_address_budget(client):
+    from apps.analyst import limits
+
+    seal()
+    assert limits.tokens_spent("127.0.0.1") == 0
+    client.post("/api/v1/queries", {"question": "How much did HHS obligate?"}, "application/json")
+    assert limits.tokens_spent("127.0.0.1") > 0
+
+
+def test_a_full_house_gets_503_with_retry_after(client, monkeypatch):
+    import threading
+
+    from apps.analyst import limits
+
+    seal()
+    taken = threading.BoundedSemaphore(1)
+    taken.acquire()
+    monkeypatch.setattr(limits, "_slots", lambda: taken)
+    reply = client.post(
+        "/api/v1/queries", {"question": "How much did HHS obligate?"}, "application/json"
+    )
+    assert reply.status_code == 503
+    assert reply["Retry-After"] == str(limits.RETRY_AFTER_SECONDS)
+    assert reply.json()["type"].endswith("analyst-busy")

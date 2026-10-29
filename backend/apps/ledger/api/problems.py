@@ -18,6 +18,9 @@ CONTENT_TYPE = "application/problem+json"
 class Problem(exceptions.APIException):
     """An API error with its own problem type."""
 
+    wait: float | None = None
+    """Seconds to wait before retrying; DRF sends it as a Retry-After header when set."""
+
     def __init__(self, status_code: int, code: str, title: str, detail: str) -> None:
         """Describe the problem; ``code`` becomes the last segment of its type URI."""
         super().__init__(detail=detail, code=code)

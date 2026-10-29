@@ -6,6 +6,7 @@ from typing import Any
 
 from django.db import connections
 
+from apps.analyst import limits
 from apps.analyst.answer import Evidence
 from apps.analyst.llm import LLMClient, LLMError, LLMRequest, LLMResponse, OpenAICompatibleClient
 from apps.analyst.models import AnalystAnswer
@@ -27,7 +28,7 @@ REFUSAL_MESSAGES = {
     "too_broad": "That list has more records than one answer may carry; narrow the question.",
     "unsafe_query": "The question couldn't be turned into a query that's safe to run.",
     "unverifiable_claim": "The drafted answer didn't pass verification, so it isn't shown.",
-    "budget_exceeded": "The analyst has reached its usage limit for now.",
+    "budget_exceeded": "This address has used today's share of the analyst; try again tomorrow.",
     "model_unavailable": "The language model isn't available right now.",
     "no_checkpoint": "Nothing has been signed into the log yet.",
 }
@@ -178,21 +179,33 @@ def answer_question(
     client: LLMClient | None = None,
     search: Any = None,  # noqa: ANN401 - a search callable, swapped in tests
     chosen: Models | None = None,
+    address: str | None = None,
 ) -> AnalystAnswer:
-    """Answer as of the newest signed checkpoint and store the result."""
+    """Answer as of the newest signed checkpoint and store the result.
+
+    With ``address``, the answer counts against that address's daily token budget,
+    and a question from an address past its budget is refused without a model call.
+    """
     latest = LedgerBatch.objects.order_by("-tree_size").values_list("tree_size", flat=True).first()
     chosen = chosen or models()
     if latest is None:
         refused = Answer(question, "refused", None, refusal="no_checkpoint")
         return store(refused, chosen, 0)
+    if address is not None and limits.over_budget(address):
+        return store(
+            Answer(question, "refused", None, refusal="budget_exceeded"), chosen, int(latest)
+        )
     runner = executor or AnalystConnection()
+    counting = limits.CountingClient(client or model_client())
     result = ask(
         question,
-        client=client or model_client(),
+        client=counting,
         executor=runner,
         search=search or search_policy,
         models=chosen,
         agencies=agencies(runner),
         tree_size=int(latest),
     )
+    if address is not None:
+        limits.spend(address, counting.tokens)
     return store(result, chosen, int(latest))

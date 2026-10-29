@@ -54,6 +54,12 @@ class AppSettings(BaseSettings):
     db_owner_url: SecretStr | None = Field(default=None, validation_alias="DB_OWNER_URL")
     db_analyst_url: SecretStr | None = Field(default=None, validation_alias="DB_ANALYST_URL")
     db_analyst_max_rows: int = Field(default=1000, ge=1, validation_alias="DB_ANALYST_MAX_ROWS")
+    analyst_max_inflight: int = Field(default=4, ge=1, validation_alias="ANALYST_MAX_INFLIGHT")
+    """Questions answered at once in one process; past this, a 503 with Retry-After."""
+    analyst_per_ip_daily_tokens: int = Field(
+        default=50_000, ge=1, validation_alias="ANALYST_PER_IP_DAILY_TOKENS"
+    )
+    """Model tokens one client address may spend a day; past this, budget_exceeded."""
     """Most records one answer may cite; a question that needs more is refused as too broad."""
 
     kafka_bootstrap_servers: str = Field(validation_alias="KAFKA_BOOTSTRAP_SERVERS")
