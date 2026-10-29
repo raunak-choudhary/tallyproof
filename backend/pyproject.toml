@@ -45,7 +45,7 @@ convention = "google"
 # bound parameter. Its unit tests pin the exact SQL it emits.
 "apps/analyst/compiler.py" = ["S608"]
 # The guard's test corpus builds hostile SQL on purpose.
-"tests/unit/analyst/test_sql_guard.py" = ["S101", "D", "ANN", "S608"]
+"tests/unit/analyst/test_sql_guard.py" = ["S101", "D", "ANN", "S608", "E501"]
 
 [tool.mypy]
 python_version = "3.12"

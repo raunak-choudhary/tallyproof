@@ -13,10 +13,6 @@ ALLOWED = [
     "SELECT o.piid FROM obligations o LEFT JOIN awards a USING (award_key) "
     "WHERE a.total_outlays > 0",
     "WITH big AS (SELECT * FROM obligations WHERE amount > 1000000) SELECT count(*) FROM big",
-    "SELECT CASE WHEN amount < 0 THEN 'down' ELSE 'up' END AS direction, count(*) FROM obligations "
-    "GROUP BY 1",
-    "SELECT extract(year FROM action_date) AS y, round(sum(amount)::numeric, 2) "
-    "FROM obligations GROUP BY y",
     "SELECT piid FROM obligations o WHERE NOT EXISTS "
     "(SELECT 1 FROM outlays p WHERE p.award_key = o.award_key)",
     "SELECT * FROM breaks WHERE break_type IN ('orphan_outlay', 'late_after_close') "
@@ -64,7 +60,7 @@ HOSTILE = [
         Rejection.CONSTRUCT,
     ),
     ("SELECT * FROM obligations LIMIT 10 OFFSET 5", Rejection.CONSTRUCT),
-    ("SELECT * FROM obligations LIMIT (SELECT 1)", Rejection.CONSTRUCT),
+    ("SELECT * FROM obligations LIMIT (SELECT 1)", Rejection.PROJECTION),
     ("SELECT string_agg(piid, ',') FROM obligations", Rejection.CONSTRUCT),
     ("SELECT row_number() OVER () FROM obligations", Rejection.CONSTRUCT),
     # Casts
@@ -76,6 +72,49 @@ HOSTILE = [
     ("SELECT * FROM obligations CROSS JOIN outlays", Rejection.JOIN),
     ("SELECT * FROM obligations NATURAL JOIN outlays", Rejection.JOIN),
     ("SELECT * FROM obligations o JOIN outlays p USING (fiscal_year)", Rejection.JOIN),
+    # Computed output values: a number typed into SQL must never become a cited value
+    (
+        "SELECT event_id, leaf_index, CAST('987654321.00' AS DECIMAL) AS amount FROM obligations",
+        Rejection.PROJECTION,
+    ),
+    ("SELECT event_id, leaf_index, amount * 1000 AS amount FROM obligations", Rejection.PROJECTION),
+    (
+        "SELECT CASE WHEN amount < 0 THEN 'down' ELSE 'up' END AS d, count(*) FROM obligations GROUP BY 1",
+        Rejection.PROJECTION,
+    ),
+    ("SELECT round(sum(amount), 2) FROM obligations", Rejection.PROJECTION),
+    (
+        "SELECT o.event_id, p.leaf_index, p.period_outlay FROM obligations o JOIN outlays p ON o.award_key = p.award_key",
+        Rejection.PROJECTION,
+    ),
+    ("SELECT amount::double FROM obligations", Rejection.CAST),
+    # CTE shadowing: a name must resolve the way Postgres resolves it
+    (
+        "WITH x AS (WITH pg_stat_activity AS (SELECT event_id FROM obligations) SELECT event_id FROM pg_stat_activity) SELECT * FROM pg_stat_activity",
+        Rejection.CONSTRUCT,
+    ),
+    (
+        "WITH obligation_descriptions AS (SELECT * FROM obligation_descriptions) SELECT * FROM obligation_descriptions",
+        Rejection.RELATION,
+    ),
+    (
+        "WITH a AS (SELECT * FROM b), b AS (SELECT * FROM obligations) SELECT * FROM a",
+        Rejection.RELATION,
+    ),
+    (
+        "SELECT * FROM obligations WHERE event_id IN (WITH pg_roles AS (SELECT event_id FROM obligations) SELECT event_id FROM pg_roles)",
+        Rejection.CONSTRUCT,
+    ),
+    # Joins that compare a key with itself, or hide behind OR, are cartesian
+    (
+        "SELECT a.piid FROM obligations a JOIN outlays b ON a.award_key = a.award_key",
+        Rejection.JOIN,
+    ),
+    (
+        "SELECT a.piid FROM obligations a JOIN outlays b ON a.award_key = b.award_key OR TRUE",
+        Rejection.JOIN,
+    ),
+    ("SELECT a.piid FROM obligations a JOIN outlays b ON award_key = award_key", Rejection.JOIN),
     # Size
     ("SELECT " + " + ".join(["amount"] * 300) + " FROM obligations", Rejection.TOO_COMPLEX),
     ("SELECT " + "(" * 40 + "amount" + ")" * 40 + " FROM obligations", Rejection.TOO_COMPLEX),
@@ -106,3 +145,23 @@ def test_the_sql_that_runs_is_rebuilt_from_the_tree():
 def test_a_larger_limit_is_tightened_and_a_smaller_one_kept():
     assert guard("SELECT piid FROM obligations LIMIT 999", max_rows=10).sql.endswith("LIMIT 10")
     assert guard("SELECT piid FROM obligations LIMIT 3", max_rows=10).sql.endswith("LIMIT 3")
+
+
+def test_every_view_is_pinned_to_the_checkpoint():
+    sql = guard(
+        "SELECT o.event_id, o.leaf_index, o.piid FROM obligations o "
+        "JOIN outlays p ON p.award_key = o.award_key",
+        max_rows=10,
+        tree_size=500,
+    ).sql
+    assert "o.leaf_index < 500" in sql
+    assert "p.leaf_index < 500" in sql
+    nested = guard(
+        "SELECT piid FROM obligations o WHERE NOT EXISTS "
+        "(SELECT 1 FROM outlays p WHERE p.award_key = o.award_key)",
+        max_rows=10,
+        tree_size=7,
+    ).sql
+    assert nested.count("< 7") == 2
+    breaks = guard("SELECT break_id, break_type FROM breaks", max_rows=10, tree_size=9).sql
+    assert "found_at_leaf_index < 9" in breaks
