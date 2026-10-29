@@ -282,3 +282,14 @@ def test_a_data_answer_may_not_pass_a_verdict():
         (Quote("q1", "signed by both parties"),),
     )
     assert verify(quoted, policy_evidence()).ok
+
+
+def test_a_number_rebuilt_from_the_filters_digit_groups_is_still_free():
+    e = Evidence(filter_words="obligations where amount is above 1,000.00")
+    cite = e.add_citation([("evt_a", 1)], "row 1")
+    e.add_slot("money", Decimal(5000), "total", cite)
+    forged = Draft("The total was {{s1}} [[c1]], against a budget of $1,000,000,000.00.")
+    assert verify(forged, e).problems == ("free_number:$1,000,000,000.00.",)
+    assert verify(Draft("It was {{s1}} at 1.00 [[c1]]."), e).problems == ("free_number:1.00",)
+    shown = Draft("Above 1,000.00, the total was {{s1}} [[c1]].")
+    assert verify(shown, e).ok
