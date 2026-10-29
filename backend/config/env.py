@@ -168,7 +168,7 @@ class LLMSettings(BaseSettings):
     """Which model provider the analyst and the evaluation judge call, and the limits.
 
     The provider is anything that serves the OpenAI chat-completions protocol; the
-    first live provider is Google Gemini's free tier. Model IDs and the base URL
+    live provider is Groq's free tier. Model IDs and the base URL
     always come from here, never from code.
     """
 
@@ -192,7 +192,7 @@ class LLMSettings(BaseSettings):
     llm_reasoning_effort: Literal["none", "minimal", "low", "medium", "high"] | None = Field(
         default=None, validation_alias="LLM_REASONING_EFFORT"
     )
-    """How hard a thinking model reasons first. Gemini's thinking counts against the
+    """How hard a thinking model reasons first. Thinking counts against the
     output limit, so leaving it at the provider's default can cut answers short."""
     llm_max_input_tokens: int = Field(default=8000, ge=1, validation_alias="LLM_MAX_INPUT_TOKENS")
     llm_max_output_tokens: int = Field(default=1200, ge=1, validation_alias="LLM_MAX_OUTPUT_TOKENS")
