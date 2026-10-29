@@ -137,6 +137,8 @@ cd frontend && pnpm install && pnpm dev   # open the site and verify records
 
 ## Documentation
 
+The documents below are also published as a site, with API reference pages generated from the code, at [raunak-choudhary.github.io/tallyproof/docs](https://raunak-choudhary.github.io/tallyproof/docs/).
+
 | Topic | Document |
 |---|---|
 | System architecture and the tamper-detection model | [architecture.md](docs/architecture.md) |

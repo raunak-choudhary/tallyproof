@@ -1,0 +1,110 @@
+# The documentation site, published beside the demo at /tallyproof/docs/.
+# Built by the Pages workflow; locally with `make docs` (serve) or `make docs-build`.
+site_name: Tallyproof
+site_description: How Tallyproof records public spending, proves every record, and answers questions with citations a reader can verify.
+site_url: https://raunak-choudhary.github.io/tallyproof/docs/
+repo_url: https://github.com/raunak-choudhary/tallyproof
+repo_name: raunak-choudhary/tallyproof
+edit_uri: edit/main/docs/
+docs_dir: docs
+strict: true
+
+theme:
+  name: material
+  features:
+    - navigation.sections
+    - navigation.top
+    - navigation.footer
+    - search.suggest
+    - content.code.copy
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+
+plugins:
+  - search
+  - mkdocstrings:
+      default_handler: python
+      handlers:
+        python:
+          paths: [backend]
+          options:
+            docstring_style: google
+            show_source: false
+            show_root_heading: true
+            show_root_full_path: false
+            members_order: source
+            filters: ["!^_"]
+
+validation:
+  omitted_files: warn
+  absolute_links: warn
+  unrecognized_links: warn
+
+nav:
+  - Overview: index.md
+  - Design:
+      - Architecture and tamper detection: architecture.md
+      - Backend design: backend-design.md
+      - Evaluation: evaluation.md
+      - Limitations and how to lift them: limitations.md
+      - Data profile: data-profile.md
+      - Threat model: threat-model.md
+      - AWS reference architecture: aws-reference-architecture.md
+  - Operating:
+      - Runbook: runbook.md
+      - Configuration: configuration.md
+      - Testing: testing.md
+      - Technology choices: tech-stack.md
+  - Contributing:
+      - Coding standards: coding-standards.md
+      - Frontend guidelines: frontend-guidelines.md
+  - Decisions:
+      - All decisions: adr/README.md
+      - "ADR-0001: PostgreSQL over NoSQL for the ledger": adr/0001-postgres-over-nosql.md
+      - "ADR-0002: Redpanda as the local Kafka-compatible broker": adr/0002-redpanda-for-local-kafka.md
+      - "ADR-0003: Merkle log structure and batching policy": adr/0003-merkle-batching-strategy.md
+      - "ADR-0004: Django 5.2 LTS": adr/0004-django-5-2-lts.md
+      - "ADR-0005: Replay mode for the public demo": adr/0005-replay-mode-public-demo.md
+      - "ADR-0006: Project name": adr/0006-project-name.md
+      - "ADR-0007: Signed checkpoints and external witnessing": adr/0007-signed-checkpoints-and-witnessing.md
+      - "ADR-0008: Effectively-once ingestion with Bloom fast path": adr/0008-effectively-once-ingestion.md
+      - "ADR-0009: Bound-claim answer format (the model never types a number)": adr/0009-bound-claims-answer-format.md
+      - "ADR-0010: RFC 8785 canonical JSON for leaf bytes": adr/0010-canonical-json-rfc8785.md
+      - "ADR-0011: release-please runs on a minimal GitHub Actions workflow": adr/0011-release-automation-on-github-actions.md
+      - "ADR-0012: Parquet lake on SeaweedFS (S3 API)": adr/0012-lake-sink-and-object-store.md
+      - "ADR-0013: Derive a double-entry journal from events": adr/0013-double-entry-journal.md
+      - "ADR-0014: Constrained query IR compiled to SQL (guarded text-to-SQL, done safely)": adr/0014-constrained-query-ir.md
+      - "ADR-0015: Verification trust model (what the green check actually proves)": adr/0015-verification-trust-model.md
+      - "ADR-0016: Real public spending data with a labeled synthetic overlay": adr/0016-real-public-data-sources.md
+      - "ADR-0017: PySpark 4.1 for batch processing, with Deequ data quality checks": adr/0017-spark-batch-processing-and-deequ.md
+      - "ADR-0018: Uvicorn instead of Daphne for the WebSocket server": adr/0018-uvicorn-for-websockets.md
+      - "ADR-0019: Derived state is projected from the ledger, not consumed from Kafka": adr/0019-projections-read-the-ledger.md
+      - "ADR-0020: GitHub Pages for the public demo, deployed by GitHub Actions": adr/0020-github-pages-for-the-demo-site.md
+      - "ADR-0021: One OpenAI-compatible model client, running on Groq's free tier": adr/0021-openai-compatible-client-on-groq.md
+      - "ADR-0022: fastembed and an in-memory index for policy retrieval": adr/0022-fastembed-and-an-in-memory-policy-index.md
+      - "ADR-0023: Evaluation runs are recorded as reports, in a throwaway ledger": adr/0023-evaluation-runs-recorded-as-reports.md
+  - API reference:
+      - Core library: reference/core.md
+      - Analyst: reference/analyst.md
+  - Sources: references.md
