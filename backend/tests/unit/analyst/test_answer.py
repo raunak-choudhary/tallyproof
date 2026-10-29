@@ -210,3 +210,35 @@ def test_a_citation_says_when_it_is_a_sample():
     assert e.citations[full].sample_of is None
     assert e.citations[part].sample_of == 40
     assert e.sampled
+
+
+def policy_evidence() -> Evidence:
+    e = Evidence(assurance="policy")
+    e.sources["q1"] = QuoteSource(
+        "q1", "evt_far", 9, "43.103", "Types of contract modifications.", "excerpt",
+        "(a) Bilateral. A bilateral modification is a contract modification "
+        "signed by both parties.",
+    )  # fmt: skip
+    return e
+
+
+def test_a_policy_answer_needs_a_quote():
+    bare = Draft("Bilateral modifications need both parties [[q1]].")
+    assert verify(bare, policy_evidence()).problems == ("quote_required",)
+    quoted = Draft(
+        "Bilateral modifications need both parties [[q1]].",
+        (Quote("q1", "signed by both parties"),),
+    )
+    assert verify(quoted, policy_evidence()).ok
+
+
+def test_text_quoted_inline_must_come_from_a_source_the_sentence_cites():
+    quote = (Quote("q1", "signed by both parties"),)
+    honest = Draft('The FAR says a bilateral change is "signed by both parties" [[q1]].', quote)
+    assert verify(honest, policy_evidence()).ok
+    curly = Draft("The FAR says it is “signed by both parties” [[q1]].", quote)
+    assert verify(curly, policy_evidence()).ok
+    invented = Draft('The FAR says it "may be signed by either party alone" [[q1]].', quote)
+    assert verify(invented, policy_evidence()).problems == ("inline_quote_unchecked",)
+    uncited = Draft('Total {{s1}} was "signed by both parties" [[c1]].')
+    assert verify(uncited, evidence()).problems == ("inline_quote_unchecked",)

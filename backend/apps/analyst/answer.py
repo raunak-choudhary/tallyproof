@@ -47,6 +47,8 @@ NUMBER_WORDS = {
 out: it reads as a pronoun far more often than as a count ("no one", "one of")."""
 NUMBER_WORD = re.compile(r"\b(" + "|".join(NUMBER_WORDS) + r")\b", re.IGNORECASE)
 NUMERIC_SLOT_KINDS = frozenset({"money", "count"})
+INLINE_QUOTE = re.compile(r"[\"\u201c]([^\"\u201c\u201d]{8,})[\"\u201d]")
+"""Text the model put in quotation marks inside its own sentence."""
 SCALE_AFTER = re.compile(
     r"\{\{\s*(s\d+)\s*\}\}(?:[0-9%]|\s*(?:k|m|bn|mn|thousand|million|billion|trillion)\b)",
     re.IGNORECASE,
@@ -402,6 +404,10 @@ def verify(draft: Draft, evidence: Evidence) -> Verdict:
             if not set(DIGITS.findall(token)) <= sentence_allowed:
                 free += 1
                 problems.append(f"free_number:{token}")
+        for inline in INLINE_QUOTE.findall(prose):
+            cited = [evidence.sources[c] for c in cites if c in evidence.sources]
+            if not any(_normalize(inline) in _normalize(s.leaf_text) for s in cited):
+                problems.append("inline_quote_unchecked")
         numerals = _numeral_problems(prose, sentence_allowed)
         free += len(numerals)
         problems += numerals
@@ -416,6 +422,9 @@ def verify(draft: Draft, evidence: Evidence) -> Verdict:
             problems.append(f"quote_mismatch:{quote.source}")
     if not kept and not draft.quotes:
         problems.append("no_claims")
+    elif evidence.assurance == "policy" and not draft.quotes:
+        # A policy answer is about the regulation's words, so it must show some of them.
+        problems.append("quote_required")
     return Verdict(tuple(dict.fromkeys(problems)), tuple(kept), free)
 
 
