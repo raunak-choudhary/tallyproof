@@ -97,7 +97,11 @@ export function EventVerifier({ eventId }: { eventId: string }) {
         <p className="mt-1 text-sm text-fg-muted">
           Leaf {record.leafIndex} of {bundle.manifest.tree_size} in log {bundle.manifest.origin}
         </p>
-        <pre className="mt-3 overflow-x-auto rounded-[var(--radius)] border border-border bg-bg-elevated p-4 font-mono text-sm">
+        <pre
+          tabIndex={0}
+          aria-label="The record's canonical bytes, scrollable"
+          className="mt-3 overflow-x-auto rounded-[var(--radius)] border border-border bg-bg-elevated p-4 font-mono text-sm"
+        >
           {JSON.stringify(parsed, null, 2)}
         </pre>
       </section>

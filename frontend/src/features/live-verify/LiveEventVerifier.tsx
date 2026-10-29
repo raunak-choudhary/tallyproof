@@ -73,7 +73,11 @@ export function LiveEventVerifier({ base, eventId }: { base: string; eventId: st
         <p className="mt-1 text-sm text-fg-muted">
           Leaf {event.leafIndex}, proved against a signed checkpoint of {proof.treeSize} records
         </p>
-        <pre className="mt-3 overflow-x-auto rounded-[var(--radius)] border border-border bg-bg-elevated p-4 font-mono text-sm">
+        <pre
+          tabIndex={0}
+          aria-label="The record's canonical bytes, scrollable"
+          className="mt-3 overflow-x-auto rounded-[var(--radius)] border border-border bg-bg-elevated p-4 font-mono text-sm"
+        >
           {JSON.stringify(parsed, null, 2)}
         </pre>
       </section>
