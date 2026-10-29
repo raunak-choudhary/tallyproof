@@ -12,6 +12,9 @@ repos:
         exclude: \.md$
       - id: end-of-file-fixer
       - id: check-yaml
+        # mkdocs.yml tags a Python function for Mermaid fences, which a plain YAML
+        # loader rejects; `make docs-build` and the Pages build parse it strictly.
+        exclude: ^mkdocs\.yml$
       - id: check-toml
       - id: check-merge-conflict
       - id: check-added-large-files
