@@ -7,5 +7,8 @@
 /Makefile                @raunak-choudhary
 /frontend/public/replay/ @raunak-choudhary
 /backend/corpus/         @raunak-choudhary
-/evals/thresholds.toml   @raunak-choudhary
+/backend/evals/thresholds.toml @raunak-choudhary
+/backend/evals/questions/ @raunak-choudhary
+/testdata/llm_cache/     @raunak-choudhary
+/testdata/eval/          @raunak-choudhary
 /docs/adr/               @raunak-choudhary
