@@ -304,8 +304,11 @@ def build(oracle: Oracle) -> tuple[list[Row], list[Row]]:
     by_category: dict[str, list[Row]] = defaultdict(list)
     for row in every:
         by_category[row["category"]].append(row)
+    # A small slice may lack a category entirely; take what exists.
     picked = [
-        row for category, n in SMOKE_PLAN.items() for row in rng.sample(by_category[category], n)
+        row
+        for category, n in SMOKE_PLAN.items()
+        for row in rng.sample(by_category[category], min(n, len(by_category[category])))
     ]
     chosen = list(picked)
     for category, rows in by_category.items():

@@ -30,6 +30,9 @@ from tallyproof_pipeline.overlay import Label, inject, write_labels
 from tallyproof_pipeline.settings import REPO_ROOT, get_settings
 
 OUT_DIR = REPO_ROOT / "testdata" / "eval"
+DEMO_DIR = REPO_ROOT / "var" / "eval-data" / "demo"
+DEMO_EVENTS = 20_000
+"""The demo streams the first 20,000 gold events (``DATA_SCENARIO=demo``); so does this."""
 SEED = 2026
 PER_ANOMALY = 3
 
@@ -173,6 +176,40 @@ def build(gold_dir: Path, out_dir: Path = OUT_DIR) -> dict[str, object]:
     return manifest
 
 
+def build_demo(
+    gold_dir: Path, out_dir: Path = DEMO_DIR, events: int = DEMO_EVENTS
+) -> dict[str, object]:
+    """The demo's own slice: the first gold events, with gold's labels that fall inside it.
+
+    Not committed: it is about 2 MB and derived from a local gold build. It exists to
+    measure the analyst at the scale the demo runs, where totals pass the citation cap.
+    """
+    out_dir.mkdir(parents=True, exist_ok=True)
+    kept: set[str] = set()
+    with (
+        gzip.open(gold_dir / "events.jsonl.gz", "rt", encoding="utf-8") as source,
+        gzip.open(out_dir / "events.jsonl.gz", "wt", encoding="utf-8") as target,
+    ):
+        for n, line in enumerate(source):
+            if n == events:
+                break
+            kept.add(json.loads(line)["event_id"])
+            target.write(line)
+    with (gold_dir / "labels.jsonl").open(encoding="utf-8") as handle:
+        labels = [json.loads(line) for line in handle]
+    inside = [x for x in labels if x["event_id"] in kept]
+    with (out_dir / "labels.jsonl").open("w", encoding="utf-8") as handle:
+        for label in inside:
+            handle.write(json.dumps(label, sort_keys=True) + "\n")
+    manifest = {
+        "source": "first gold events, as the demo streams them",
+        "events": len(kept),
+        "labels": dict(sorted(Counter(x["anomaly"] for x in inside).items())),
+    }
+    (out_dir / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+    return manifest
+
+
 def load_labels(out_dir: Path = OUT_DIR) -> list[Label]:
     """Read the dataset's ground truth. Only the evaluation harness may call this."""
     with (out_dir / "labels.jsonl").open(encoding="utf-8") as handle:
@@ -180,9 +217,14 @@ def load_labels(out_dir: Path = OUT_DIR) -> list[Label]:
 
 
 def main() -> None:  # pragma: no cover - thin command-line wrapper
-    """Rebuild ``testdata/eval`` from the local gold build."""
-    manifest = build(get_settings().gold_dir)
-    print(json.dumps(manifest, indent=2))
+    """Rebuild ``testdata/eval``, or the demo-scale slice with ``--scale demo``."""
+    import argparse
+
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("--scale", choices=["eval", "demo"], default="eval")
+    gold = get_settings().gold_dir
+    builder = build_demo if parser.parse_args().scale == "demo" else build
+    print(json.dumps(builder(gold), indent=2))
 
 
 if __name__ == "__main__":  # pragma: no cover

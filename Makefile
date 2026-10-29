@@ -150,14 +150,15 @@ data-sample: require-venv ## Refresh the committed real-data sample from gold
 
 SET ?= smoke
 MODE ?= cached
-eval: require-venv $(INTEGRATION_NEEDS) ## Run an evaluation in a throwaway database: SET=smoke|full|held_out|all MODE=fake|cached|live
-	cd $(BACKEND) && $(INTEGRATION_ENV) .venv/bin/python -m evals.runner --set $(SET) --mode $(MODE)
+SCALE ?= eval
+eval: require-venv $(INTEGRATION_NEEDS) ## Run an evaluation in a throwaway database: SET=smoke|full|held_out|all MODE=fake|cached|live SCALE=eval|demo
+	cd $(BACKEND) && $(INTEGRATION_ENV) .venv/bin/python -m evals.runner --set $(SET) --mode $(MODE) --scale $(SCALE)
 
 eval-questions: require-venv ## Rebuild the smoke and full question sets from the evaluation dataset
 	cd $(BACKEND) && .venv/bin/python -m evals.golden
 
-eval-dataset: require-venv ## Rebuild the committed evaluation dataset from gold
-	cd $(BACKEND) && .venv/bin/python -m evals.dataset
+eval-dataset: require-venv ## Rebuild the evaluation dataset from gold: SCALE=eval (committed) or demo (local, the first 20,000 events)
+	cd $(BACKEND) && .venv/bin/python -m evals.dataset --scale $(SCALE)
 
 keygen: require-venv ## Create a signing key in secrets/ (KEY=dev or KEY=rel)
 	cd $(BACKEND) && .venv/bin/python -m tallyproof_pipeline.keygen $(or $(KEY),dev)

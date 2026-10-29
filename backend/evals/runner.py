@@ -26,6 +26,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from evals import harness
+from evals.dataset import DEMO_DIR
+from evals.dataset import OUT_DIR as EVAL_DIR
 from evals.golden import FULL, SMOKE
 from evals.oracle import Oracle
 from evals.questions import HELD_OUT, Question, load
@@ -45,6 +47,56 @@ RECONCILED = {
     "outlay_exceeds_obligation": "outlay_exceeds_obligation",
 }
 """Which reconciliation break each labeled anomaly should produce, restated here."""
+
+
+def demo_questions(oracle: Oracle) -> list[Question]:
+    """The smoke-shaped set generated from the dataset, plus totals that pass the citation cap.
+
+    Template sampling can land on small agencies, which would measure nothing about
+    large totals, so the two agencies with the most records always get a total and a
+    count, and one question ranks every agency.
+    """
+    from collections import Counter
+
+    from evals import golden
+
+    smoke, _ = golden.build(oracle)
+    rows = [{**row, "set": "demo"} for row in smoke]
+    sizes = Counter(
+        r.fields["awarding_agency"]
+        for r in oracle.records
+        if r.event_type.startswith("obligation.") and r.fields.get("awarding_agency")
+    )
+    large = [agency for agency, _ in sizes.most_common(2)]
+    n = 0
+    for agency in large:
+        for text, kind in (
+            (f"What has {agency} obligated in total?", "sum"),
+            (f"How many contract actions has {agency} recorded?", "count"),
+        ):
+            n += 1
+            expect = {"kind": kind, "entity": "obligations", "awarding_agency": agency}
+            rows.append(
+                {"id": f"L{n:03d}", "text": text, "category": "numeric_aggregate", "expect": expect}
+            )
+    rows.append(
+        {
+            "id": f"L{n + 1:03d}",
+            "text": "Which agency has obligated the most, and how much?",
+            "category": "numeric_aggregate",
+            "expect": {"kind": "top", "entity": "obligations", "group_by": "awarding_agency"},
+        }
+    )
+    return [
+        Question(
+            id=row["id"],
+            text=row["text"],
+            category=row["category"],
+            expect=row["expect"],
+            must_not_say=tuple(row.get("must_not_say", ())),
+        )
+        for row in rows
+    ]
 
 
 def fake_script(request: Any) -> str:  # noqa: ANN401 - an LLMRequest; typed loosely to stay import-free
@@ -208,6 +260,7 @@ def _observe(answer: Any, integrity: Integrity, tokens: int, elapsed_ms: int) ->
         tokens=tokens,
         latency_ms=elapsed_ms,
         integrity_ok=leaf_text_ok and integrity.events(cited),
+        sampled=bool(evidence is not None and evidence.sampled),
     )
 
 
@@ -352,11 +405,24 @@ def main(argv: list[str] | None = None) -> int:  # pragma: no cover - exercised 
     parser.add_argument("--set", choices=sorted(SETS), default="smoke")
     parser.add_argument("--mode", choices=["fake", "cached", "live"], default="cached")
     parser.add_argument("--out", type=Path, default=OUT)
+    parser.add_argument(
+        "--scale",
+        choices=["eval", "demo"],
+        default="eval",
+        help="eval: the committed dataset; demo: the first 20,000 gold events, as the demo runs",
+    )
     args = parser.parse_args(argv)
-    questions = [(p.stem, q) for p in SETS[args.set] for q in load(p)]
-    oracle = Oracle()
+    dataset = DEMO_DIR if args.scale == "demo" else EVAL_DIR
+    if not (dataset / "events.jsonl.gz").exists():
+        print(f"no dataset at {dataset}; run make eval-dataset SCALE={args.scale}")
+        return 2
+    oracle = Oracle(dataset)
+    if args.scale == "demo":
+        questions = [("demo", q) for q in demo_questions(oracle)]
+    else:
+        questions = [(p.stem, q) for p in SETS[args.set] for q in load(p)]
     with harness.database():
-        built = harness.build()
+        built = harness.build(dataset)
         print(f"ledger built: {built.events} events, {built.policy_sections} FAR leaves, "
               f"checkpoint at {built.tree_size}")  # fmt: skip
         meter, models = _client(args.mode)
