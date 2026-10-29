@@ -16,6 +16,8 @@ export interface Bundle {
   records: BundleRecord[];
   leaves: Uint8Array[];
   latestCheckpointNote: string;
+  /** Every checkpoint the bundle ships, oldest first; each note is signed by the pinned key. */
+  checkpoints: { treeSize: number; note: string }[];
   manifest: { origin: string; tree_size: number; root_hash_hex: string };
 }
 
@@ -73,6 +75,7 @@ export async function loadBundle(base: string, pinnedKey: VerifierKey): Promise<
     records,
     leaves: records.map((r) => leafHash(utf8(r.canonical))),
     latestCheckpointNote: latest.note,
+    checkpoints: checkpoints.map((c) => ({ treeSize: c.tree_size, note: c.note })),
     manifest,
   };
 }
