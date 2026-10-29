@@ -92,6 +92,10 @@ On its first start, Postgres creates three roles from `infra/postgres/create-rol
 | `make fanout` | Forwards appended events and breaks to WebSocket clients |
 | `make stream` | WebSocket endpoint on port 8001 |
 
+### Documentation site
+
+`make docs` serves this documentation with live reload at http://127.0.0.1:8100, and `make docs-build` builds it the way the Pages workflow does, failing on any broken link or reference, into `var/docs-site`. The API reference pages come from the docstrings in `tallyproof_core` and `apps.analyst`, read without importing the code.
+
 ### Policy corpus
 
 The FAR text the analyst can quote lives in `backend/corpus/far/`, one JSON Lines file per part plus a manifest of text hashes. `make policy-fetch` refreshes it from the latest eCFR edition; review the diff and commit it like code. `make policy-publish` sends it to the raw topic, where each section becomes a ledger leaf. Sections whose text hasn't changed are refused as duplicates, so publishing again is safe.
