@@ -241,6 +241,15 @@ jobs:
       - run-eval:
           set: smoke
           mode: cached
+      - run:
+          name: Changes to the analyst come with recorded responses
+          command: |
+            if [ "$CIRCLE_BRANCH" = "main" ]; then
+              echo "On main: the pull request was already checked."
+              exit 0
+            fi
+            git fetch --quiet origin main
+            python3 scripts/ci/check_eval_recordings.py "origin/main...HEAD"
 
   # Weekly, from a scheduled trigger only. The llm-eval context holds the provider key and is limited to main.
   eval-weekly:
