@@ -106,3 +106,19 @@ def test_policy_credit_comes_from_cited_sections_and_anomalies_dont_hurt_precisi
     assert values["citation_precision"] is None
     assert values["anomaly_findings_beyond_labels"] == 2
     assert values["anomaly_recall"] == 1.0
+
+
+def test_quote_faithfulness_counts_only_answers_that_quote():
+    quoted = score(
+        "P1", "q", "policy", True, Expected(section="1.1"), observed(quotes=[("1.1", "x")])
+    )
+    cited_only = score(
+        "P2", "q", "policy", True, Expected(section="1.1"), observed(sections_cited=["1.1"])
+    )
+    bad = score(
+        "P3", "q", "policy", True, Expected(section="1.1"),
+        observed(quotes=[("1.1", "x")], integrity_ok=False),
+    )  # fmt: skip
+    assert cited_only.quotes_faithful is None
+    assert metrics([quoted, cited_only])["quote_faithfulness"] == 1.0
+    assert metrics([quoted, bad])["quote_faithfulness"] == 0.5
