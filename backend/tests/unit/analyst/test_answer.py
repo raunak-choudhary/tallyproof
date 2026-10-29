@@ -130,13 +130,28 @@ def test_list_lookup_and_absence_rows_each_get_a_citation():
     assert [x.value for x in e.slots.values()] == ["AWD", Decimal(4)]
 
 
-def test_numbers_from_a_cited_regulation_are_allowed():
+def test_a_number_from_the_regulation_needs_the_quote_that_holds_it():
     e = evidence()
     e.sources["q1"] = QuoteSource(
-        "q1", "evt_far", 9, "43.201", "General.", "issued on Standard Form 30", "x"
+        "q1",
+        "evt_far",
+        9,
+        "43.201",
+        "General.",
+        "issued on Standard Form 30",
+        "issued on Standard Form 30",
     )
-    assert verify(Draft("Change orders use Standard Form 30 [[q1]]."), e, QUESTION).ok
-    assert not verify(Draft("Change orders use Standard Form 31 [[q1]]."), e, QUESTION).ok
+    e.sources["q2"] = QuoteSource("q2", "evt_far2", 10, "4.101", "Signatures.", "x", "y")
+    paraphrase = Draft("Change orders use Standard Form 30 [[q1]].")
+    assert verify(paraphrase, e, QUESTION).problems == ("free_number:30",)
+    quoted = Draft(
+        "Change orders use Standard Form 30 [[q1]].", (Quote("q1", "issued on Standard Form 30"),)
+    )
+    assert verify(quoted, e, QUESTION).ok
+    wrong_source = Draft(
+        "Change orders use Standard Form 30 [[q2]].", (Quote("q1", "issued on Standard Form 30"),)
+    )
+    assert "free_number:30" in verify(wrong_source, e, QUESTION).problems
 
 
 def test_every_value_shown_carries_its_citation():

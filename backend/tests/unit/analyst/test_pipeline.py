@@ -70,7 +70,7 @@ def test_a_numeric_question_is_answered_with_bound_values_and_citations():
     fake = FakeClient(
         model(**{
             "router.v2": json.dumps({"category": "numeric_aggregate", "spec": SUM_SPEC}),
-            "composer.v3": json.dumps(
+            "composer.v4": json.dumps(
                 {"answer": "State obligated {{s1}} over {{s2}} actions [[c1]]."}
             ),
         })
@@ -96,7 +96,7 @@ def test_a_free_number_gets_one_repair_and_then_a_refusal():
         model(
             **{
                 "router.v2": json.dumps({"category": "numeric_aggregate", "spec": SUM_SPEC}),
-                "composer.v3": replies,
+                "composer.v4": replies,
             }
         )
     )
@@ -110,7 +110,7 @@ def test_a_free_number_gets_one_repair_and_then_a_refusal():
         model(
             **{
                 "router.v2": json.dumps({"category": "numeric_aggregate", "spec": SUM_SPEC}),
-                "composer.v3": stubborn,
+                "composer.v4": stubborn,
             }
         )
     )
@@ -135,7 +135,7 @@ def test_policy_answers_quote_exactly_and_cite_the_leaf():
     fake = FakeClient(
         model(
             **{
-                "composer.v3": json.dumps(
+                "composer.v4": json.dumps(
                     {
                         "answer": "FAR 43.202 limits this [[q1]].",
                         "quotes": [{"source": "q1", "text": quote}],
@@ -152,7 +152,7 @@ def test_policy_answers_quote_exactly_and_cite_the_leaf():
 
 def test_anomaly_lists_cite_the_events_behind_each_break():
     composer = json.dumps({"answer": "One award was paid more than obligated: {{s2}} [[c1]]."})
-    fake = FakeClient(model(**{"composer.v3": composer}))
+    fake = FakeClient(model(**{"composer.v4": composer}))
     db = Database(
         evidence=[("brk_1", 40, "outlay_exceeds_obligation", "AWD1", Decimal("10.00"))],
         break_events=[("evt_award", 3), ("evt_outlay", 39)],
@@ -190,7 +190,7 @@ def test_the_fallback_path_runs_only_guarded_sql_and_is_labeled():
             "spec": {"shape": "aggregate", "entity": "obligations", "metric": "avg"},
         }),
         "fallback-sql.v1": fallback_sql,
-        "composer.v3": json.dumps({"answer": "The first award averaged {{s1}} [[c1]]."}),
+        "composer.v4": json.dumps({"answer": "The first award averaged {{s1}} [[c1]]."}),
     }))  # fmt: skip
     db = Database(fallback=[("evt_a", 1, Decimal("5.50"))])
     answer = run("Average award size?", fake, db)
@@ -237,7 +237,7 @@ def test_a_total_over_the_citation_cap_is_answered_with_a_labelled_sample():
     small = Models(router="router-m", answer="answer-m", max_output_tokens=400, max_rows=2)
     composed = json.dumps({"answer": "State obligated {{s1}} over {{s2}} actions [[c1]]."})
     routed = json.dumps({"category": "numeric_aggregate", "spec": SUM_SPEC})
-    fake = FakeClient(model(**{"router.v2": routed, "composer.v3": composed}))
+    fake = FakeClient(model(**{"router.v2": routed, "composer.v4": composed}))
     db = Database(
         value=[(Decimal("500.00"), 5)],
         evidence=[

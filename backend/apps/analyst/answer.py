@@ -279,11 +279,18 @@ def _normalize(text: str) -> str:
 def _allowed_digits(question: str, evidence: Evidence) -> set[str]:
     allowed = set(DIGITS.findall(question))
     for source in evidence.sources.values():
-        # Numbers in a cited regulation (form numbers, rates, section references) are
-        # part of the source the reader can verify, not numbers the model made up.
         allowed.update(DIGITS.findall(source.section))
-        allowed.update(DIGITS.findall(source.excerpt))
     return allowed
+
+
+def _quoted_digits(cites: Sequence[str], quotes: Sequence[Quote]) -> set[str]:
+    """Numbers a sentence may repeat because it cites a source it also quotes.
+
+    A rate or a form number from the regulation is allowed only when the answer gives
+    the passage that holds it word for word, so the reader sees it in the source's own
+    words and the quote itself is checked against the leaf.
+    """
+    return {d for q in quotes if q.source in cites for d in DIGITS.findall(q.text)}
 
 
 def verify(draft: Draft, evidence: Evidence, question: str) -> Verdict:
@@ -303,8 +310,9 @@ def verify(draft: Draft, evidence: Evidence, question: str) -> Verdict:
             if label not in known:
                 problems.append(f"unknown_citation:{label}")
         prose = CITE.sub(" ", SLOT.sub(" ", sentence))
+        sentence_allowed = allowed | _quoted_digits(cites, draft.quotes)
         for token in TOKEN_WITH_DIGIT.findall(prose):
-            if not set(DIGITS.findall(token)) <= allowed:
+            if not set(DIGITS.findall(token)) <= sentence_allowed:
                 free += 1
                 problems.append(f"free_number:{token}")
         if slots or cites:
