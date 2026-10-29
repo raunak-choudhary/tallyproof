@@ -176,10 +176,11 @@ def answer_question(
     executor: Executor | None = None,
     client: LLMClient | None = None,
     search: Any = None,  # noqa: ANN401 - a search callable, swapped in tests
+    chosen: Models | None = None,
 ) -> AnalystAnswer:
     """Answer as of the newest signed checkpoint and store the result."""
     latest = LedgerBatch.objects.order_by("-tree_size").values_list("tree_size", flat=True).first()
-    chosen = models()
+    chosen = chosen or models()
     if latest is None:
         refused = Answer(question, "refused", None, refusal="no_checkpoint")
         return store(refused, chosen, 0)

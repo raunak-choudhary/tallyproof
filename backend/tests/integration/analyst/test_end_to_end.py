@@ -25,6 +25,7 @@ from testcontainers.community.kafka import RedpandaContainer
 
 from apps.analyst import api
 from apps.analyst.llm import CachingClient, FakeClient, LLMRequest
+from apps.analyst.pipeline import Models
 from apps.analyst.service import answer_question
 from apps.ingestion.consumer import Ingestor, run
 from apps.ingestion.dedupe import PartitionFilters
@@ -48,6 +49,8 @@ RAW, DLQ, GROUP = "e2e.events.raw.v1", "e2e.events.dlq.v1", "ingest-analyst-e2e"
 IPV4 = {"broker.address.family": "v4"}
 RECORDINGS = REPO_ROOT / "testdata" / "llm_recordings" / "e2e"
 HHS = "Department of Health and Human Services"
+MODELS = Models("recorded-router", "recorded-answer", 1200, 1000, "low")
+"""Pinned, so the recordings never depend on whoever runs the test or their .env."""
 
 
 def script(request: LLMRequest) -> str:
@@ -141,7 +144,11 @@ def test_questions_get_answers_whose_every_citation_verifies(
         api,
         "answer_question",
         partial(
-            answer_question, executor=AsAnalyst(), client=client_for_test(), search=lambda q, k: []
+            answer_question,
+            executor=AsAnalyst(),
+            client=client_for_test(),
+            search=lambda q, k: [],
+            chosen=MODELS,
         ),
     )
     client = Client(HTTP_HOST="localhost")

@@ -6,17 +6,17 @@
         "role": "system"
       },
       {
-        "content": "<question>How much did HHS obligate?</question>\n<evidence>\nRecords: total of obligations and modifications where awarding agency is Department of Health and Human Services\n{{s1}} money: total of obligations and modifications where awarding agency is Department of Health and Human Services = $17,049,347.67, cited by [[c1]]\n{{s2}} count: number of records = 29, cited by [[c1]]\n[[c1]] the 29 records counted (29 events)\n</evidence>",
+        "content": "<question>Which payments have no recorded award behind them?</question>\n<evidence>\nRecords: outlay reports with no recorded obligation for their award\n{{s1}} text: award key = CONT_AWD_70LGLY24PSSB00001_7015_-NONE-_-NONE-_X1, cited by [[c1]]\n{{s2}} money: amount paid in the period = $25,900.00, cited by [[c1]]\n{{s3}} text: award key = CONT_AWD_2031ZA24F00086_2041_2031ZA22D00005_2041_X0, cited by [[c2]]\n{{s4}} money: amount paid in the period = $4,014.50, cited by [[c2]]\n{{s5}} text: award key = CONT_AWD_69727624F00005N_6938_DTMA98D16010_6938_X2, cited by [[c3]]\n{{s6}} money: amount paid in the period = $360,890.00, cited by [[c3]]\n[[c1]] an outlay with no recorded award (1 events)\n[[c2]] an outlay with no recorded award (1 events)\n[[c3]] an outlay with no recorded award (1 events)\n</evidence>",
         "role": "user"
       }
     ],
-    "model": "openai/gpt-oss-120b",
+    "model": "recorded-answer",
     "prompt_version": "composer.v3"
   },
   "response": {
-    "input_tokens": 372,
+    "input_tokens": 465,
     "latency_ms": 0,
-    "output_tokens": 18,
-    "text": "{\"answer\": \"HHS obligated {{s1}} across {{s2}} contract actions [[c1]].\"}"
+    "output_tokens": 29,
+    "text": "{\"answer\": \"Payments were made on awards that were never recorded: {{s1}} [[c1]], {{s3}} [[c2]], and {{s5}} [[c3]].\"}"
   }
 }
