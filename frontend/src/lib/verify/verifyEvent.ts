@@ -7,7 +7,17 @@ import { verifyCheckpoint } from "./checkpoint";
 import { leafHash } from "./hashing";
 import { inclusionProof, root, verifyInclusion } from "./merkle";
 
-export type StepId = "signature" | "canonical" | "leaf" | "inclusion";
+export type StepId = "signature" | "canonical" | "leaf" | "inclusion" | "match";
+
+/** What a citation claims about the record it points to. */
+export interface Expected {
+  eventId: string;
+  leafIndex: number;
+  /** The checkpoint the answer was pinned to. */
+  treeSize: number;
+  /** Text the answer quoted from this record, which must appear in its `payload.text`. */
+  quote?: string;
+}
 
 export interface Step {
   id: StepId;
@@ -31,6 +41,11 @@ export interface VerifyInput {
   checkpointNote: string;
   /** The key compiled into the web build: the only key this page trusts. */
   pinnedKey: VerifierKey;
+  /**
+   * When checking a citation: the event, leaf, and checkpoint it names. A valid proof
+   * for some other record, leaf, or checkpoint then fails instead of passing.
+   */
+  expected?: Expected;
 }
 
 export interface VerifyResult {
@@ -120,7 +135,34 @@ export function verifyEvent(input: VerifyInput): VerifyResult {
       ? `${proof.length} sibling hashes, root ${toHex(checkpoint.rootHash).slice(0, 16)}…`
       : "The recomputed leaf does not reproduce the signed root",
   });
+  if (input.expected) steps.push(matchStep(input.expected, parsed, input.leafIndex, size));
   return done({ checkpoint, computedLeafHex: toHex(computed) });
+}
+
+function matchStep(expected: Expected, record: unknown, leafIndex: number, size: number): Step {
+  const fields = (record ?? {}) as { event_id?: unknown; payload?: { text?: unknown } };
+  const problems: string[] = [];
+  if (fields.event_id !== expected.eventId)
+    problems.push(`the record is ${String(fields.event_id)}`);
+  if (leafIndex !== expected.leafIndex) problems.push(`the proof is for leaf ${leafIndex}`);
+  if (size !== expected.treeSize) problems.push(`the checkpoint has ${size} records`);
+  if (expected.quote !== undefined) {
+    const text = fields.payload?.text;
+    if (typeof text !== "string" || !text.includes(expected.quote))
+      problems.push("the quoted text isn't in the record");
+  }
+  return {
+    id: "match",
+    label:
+      expected.quote === undefined
+        ? "Proof is for the cited record"
+        : "Quote is in the cited record",
+    ok: problems.length === 0,
+    detail:
+      problems.length === 0
+        ? `${expected.eventId}, leaf ${expected.leafIndex}, checkpoint ${expected.treeSize}`
+        : `Expected ${expected.eventId} at leaf ${expected.leafIndex}, checkpoint ${expected.treeSize}, but ${problems.join(", ")}`,
+  };
 }
 
 /**

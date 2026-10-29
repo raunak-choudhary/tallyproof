@@ -38,7 +38,7 @@ function CitationBlock({
       <ul className="mt-2 divide-y divide-border">
         {events.map((e) => (
           <CitationCheck
-            key={e.eventId}
+            key={`${e.eventId}@${treeSize}`}
             base={base}
             eventId={e.eventId}
             leafIndex={e.leafIndex}
@@ -114,10 +114,12 @@ export function AnswerView({ base, answer }: { base: string; answer: Answer }) {
               </figcaption>
               <ul className="mt-1">
                 <CitationCheck
+                  key={`${q.eventId}@${answer.treeSize}`}
                   base={base}
                   eventId={q.eventId}
                   leafIndex={q.leafIndex}
                   treeSize={answer.treeSize}
+                  quote={q.text}
                 />
               </ul>
             </figure>

@@ -89,7 +89,8 @@ export function AnalystPage() {
           The analyst couldn&apos;t be reached: {error}
         </p>
       )}
-      {answer && <AnswerView base={base} answer={answer} />}
+      {/* Keyed by answer, so no check or expanded list carries over to the next answer. */}
+      {answer && <AnswerView key={answer.answerId} base={base} answer={answer} />}
     </div>
   );
 }
