@@ -74,6 +74,8 @@ def configure(level: str | None = None, fmt: str | None = None) -> None:
         processors=[
             structlog.stdlib.ProcessorFormatter.remove_processors_meta,
             structlog.processors.format_exc_info,
+            # Again after formatting: a traceback's text can carry a connection string.
+            redact_secrets,
             renderer,
         ],
     )
