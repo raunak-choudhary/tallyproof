@@ -3,6 +3,11 @@
 import { useState } from "react";
 
 import { VerificationSteps } from "@/features/event-verify/VerificationSteps";
+import { MerkleRadial } from "@/features/proof/MerkleRadial";
+import type { Climb } from "@/lib/charts/merkleClimb";
+import { climb } from "@/lib/charts/merkleClimb";
+import { utf8 } from "@/lib/verify/bytes";
+import { leafHash } from "@/lib/verify/hashing";
 import { fetchEvent, fetchProof } from "@/lib/live/api";
 import { pinnedVerifierKey } from "@/lib/replay/pinnedKey";
 import type { VerifyResult } from "@/lib/verify/verifyEvent";
@@ -27,6 +32,7 @@ export function CitationCheck({
 }) {
   const [state, setState] = useState<"idle" | "checking" | "done" | "error">("idle");
   const [result, setResult] = useState<VerifyResult | null>(null);
+  const [path, setPath] = useState<Climb | null>(null);
   const [error, setError] = useState("");
   const [open, setOpen] = useState(false);
 
@@ -37,6 +43,9 @@ export function CitationCheck({
         fetchEvent(base, eventId),
         fetchProof(base, eventId, fetch, treeSize),
       ]);
+      setPath(
+        climb(leafHash(utf8(event.canonical)), proof.leafIndex, proof.treeSize, proof.auditPath),
+      );
       setResult(
         verifyEvent({
           canonical: event.canonical,
@@ -89,6 +98,15 @@ export function CitationCheck({
       {open && result && (
         <div className="mt-3 rounded-[var(--radius)] border border-border bg-bg-elevated p-4">
           <VerificationSteps result={result} tampered={false} />
+          {path && (
+            <div className="mt-4">
+              <MerkleRadial
+                climbResult={path}
+                signedRoot={result.checkpoint?.rootHash ?? null}
+                title="This record's audit path"
+              />
+            </div>
+          )}
         </div>
       )}
     </li>

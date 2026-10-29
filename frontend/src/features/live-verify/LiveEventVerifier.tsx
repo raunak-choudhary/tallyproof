@@ -3,12 +3,17 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { VerificationSteps } from "@/features/event-verify/VerificationSteps";
+import { MerkleRadial } from "@/features/proof/MerkleRadial";
+import type { Climb } from "@/lib/charts/merkleClimb";
+import { climb } from "@/lib/charts/merkleClimb";
 import type { LiveEvent, LiveProof } from "@/lib/live/api";
 import { fetchEvent, fetchProof } from "@/lib/live/api";
 import { pinnedVerifierKey } from "@/lib/replay/pinnedKey";
 import { canonicalize } from "@/lib/verify/canonical";
 import type { VerifyResult } from "@/lib/verify/verifyEvent";
 import { verifyEvent } from "@/lib/verify/verifyEvent";
+import { utf8 } from "@/lib/verify/bytes";
+import { leafHash } from "@/lib/verify/hashing";
 
 function withAmount(canonical: string, amount: string): string {
   const record = JSON.parse(canonical) as { payload: Record<string, unknown> };
@@ -21,6 +26,7 @@ export function LiveEventVerifier({ base, eventId }: { base: string; eventId: st
   const [amount, setAmount] = useState("");
   const [tampered, setTampered] = useState(false);
   const [result, setResult] = useState<VerifyResult | null>(null);
+  const [path, setPath] = useState<Climb | null>(null);
 
   useEffect(() => {
     Promise.all([fetchEvent(base, eventId), fetchProof(base, eventId)])
@@ -52,6 +58,7 @@ export function LiveEventVerifier({ base, eventId }: { base: string; eventId: st
       ? withAmount(event.canonical, amount || originalAmount)
       : event.canonical;
     setTampered(edit);
+    setPath(climb(leafHash(utf8(canonical)), proof.leafIndex, proof.treeSize, proof.auditPath));
     setResult(
       verifyEvent({
         canonical,
@@ -112,6 +119,11 @@ export function LiveEventVerifier({ base, eventId }: { base: string; eventId: st
           </button>
         </div>
         {result && <VerificationSteps result={result} tampered={tampered} />}
+        {result && path && (
+          <div className="mt-6">
+            <MerkleRadial climbResult={path} signedRoot={result.checkpoint?.rootHash ?? null} />
+          </div>
+        )}
       </section>
     </div>
   );
