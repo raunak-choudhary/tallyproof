@@ -198,19 +198,19 @@ def answer_question(
             Answer(question, "refused", None, refusal="budget_exceeded"), chosen, int(latest)
         )
     runner = executor or AnalystConnection()
-    counting = limits.CountingClient(client or model_client())
-    try:
-        result = ask(
-            question,
-            client=counting,
-            executor=runner,
-            search=search or search_policy,
-            models=chosen,
-            agencies=agencies(runner),
-            tree_size=int(latest),
-        )
-    finally:
-        # Charged whatever happens, so a question that fails midway still counts.
-        if address is not None:
-            limits.spend(address, counting.tokens)
+    # Charges each model call as it returns, so a question that fails midway still counts.
+    counting = limits.CountingClient(
+        client or model_client(),
+        address=address,
+        max_input_tokens=llm_settings().llm_max_input_tokens,
+    )
+    result = ask(
+        question,
+        client=counting,
+        executor=runner,
+        search=search or search_policy,
+        models=chosen,
+        agencies=agencies(runner),
+        tree_size=int(latest),
+    )
     return store(result, chosen, int(latest))
