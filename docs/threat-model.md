@@ -39,21 +39,25 @@ The data is real public U.S. government spending, plus a labeled synthetic anoma
 
 ### The analyst's database access
 
-*Built: the read-only role, its 3 second timeout, the curated `security_barrier` views, the query compiler, and the guard (`backend/apps/analyst/sql_guard.py`). An integration test shows the role refuses every write even with read-only mode switched off, and a hostile-SQL corpus covers every guard rule below. Statement and lock timeouts beyond the 3 second statement limit, and the dedicated connection pool, arrive with the query endpoint.*
+*Built: the read-only role with its timeouts and resource limits (`infra/postgres/create-roles.sql`), the curated `security_barrier` views, the query compiler, and the guard (`backend/apps/analyst/sql_guard.py`). An integration test shows the role refuses every write even with read-only mode switched off, and a hostile-SQL corpus covers every guard rule below.*
 
-Most numeric questions never produce free-form SQL. The model fills in a typed query spec, and the server compiles it into SQL it already knows is safe ([ADR-0014](adr/0014-constrained-query-ir.md)). The fallback path, which does accept model-written SQL, is treated as hostile input and checked at two layers.
+Most numeric questions never produce free-form SQL. The model fills in a typed query spec, and the server compiles it into SQL it already knows is safe ([ADR-0014](adr/0014-constrained-query-ir.md)). Every compiled query is pinned to the answer's checkpoint, including the award fields (contract number and agency) that the views take from an award's first record and the award totals, which are added up only from leaves before the checkpoint.
+
+The fallback path, which accepts model-written SQL, is off unless `ANALYST_SQL_FALLBACK` is set; questions the spec can't express are refused as `not_expressible`. When it is on, the SQL is treated as hostile input and checked at two layers, and its answers are labelled lower assurance.
 
 At the database:
 
-- A dedicated read-only role that can see only the curated `analyst` views, with `default_transaction_read_only` on and `search_path` pinned.
+- A dedicated read-only role that can see only the curated `analyst` views it is granted by name, with `default_transaction_read_only` on and `search_path` pinned. It can't read the view of source descriptions, whose free text may carry planted instructions, or the policy view, and a view added later stays unreadable until a migration grants it.
 - `REVOKE ALL ON SCHEMA public FROM PUBLIC`, no access to catalog views beyond what Postgres requires, and `security_barrier` views.
-- Statement, lock, and idle-in-transaction timeouts, a temp file limit, and a small dedicated connection pool that caps concurrency.
+- A 3 second statement timeout, a 1 second lock timeout, a 5 second idle-in-transaction timeout, 16 MB of working memory, a 64 MB temp file limit, and at most 24 connections.
 
 In the query guard, which parses SQL with sqlglot before anything runs:
 
 - Exactly one `SELECT` statement. Anything else is rejected, including set operations and data-modifying CTEs.
-- Allowlists for relations, columns, functions, operators, and cast targets. Schema-qualified names, `pg_*` and `information_schema` relations, `WITH RECURSIVE`, set-returning functions, `LATERAL`, locking clauses, and casts to `reg*` types are all rejected.
-- Joins need an equality predicate between allowlisted keys, so `ON true` doesn't sneak a cartesian product through.
+- Allowlists for relations, columns, functions, operators, and cast targets. Schema-qualified names, `pg_*` and `information_schema` relations, `WITH RECURSIVE`, nested `WITH`, CTE names that shadow another relation, set-returning functions, `LATERAL`, locking clauses, and casts to `reg*` types are all rejected. The awards view is left out, because its totals ignore the checkpoint.
+- A selected value must be a bare view column or a plain aggregate of one, so a query can't put a literal or an expression beside a real event ID and have it cited. The event ID and leaf index must come from the same table, and rows without both give no evidence.
+- Joins need an equality between the same key on two different tables, with no top-level `OR`, so `ON a.k = a.k OR true` doesn't sneak a cartesian product through.
+- Every view is pinned to the checkpoint, and so is each award's first record when the query uses an award field.
 - Limits on AST depth and node count, plus an injected `LIMIT`.
 - The guard executes SQL re-rendered from the parsed tree, never the original string, which closes parser-differential tricks.
 
@@ -61,18 +65,26 @@ Clients only ever see generic error codes, never raw Postgres messages, because 
 
 ### Prompt injection
 
-*Built (`backend/apps/analyst/pipeline.py`, `answer.py`): questions, evidence, and policy text go to the model inside delimited data blocks; descriptions stay out of the views the model reads; the verifier drops any sentence without a bound value or citation and rejects free numbers, unknown citations, and inexact quotes. Policy text enters only through a reviewed pull request (`backend/corpus/far`, covered by CODEOWNERS). The analyst page renders the model's text as plain text through React, never as HTML, and the only links it makes are to the citation anchors on the same page.*
+*Built (`backend/apps/analyst/pipeline.py`, `answer.py`): questions, evidence, and policy text go to the model inside delimited data blocks, with the delimiter tags themselves stripped from anything placed inside one; descriptions stay out of the views the model reads; the verifier drops any clause without a bound value or citation and rejects free numbers, unknown citations, and inexact quotes. Policy text enters only through a reviewed pull request (`backend/corpus/far`, covered by CODEOWNERS). The analyst page renders the model's text as plain text through React, never as HTML, and the only links it makes are to the citation anchors on the same page.*
 
 | Threat | Control |
 |---|---|
 | Instructions hidden in descriptions or policy text | Untrusted text goes into clearly delimited data blocks, length-capped, and the system prompt says data is never instructions |
-| The model told to state numbers or cite records it didn't retrieve | Numbers come only from query results through typed slots, or, in a policy answer, from a word-for-word quote of the regulation that the verifier checks against the cited leaf. Citations must reference IDs in the evidence set. The verifier rejects anything else ([ADR-0009](adr/0009-bound-claims-answer-format.md)) |
+| The model told to state numbers or cite records it didn't retrieve | Numbers come only from query results through typed slots, or, in a policy answer, from a word-for-word quote of the regulation that the verifier checks against the cited leaf. Citations must reference IDs in the evidence set. The verifier also catches numbers written as words, numerals other than ASCII digits, a value with a digit, sign, or scale word attached, and two values run together. A digit from the question is allowed only when the filter shown with the answer contains it. It rejects anything else ([ADR-0009](adr/0009-bound-claims-answer-format.md)) |
+| A claim smuggled into an uncited clause | Each clause after a semicolon, or after a sentence that ends and starts again in lowercase, needs its own bound value or citation |
+| A value read as another group's | When one sentence mixes values from several citations, each value is shown with its own |
+| A made-up quotation | A policy answer must give at least one passage word for word, and text the model puts in quotation marks inside a sentence must appear in a source that sentence cites |
+| A verdict dressed up as an answer | Questions asking whether someone committed fraud, bribery, embezzlement, and similar wrongs are refused by rule, even when they mention the regulation, unless they ask what the regulation's text says. A data answer that uses such words is rejected |
 | Injected claims with no numbers in them ("approved by the CFO") | Free-text columns are left out of analyst views unless a query asks for them. Each sentence the model writes must carry a bound value or a citation, or it gets dropped |
 | A poisoned policy document | Policy text enters the corpus only through a reviewed pull request. There's no upload path at runtime |
 | Exfiltration through rendered output | Answers render as plain text plus structured claim components. Model output never becomes links, images, or HTML |
 | The model told to change behavior | It has no write tools at all |
 
 Injection resistance is an evaluation category with a CI threshold ([evaluation.md](evaluation.md)).
+
+### Checking a citation in the browser
+
+The Verify button checks more than the proof itself. The record must be the event the answer cited, its proof must be for the cited leaf, and the checkpoint must be the one the answer was pinned to; a valid proof for anything else fails. For a quoted passage, the quoted text must appear in the record's own text. Each check's result belongs to one answer, so a new answer never shows an earlier answer's result.
 
 ### Tampering and signing keys
 
@@ -107,7 +119,8 @@ The append-only tables have no update or delete grants for the application role,
 - `.env` is ignored by git. `.env.example` lists every variable with an explanation ([configuration.md](configuration.md)).
 - gitleaks runs in pre-commit and in CI.
 - Nothing environment-specific is hardcoded: model IDs, URLs, thresholds, batch sizes. `scripts/ci/check_literals.py` runs in `make lint` and fails on URL, local-address, and model-ID literals outside the settings modules, docstrings, comments, and tests.
-- A structlog processor redacts keys, tokens, and passwords in connection strings, and it has its own unit test.
+- A structlog processor redacts keys, tokens, and passwords in connection strings, once before a line is formatted and again after, so a traceback's text is covered too. It has its own unit tests.
+- `LLM_BASE_URL` must use https unless it points at the same machine, and the API refuses to start in debug mode with a real model provider, because debug pages can show the key.
 
 ### CI
 
@@ -123,9 +136,11 @@ The append-only tables have no update or delete grants for the application role,
 ### Public endpoints
 
 - Every endpoint is public by design, since all served data is public and free of personal data. The API refuses to start unless `DATA_CLASSIFICATION` is `public-no-pii`.
-- Rate limits apply per IP with explicitly configured trusted proxies. Questions to the analyst have their own, tighter limit (`API_THROTTLE_ANON_QUERIES`, 10 a minute). Each process answers at most `ANALYST_MAX_INFLIGHT` questions at once and returns a 503 with `Retry-After` past that, and each client address may spend `ANALYST_PER_IP_DAILY_TOKENS` model tokens a day before its questions are refused without a model call. A breaker that switches to cached answers is planned before any public deployment; today the analyst runs only locally and in evaluations.
+- Rate limits apply per client with explicitly configured trusted proxies, and an IPv6 client counts as its whole /64, so rotating addresses doesn't reset them. Questions to the analyst have their own, tighter limit (`API_THROTTLE_ANON_QUERIES`, 10 a minute). The API runs threaded workers, so a question waiting on the model holds one thread rather than a process. Each process answers at most `ANALYST_MAX_INFLIGHT` questions at once and returns a 503 with `Retry-After` past that. Each client may spend `ANALYST_PER_IP_DAILY_TOKENS` model tokens a day, charged after every model call, and no call is made once it's past that. The API waits at most `ANALYST_MAX_RETRY_WAIT_SECONDS` when the provider asks it to retry. A breaker that switches to cached answers is planned before any public deployment; today the analyst runs only locally and in evaluations.
+- Filter values are bounded to what their columns hold, so a number like `1e100000000000000` is refused before it's formatted. A grouped answer covers at most 100 groups.
+- `/readyz` reuses its result for five seconds, so a flood of requests doesn't open a connection each.
 - List endpoints use cursors and cap a page at 200 items, and size parameters are validated. Proofs come from one in-memory tree that's extended as the log grows, so a request never rebuilds the log.
-- WebSockets check the origin against `DJANGO_ALLOWED_HOSTS`, cap connections per IP (`WS_MAX_CONNECTIONS_PER_IP`), and limit frame size (`WS_MAX_MESSAGE_BYTES`). A slow client drops its own oldest facts instead of slowing anyone else.
+- WebSockets check the origin against `DJANGO_ALLOWED_HOSTS`, cap connections per client (`WS_MAX_CONNECTIONS_PER_IP`), counted only once a connection is accepted, and limit frame size (`WS_MAX_MESSAGE_BYTES`). Frames clients send are dropped unread. A slow client drops its own oldest facts instead of slowing anyone else. The stream process serves WebSockets only and answers plain HTTP with 404, and it trusts forwarded client addresses only when proxies are configured.
 - Public IDs carry 80 random bits (ULIDs), so they can't be enumerated.
 - CORS is limited to the configured web origin, and standard security headers are set: a Content-Security-Policy that allows nothing on JSON responses, HSTS wherever HTTPS is configured, `X-Content-Type-Options`, `Referrer-Policy`, and `X-Frame-Options`.
 
@@ -139,7 +154,7 @@ Python dependencies are pinned with hashes through pip-tools, and frontend depen
 
 ### LLM cost and where prompts go
 
-*Partly built: per-request token caps, per-run request and token budgets, client-side pacing, and the response cache exist (`backend/apps/analyst/llm.py`). The query endpoint has its own rate limit, a cap on questions answered at once, and a daily token budget per client address (`backend/apps/analyst/limits.py`).*
+*Built: per-request input and output token caps, per-run request and token budgets, client-side pacing, and the response cache (`backend/apps/analyst/llm.py`). The query endpoint has its own rate limit, a cap on questions answered at once, and a daily token budget per client address, charged after every call (`backend/apps/analyst/limits.py`).*
 
 Per-request token caps, run budgets, response caching, and rate limits bound the cost. A run that would pass its budget stops before the call, with a clear error, instead of producing a surprise bill.
 
@@ -150,5 +165,14 @@ The live provider is Groq's free tier running `openai/gpt-oss-120b`, chosen afte
 - A key holder who rewrites history before the next external timestamp can't be detected. The exposure window is `WITNESS_INTERVAL_SECONDS`.
 - Locally, there's a single signing key and no hardware security module. Production would use AWS KMS ([aws-reference-architecture.md](aws-reference-architecture.md)).
 - Narrative faithfulness is scored by an LLM judge, so it's probabilistic.
-- Timing side channels on the fallback SQL path are reduced, not removed.
+- Timing side channels on the fallback SQL path are reduced, not removed. The fallback is off by default, and its answers are labelled lower assurance when it's on.
+- The verifier recognizes number words from a fixed list. It leaves out "one", which reads as a pronoun far more often than a count, and unusual spellings of a number could still slip past it.
+- The in-flight cap and the daily token budget are counted per process unless Django's cache is shared, such as through Redis.
+- A client with more than a /64 of IPv6 space can still spread its requests across networks.
 - One person wrote both the anomaly injector and the detectors. Near-miss cases and a held-out question set limit how much that bias can flatter the results ([evaluation.md](evaluation.md)).
+
+## Review record
+
+On 2026-10-29 two independent reviews went over the analyst and the API: one tried to break the analyst's promises from the outside, and one audited the code for vulnerabilities. Both reproduced their findings with probe scripts. They found 22 problems: one critical, eight high, seven medium, and six low. Every one is fixed, each with a test that failed before the fix, and the controls above describe the result. Attempts that failed are covered by the existing tests, among them union queries, comma joins, window functions, `pg_sleep`, dollar quoting, Unicode digits in a draft, and spoofed forwarded addresses.
+
+This document was signed off against commit `622b5a8`.

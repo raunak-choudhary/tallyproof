@@ -43,5 +43,14 @@ As built in `backend/apps/analyst/answer.py` and `pipeline.py`:
 - **Numbers from a source.** A number from a regulation, such as a rate or a form number, is allowed only in a sentence that cites that source, and only when the answer also quotes, word for word, the passage that holds the number. A paraphrased rate with no quote is rejected, so every regulatory number a reader sees is one they can check against the leaf.
 - **Repair.** One repair attempt carries the verifier's findings as plain instructions, not just codes.
 - **Large totals.** A total over more records than one answer cites (`DB_ANALYST_MAX_ROWS`) is computed over all of them; its citation lists the first records in log order with `sample_of` set to the full count, and the page labels it.
-- **Refusal codes.** Thirteen typed reasons, not five: `forecast`, `personal_data`, `judgment_beyond_data`, `out_of_scope`, `no_data`, `no_evidence`, `ambiguous`, `too_broad`, `unsafe_query`, `unverifiable_claim`, `budget_exceeded`, `model_unavailable`, and `no_checkpoint`.
+- **Refusal codes.** Fourteen typed reasons, not five: `forecast`, `personal_data`, `judgment_beyond_data`, `out_of_scope`, `no_data`, `no_evidence`, `ambiguous`, `too_broad`, `unsafe_query`, `unverifiable_claim`, `budget_exceeded`, `model_unavailable`, `no_checkpoint`, and `not_expressible`.
 - **The interactive value.** The analyst page lists each value with its meaning and opens the records behind it with Verify. Showing the compiled SQL beside a value is planned with the site.
+
+## Changes after the security review (2026-10-29)
+
+- **Numbers in any form.** Number words such as "fifteen" or "two hundred", and numerals other than ASCII digits, count as free numbers. A value can't have a digit, sign, unit, or scale word attached, and two values can't run together.
+- **Question digits.** A digit from the question is allowed only when the filter shown with the answer contains it, since a question can say anything.
+- **Clauses.** A clause after a semicolon, or after a sentence that ends and starts again in lowercase, needs its own value or citation. Common abbreviations don't end a sentence.
+- **Quotes.** A policy answer must quote at least one passage, and text the model puts in quotation marks inside a sentence must appear in a source the sentence cites.
+- **Verdicts.** A data answer that calls something fraud, a crime, or wrongdoing is rejected.
+- **Mixed groups.** When a sentence holds values from several citations, each value is shown with its own citation.
