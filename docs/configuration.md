@@ -160,7 +160,7 @@ The evaluation runner has no settings of its own. A run is bounded by `LLM_RUN_M
 | `NEXT_PUBLIC_BASE_PATH` | Path the site is served under: empty locally, `/tallyproof` on GitHub Pages |
 | `NEXT_PUBLIC_REPLAY_BASE` | Where the replay bundle is served from; empty means `<base path>/replay` |
 | `NEXT_PUBLIC_BUILD_COMMIT`, `NEXT_PUBLIC_SOURCE_URL` | Set by the publishing workflow so every page names, and links, the commit it was built from |
-| `NEXT_PUBLIC_WS_URL` | planned: WebSocket base URL for live updates in the browser |
+| `NEXT_PUBLIC_WS_URL` | WebSocket base URL (for example `ws://127.0.0.1:8001`) for the ledger page's live stream; empty means the page replays the demo bundle |
 
 The frontend reads its own `frontend/.env.example`, not the repository's `.env`.
 
