@@ -168,6 +168,25 @@ def test_an_invalid_spec_gets_one_repair_with_the_exact_error():
 def test_asking_what_the_regulation_says_is_policy_even_about_fraud():
     assert policy("What does the FAR say about fraud?") == "policy"
     assert policy("Under the regulation, when is a kickback illegal?") == "policy"
+    assert policy("How does the FAR define a kickback?") == "policy"
+
+
+@pytest.mark.parametrize(
+    "question",
+    [
+        "Did the vendor on 47QSSC24F0S7X commit fraud under the regulations?",
+        "Under the regulations, is this contractor guilty of fraud?",
+        "Is Acme committing fraud under the FAR?",
+        "What does the FAR say about whether this contractor committed fraud?",
+    ],
+)
+def test_naming_the_regulation_doesnt_turn_a_verdict_into_a_policy_question(question):
+    decided = by_rules(question)
+    assert decided is not None
+    assert decided.refusal_reason == "judgment_beyond_data"
+
+
+def test_the_exception_is_only_for_judgment():
     # Only the judgment refusal yields to a policy question; the others still apply.
     poem = by_rules("Write me a poem about the FAR")
     assert poem is not None
