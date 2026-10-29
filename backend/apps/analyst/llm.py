@@ -145,8 +145,13 @@ class OpenAICompatibleClient:
         session: _Session | None = None,
         sleep: Callable[[float], None] = time.sleep,
         clock: Callable[[], float] = time.monotonic,
+        max_retry_wait: float | None = None,
     ) -> None:
-        """Set up the client; nothing is sent until :meth:`complete`."""
+        """Set up the client; nothing is sent until :meth:`complete`.
+
+        With ``max_retry_wait``, a provider asking to wait longer than that fails the
+        call at once, so a request handler isn't held for as long as the provider says.
+        """
         self._url = base_url.rstrip("/") + "/chat/completions"
         self._headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
         self._timeout = timeout_seconds
@@ -156,6 +161,7 @@ class OpenAICompatibleClient:
         self._sleep = sleep
         self._clock = clock
         self._last_sent: float | None = None
+        self._max_wait = max_retry_wait
 
     def _pace(self) -> None:
         if self._last_sent is not None:
@@ -203,6 +209,8 @@ class OpenAICompatibleClient:
                 continue
             if reply.status_code in RETRY_STATUSES and attempt < self._retries:
                 delay = _retry_after(reply.headers.get("Retry-After", ""), 2.0**attempt)
+                if self._max_wait is not None and delay > self._max_wait:
+                    raise LLMError(f"provider asked to wait {delay:.0f}s, past the cap")
                 log.warning("llm retry", extra={"status": reply.status_code, "delay": delay})
                 self._sleep(delay)
                 continue

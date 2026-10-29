@@ -139,6 +139,20 @@ def test_fractional_retry_after_is_honored():
     assert clock.slept == [2.98]
 
 
+def test_a_wait_past_the_cap_fails_at_once_instead_of_holding_the_worker():
+    session = Session(Reply(429, headers={"Retry-After": "86400"}), ok())
+    clock = Clock()
+    client = OpenAICompatibleClient(
+        base_url=BASE, api_key="sk-test", timeout_seconds=5, max_retries=2,
+        requests_per_minute=600, session=session, sleep=clock.sleep, clock=clock.time,
+        max_retry_wait=10,
+    )  # fmt: skip
+    with pytest.raises(LLMError, match="wait"):
+        client.complete(request())
+    assert len(session.calls) == 1
+    assert all(s < 10 for s in clock.slept)
+
+
 def test_requests_are_paced_to_the_rate_limit():
     session, clock = Session(ok(), ok()), Clock()
     client = real(session, clock, rpm=10)
