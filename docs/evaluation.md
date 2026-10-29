@@ -10,9 +10,9 @@ This document explains how Tallyproof measures the quality of its answers, and h
 
 Each expected answer lists the events a complete answer must cite and the events it may cite without being wrong (for an anomalous outlay, the award behind it), so citation recall and precision are both well defined.
 
-**Deterministic checks come first.** Anything that can be scored exactly is. An LLM judge is used for one thing only, whether the prose connecting claims is supported, and its prompt and model are versioned.
+**Deterministic checks come first.** Anything that can be scored exactly is. An LLM judge is planned for one thing only, whether the prose connecting claims is supported, with its prompt and model versioned. Until it exists, narrative faithfulness isn't reported, and the verifier's structural rules (no free numbers, every sentence bound to a value or a citation) are the only checks on the prose.
 
-**Thresholds only go up.** They live in `evals/thresholds.toml`. Lowering one needs a written decision record.
+**Thresholds only go up.** They live in `backend/evals/thresholds.toml`. Today they hold the planned first-milestone values, which the latest smoke run passes. Once the full run sets them from its baseline, lowering one needs a written decision record.
 
 **Results are labeled honestly.** Runs that use the fake LLM client test the evaluation harness, not answer quality. They're labeled as harness checks and never published as quality results.
 
@@ -46,16 +46,16 @@ A frozen set of 40 free-form questions (`backend/evals/questions/held_out.toml`)
 | Citation precision | Cited events that should have been cited, divided by all cited events. For policy questions the unit is the FAR section, and sections in the expected section's subpart count as correct. Anomaly lists are left out: the real data holds anomalies nobody planted, which reconciliation rightly finds but the labels can't know about. Those extra findings are counted separately |
 | Citation recall | Events that should have been cited and were, divided by all events that should have been cited |
 | Numeric exactness | Answers whose bound value matches the expected amount to the cent |
-| Reconciliation precision and recall | Breaks found against breaks expected, on data that includes near-miss cases such as legitimate split outlays |
+| Reconciliation recall | Labeled anomalies caught by the reconciliation rule of the right type. Precision isn't computed: the real data holds anomalies nobody planted, which the rules rightly find but the labels can't know about, so findings beyond the labels are counted instead |
 | Analyst anomaly recall | Expected anomalies the analyst listed, divided by all expected anomalies |
 | Answer coverage | Answerable questions that got an answer |
 | Refusal correctness | Precision, recall, and F1 of refusals |
 | Free-number and repair rates | How often the model typed a number before the verifier stopped it, and how often a retry fixed it |
 | Quote faithfulness | Policy quotes that appear exactly in the cited document |
-| Narrative faithfulness | LLM-judge score for whether the prose is supported by the cited evidence |
+| Narrative faithfulness | Planned: an LLM judge's score for whether the prose is supported by the cited evidence. Not reported yet |
 | Injection resistance | Injection questions answered correctly without following the planted instructions |
 | Fallback rate | Numeric questions that needed the lower-assurance SQL fallback instead of the query spec |
-| Cost and latency | Tokens, estimated cost, and p50 and p95 latency |
+| Cost and latency | Tokens, and p50 and p95 latency per question. Cost isn't estimated, since the live provider is a free tier |
 
 Two scoring rules keep the numbers honest. Every quality metric counts all answerable questions, so a refusal on an answerable question is a miss, and refusing whenever in doubt can't inflate precision. And integrity checks are reported separately from quality: proof verification, numbers left after the verifier, and tamper detection are guaranteed by how the system is built. They show the wiring works. They say nothing about whether answers are good, and they're never presented as if they did.
 
@@ -79,33 +79,32 @@ Each run writes a machine-readable JSON report and a readable Markdown report to
 |---|---|---|---|
 | Every pull request (`eval-smoke`, part of `ci-gate`) | Smoke set | Cached. Uncached items fall back to the fake client and the run is labeled a harness check | Integrity always; quality thresholds once every response is recorded |
 | Weekly (scheduled trigger, Sundays 03:00 UTC) | Full and held-out sets | Live, with the key from the `llm-eval` context | Fails on regression; reports kept as artifacts |
-| Release tag | Full set | Live | Must pass before release |
+| Release tag | Full set | Live | Planned with the first release |
 
-Pull request pipelines never receive the LLM key, and forked pull requests run in fake mode only.
+Pull request pipelines never receive the model key: the `llm-eval` context is restricted to the `main` branch and the scheduled job, so a pull request, forked or not, can only replay recordings.
 
 ## Starting thresholds
 
-| Metric | First milestone | 1.0 release |
-|---|---|---|
-| Citation precision | 0.90 | 0.95 |
-| Citation recall | 0.80 | 0.90 |
-| Numeric exactness | 0.95 | 0.98 |
-| Refusal F1 | 0.85 | 0.90 |
-| Reconciliation recall | 1.00 | 1.00 |
-| Reconciliation precision | 0.95 | 0.98 |
-| Analyst anomaly recall | 0.85 | 0.90 |
-| Answer coverage | 0.80 | 0.90 |
-| Quote faithfulness | 1.00 | 1.00 |
-| Injection resistance | 0.90 | 0.95 |
-| Held-out numeric exactness | reported only | 0.90 |
+| Metric | First milestone | 1.0 release | Gated today |
+|---|---|---|---|
+| Citation precision | 0.90 | 0.95 | Yes |
+| Citation recall | 0.80 | 0.90 | Yes |
+| Numeric exactness | 0.95 | 0.98 | Yes |
+| Refusal F1 | 0.85 | 0.90 | Yes |
+| Analyst anomaly recall | 0.85 | 0.90 | Yes |
+| Answer coverage | 0.80 | 0.90 | Yes |
+| Quote faithfulness | 1.00 | 1.00 | Yes |
+| Injection resistance | 0.90 | 0.95 | Yes |
+| Reconciliation recall | 1.00 | 1.00 | Reported |
+| Held-out numeric exactness | reported only | 0.90 | Reported |
 
 Integrity checks must always pass completely, and any failure blocks a merge.
 
-These numbers are educated guesses until the first live run. After that, each threshold is set to the measured baseline minus a small margin, then ratcheted up.
+These were educated guesses before any live run, and the smoke run passes all of them. The full run of every question sets each threshold to its measured baseline minus a small margin; after that they only go up.
 
 ## Comparing against a naive baseline
 
-The same questions also run through a naive RAG setup: retrieve the top rows and documents, let the model answer and cite freely, with no slots and no verifier. The README shows both columns side by side, which makes it plain what the query spec, the bound values, and the verifier actually contribute.
+Planned: the same questions run through a naive RAG setup, retrieving the top rows and documents and letting the model answer and cite freely, with no slots and no verifier, scored by the same oracle. Shown beside the real results, it would make plain what the query spec, the bound values, and the verifier contribute. It isn't built yet, so no comparison is claimed.
 
 ## The README results table
 
