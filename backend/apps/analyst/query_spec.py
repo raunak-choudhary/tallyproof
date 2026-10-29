@@ -160,6 +160,12 @@ AbsenceRule = Literal["outlay_without_recorded_award"]
 
 MAX_IN_VALUES = 20
 MAX_TEXT = 200
+MAX_NUMBER_TEXT = 32
+MONEY_LIMIT = Decimal(10) ** 17
+"""Money columns are numeric(19, 2), so every amount they hold is below this."""
+CENT = Decimal("0.01")
+INTEGER_LIMIT = 2**63
+"""Integer columns are bigint at most."""
 MAX_LIST_ROWS = 100
 
 
@@ -177,13 +183,27 @@ def parse_value(field: CatalogField, raw: object) -> str | int | Decimal | date:
         if field.type is FieldType.INTEGER:
             if isinstance(raw, bool) or not isinstance(raw, int | str):
                 raise SpecError(f"{field.column} needs a whole number")
-            return int(raw)
+            if isinstance(raw, str) and len(raw) > MAX_NUMBER_TEXT:
+                raise SpecError(f"{field.column}: {raw[:MAX_NUMBER_TEXT]!r}... is out of range")
+            number = int(raw)
+            if not -INTEGER_LIMIT <= number < INTEGER_LIMIT:
+                raise SpecError(f"{field.column}: the value is out of range")
+            return number
         if field.type is FieldType.MONEY:
             if not isinstance(raw, str | int):
                 raise SpecError(f"{field.column} needs a decimal amount as text")
-            value = Decimal(str(raw))
+            text = str(raw)
+            if len(text) > MAX_NUMBER_TEXT:
+                raise SpecError(f"{field.column}: {text[:MAX_NUMBER_TEXT]!r}... is out of range")
+            value = Decimal(text)
             if not value.is_finite():
                 raise SpecError(f"{field.column} needs a finite amount")
+            # Compare by exponent first: comparing a value like 1e100000000000000
+            # is cheap, but formatting it would build a string of that length.
+            if (value != 0 and value.adjusted() >= 17) or abs(value) >= MONEY_LIMIT:
+                raise SpecError(f"{field.column}: the amount is out of range")
+            if value != value.quantize(CENT):
+                raise SpecError(f"{field.column}: the amount is out of range of whole cents")
             return value
         if not isinstance(raw, str):
             raise SpecError(f"{field.column} needs a date as YYYY-MM-DD")
