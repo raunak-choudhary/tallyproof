@@ -54,15 +54,19 @@ class AppSettings(BaseSettings):
     db_owner_url: SecretStr | None = Field(default=None, validation_alias="DB_OWNER_URL")
     db_analyst_url: SecretStr | None = Field(default=None, validation_alias="DB_ANALYST_URL")
     db_analyst_max_rows: int = Field(default=1000, ge=1, validation_alias="DB_ANALYST_MAX_ROWS")
+    """Most records one answer may cite; a question that needs more is refused as too broad."""
     analyst_sql_fallback: bool = Field(default=False, validation_alias="ANALYST_SQL_FALLBACK")
     """Let questions the query spec can't express fall back to guarded, model-written SQL."""
     analyst_max_inflight: int = Field(default=4, ge=1, validation_alias="ANALYST_MAX_INFLIGHT")
     """Questions answered at once in one process; past this, a 503 with Retry-After."""
+    analyst_max_retry_wait_seconds: float = Field(
+        default=10.0, gt=0, validation_alias="ANALYST_MAX_RETRY_WAIT_SECONDS"
+    )
+    """Longest the API waits on a provider's Retry-After before refusing the question."""
     analyst_per_ip_daily_tokens: int = Field(
         default=50_000, ge=1, validation_alias="ANALYST_PER_IP_DAILY_TOKENS"
     )
     """Model tokens one client address may spend a day; past this, budget_exceeded."""
-    """Most records one answer may cite; a question that needs more is refused as too broad."""
 
     kafka_bootstrap_servers: str = Field(validation_alias="KAFKA_BOOTSTRAP_SERVERS")
     kafka_topic_events_raw: str = Field(
@@ -82,6 +86,11 @@ class AppSettings(BaseSettings):
         default=0.001, gt=0, lt=1, validation_alias="DEDUPE_TARGET_FPR"
     )
 
+    api_workers: int = Field(default=2, ge=1, le=32, validation_alias="API_WORKERS")
+    """Gunicorn worker processes for the HTTP API."""
+    api_threads: int = Field(default=8, ge=1, le=64, validation_alias="API_THREADS")
+    """Threads per API worker. A slow analyst question holds one thread, not the whole
+    worker, so other requests keep being served and the in-flight cap can take effect."""
     api_base_url: str = Field(default="http://127.0.0.1:8000", validation_alias="API_BASE_URL")
     """Where command-line tools such as ``verify_event`` reach the running API."""
 

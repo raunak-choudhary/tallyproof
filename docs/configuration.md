@@ -20,6 +20,8 @@ Every setting comes from environment variables, loaded through one typed setting
 | `API_THROTTLE_ANON_READS` | no | `300/min` | Rate limit for read endpoints |
 | `API_THROTTLE_ANON_QUERIES` | no | `10/min` | Rate limit for asking the analyst questions, per client IP |
 | `API_BASE_URL` | no | `http://127.0.0.1:8000` | Where command-line tools such as `make verify-event` reach the API |
+| `API_WORKERS` | no | `2` | Gunicorn processes for the API |
+| `API_THREADS` | no | `8` | Threads per API process. A question waiting on the model holds one thread, so the process keeps serving other requests |
 | `LOG_LEVEL` | no | `INFO` | `DEBUG`, `INFO`, `WARNING`, or `ERROR` |
 | `LOG_FORMAT` | no | `json` | `json` for one object per line, or `console` for reading while developing |
 
@@ -131,13 +133,15 @@ The analyst calls its model through one client that speaks the OpenAI chat-compl
 | `LLM_TIMEOUT_SECONDS` | no | `30` | Per request |
 | `LLM_MAX_RETRIES` | no | `3` | Retries for rate limits and server errors, with backoff |
 | `LLM_REQUESTS_PER_MINUTE` | no | `10` | Client-side pacing. On Groq's free tier the binding limit is 8,000 tokens a minute, so evaluations run with `4` |
-| `LLM_MAX_INPUT_TOKENS` | no | `8000` | Per request |
+| `LLM_MAX_INPUT_TOKENS` | no | `8000` | Per request, estimated at four characters a token; a longer prompt isn't sent |
 | `LLM_MAX_OUTPUT_TOKENS` | no | `1200` | Per request |
 | `LLM_RUN_MAX_REQUESTS` | no | `900` | Per evaluation run; the run stops before passing it. Kept under Groq's 1,000 a day |
 | `LLM_RUN_MAX_TOKENS` | no | `3000000` | Per evaluation run |
 | `LLM_CACHE_DIR` | no | `testdata/llm_cache` | Recorded responses, committed so CI can replay them without a key |
 | `ANALYST_MAX_INFLIGHT` | no | `4` | Questions answered at once in one process; past this, a 503 with `Retry-After` |
-| `ANALYST_PER_IP_DAILY_TOKENS` | no | `50000` | Model tokens one client address may spend a day (UTC); past this, questions are refused with `budget_exceeded`. Counted in Django's cache, so per process unless the cache is shared |
+| `ANALYST_PER_IP_DAILY_TOKENS` | no | `50000` | Model tokens one client address may spend a day (UTC), charged after every model call; past this, questions are refused with `budget_exceeded`. Counted in Django's cache, so per process unless the cache is shared |
+| `ANALYST_MAX_RETRY_WAIT_SECONDS` | no | `10` | Longest the API waits when the provider asks it to retry later. A longer wait refuses the question as `model_unavailable` instead of holding a thread. Evaluation runs wait as long as the provider asks |
+| `ANALYST_SQL_FALLBACK` | no | `false` | Let questions the query spec can't express fall back to guarded, model-written SQL, pinned to the checkpoint and labelled lower assurance. Off, such questions are refused as `not_expressible` |
 | `EMBEDDING_MODEL` | no | `BAAI/bge-small-en-v1.5` | Local embedding model for policy retrieval, run through fastembed; downloads once |
 | `EMBEDDING_CACHE_DIR` | no | `var/embeddings` | The downloaded model and cached chunk vectors |
 
