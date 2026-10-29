@@ -60,7 +60,10 @@ Installed today:
 | Framework | Next.js App Router | 16.4 | Static export for the public demo ([ADR-0005](adr/0005-replay-mode-public-demo.md)) |
 | UI | React | 19.3 | |
 | Language | TypeScript | 6.0 | Version 7 is out, but typescript-eslint doesn't support it yet |
-| Styling | Tailwind CSS | 4.3 | Design tokens as CSS variables |
+| Styling | Tailwind CSS | 4.3 | Design tokens as CSS variables in `styles/tokens.css`; components in the shadcn/ui style (class-variance-authority, clsx, tailwind-merge), copied in by hand |
+| Icons | lucide-react | 1.64 | Outline icons; every icon is paired with a word |
+| Motion | Motion 14.8; GSAP 3.15 with ScrollTrigger; Lenis 1.3 | | Motion for component state; GSAP and Lenis for the landing story only, loaded lazily on that route |
+| Browser tests | Playwright 1.64, axe-core | | Every page at six viewports in both themes: no sideways scroll, WCAG AA checks; runs in `web-checks` |
 | Verification | @noble/ed25519, @noble/hashes, canonicalize | 3.2, 2.4, 5.1 | Identical behavior in every browser ([ADR-0007](adr/0007-signed-checkpoints-and-witnessing.md)) |
 | Tests | Vitest | 5.0 | |
 | Lint and format | ESLint, typescript-eslint, Prettier | 10, 8.72, 3.9 | ESLint 9 reached end of life in August 2026 |
