@@ -65,3 +65,13 @@ def test_level_and_format_come_from_settings(capsys):
     assert "shown" in out
     assert not out.strip().startswith("{")  # console format, not JSON
     configure()
+
+
+def test_secrets_inside_exception_text_are_redacted(capsys):
+    configure()
+    log = logging.getLogger("tallyproof.test")
+    try:
+        raise ConnectionError("cannot reach postgresql://tallyproof_app:s3cret-pw@db:5432/x")
+    except ConnectionError:
+        log.exception("database down")
+    assert "s3cret-pw" not in capsys.readouterr().out
