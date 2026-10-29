@@ -1,75 +1,104 @@
 @import "tailwindcss";
+@import "../styles/tokens.css";
 
-/* Every color and timing is a token, defined for both themes from the first component. */
-:root {
-  --bg: #fbfaf7;
-  --bg-elevated: #ffffff;
-  --fg: #16181d;
-  --fg-muted: #5b6170;
-  --border: #e3e1da;
-  --accent: #1f5fbf;
-  --ok: #15803d;
-  --fail: #b42318;
-  --warn: #a15c07;
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-  --radius: 8px;
-  --dur-fast: 120ms;
-  --dur-base: 240ms;
-  color-scheme: light;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #0f1115;
-    --bg-elevated: #171a21;
-    --fg: #e8e9ec;
-    --fg-muted: #9aa1b0;
-    --border: #2a2f3a;
-    --accent: #7aa7ff;
-    --ok: #4ade80;
-    --fail: #f87171;
-    --warn: #fbbf24;
-    color-scheme: dark;
-  }
-}
-
-:root[data-theme="dark"] {
-  --bg: #0f1115;
-  --bg-elevated: #171a21;
-  --fg: #e8e9ec;
-  --fg-muted: #9aa1b0;
-  --border: #2a2f3a;
-  --accent: #7aa7ff;
-  --ok: #4ade80;
-  --fail: #f87171;
-  --warn: #fbbf24;
-  color-scheme: dark;
-}
-
+/* Tailwind utilities read the tokens, so `bg-bg-elevated`, `text-fg-muted`, `border-border`,
+   `text-ok`, and so on follow the theme automatically. */
 @theme inline {
   --color-bg: var(--bg);
   --color-bg-elevated: var(--bg-elevated);
+  --color-bg-sunken: var(--bg-sunken);
   --color-fg: var(--fg);
   --color-fg-muted: var(--fg-muted);
   --color-border: var(--border);
   --color-accent: var(--accent);
+  --color-accent-fg: var(--accent-fg);
   --color-ok: var(--ok);
   --color-fail: var(--fail);
   --color-warn: var(--warn);
+  --color-info: var(--info);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-chart-6: var(--chart-6);
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --shadow-1: var(--shadow-1);
+  --breakpoint-sm: 375px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1280px;
+}
+
+/* The responsive contract (design brief, section 8). */
+html {
+  overflow-x: clip; /* a last line of defence; the tests fail on any sideways scroll */
 }
 
 body {
   background: var(--bg);
   color: var(--fg);
   font-family: var(--font-sans);
+  font-size: var(--text-base);
+  line-height: 1.5;
+  -webkit-text-size-adjust: 100%;
+}
+
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+  line-height: 1.15;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
+  height: auto;
+}
+
+code,
+kbd,
+pre,
+samp,
+.mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Identifiers and hashes may be long: they wrap rather than widen the page. */
+.breakable {
+  overflow-wrap: anywhere;
+}
+
+/* Hover styling only where a pointer can hover; touch targets grow on coarse pointers. */
+@media (pointer: coarse) {
+  button,
+  a[role="button"],
+  input,
+  select {
+    min-height: 44px;
+  }
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 @media (prefers-reduced-motion: reduce) {
   * {
     animation-duration: 0ms !important;
     transition-duration: 0ms !important;
+    scroll-behavior: auto !important;
   }
 }

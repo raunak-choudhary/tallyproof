@@ -1,0 +1,114 @@
+/* Design tokens. Every colour, size, and duration the site uses, defined once with a
+   value per theme. Components never use raw values. Source of truth for the palette is
+   the Phase 5 design brief; Tailwind reads these through @theme in globals.css. */
+
+:root {
+  /* surfaces and text */
+  --bg: #fafaf9;
+  --bg-elevated: #ffffff;
+  --bg-sunken: #f0efec;
+  --fg: #15181d;
+  --fg-muted: #5c6470;
+  --border: #e2e1dd;
+
+  /* the one accent, and the four verification states */
+  --accent: #0f62fe;
+  --accent-fg: #ffffff;
+  --ok: #1b7f3b;
+  --fail: #c0271d;
+  --warn: #9a6700;
+  --info: #4c5a6b;
+
+  /* chart series: distinguishable under the common forms of colour-blindness */
+  --chart-1: #0072b2;
+  --chart-2: #e69f00;
+  --chart-3: #009e73;
+  --chart-4: #cc79a7;
+  --chart-5: #d55e00;
+  --chart-6: #56636f;
+  --chart-grid: #e8e7e3;
+
+  /* type: the faces are set on <html> by next/font; these are the scale */
+  --text-xs: clamp(0.75rem, 0.72rem + 0.15vw, 0.8125rem);
+  --text-sm: clamp(0.875rem, 0.84rem + 0.2vw, 0.9375rem);
+  --text-base: clamp(1rem, 0.95rem + 0.25vw, 1.0625rem);
+  --text-lg: clamp(1.125rem, 1.05rem + 0.4vw, 1.25rem);
+  --text-xl: clamp(1.375rem, 1.2rem + 0.9vw, 1.75rem);
+  --text-2xl: clamp(1.75rem, 1.3rem + 2vw, 2.75rem);
+  --text-hero: clamp(2.25rem, 1.5rem + 4vw, 4.5rem);
+
+  /* space, radius, shadow */
+  --gutter: clamp(1rem, 4vw, 2rem);
+  --space-section: clamp(3rem, 2rem + 5vw, 7rem);
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius: var(--radius-md);
+  --shadow-1: 0 1px 2px rgb(21 24 29 / 6%), 0 4px 12px rgb(21 24 29 / 6%);
+
+  /* motion */
+  --dur-fast: 120ms;
+  --dur-base: 240ms;
+  --dur-story: 900ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0b0f14;
+    --bg-elevated: #121922;
+    --bg-sunken: #070a0e;
+    --fg: #e8ecf1;
+    --fg-muted: #95a0ad;
+    --border: #243040;
+    --accent: #78a9ff;
+    --accent-fg: #0b0f14;
+    --ok: #42be65;
+    --fail: #ff7b73;
+    --warn: #f1c21b;
+    --info: #a2b0bf;
+    --chart-1: #56b4e9;
+    --chart-2: #f0c35a;
+    --chart-3: #3fd0a4;
+    --chart-4: #e6a2cc;
+    --chart-5: #f08a4b;
+    --chart-6: #9aa7b4;
+    --chart-grid: #1c2632;
+    --shadow-1: 0 0 0 1px var(--border);
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #0b0f14;
+  --bg-elevated: #121922;
+  --bg-sunken: #070a0e;
+  --fg: #e8ecf1;
+  --fg-muted: #95a0ad;
+  --border: #243040;
+  --accent: #78a9ff;
+  --accent-fg: #0b0f14;
+  --ok: #42be65;
+  --fail: #ff7b73;
+  --warn: #f1c21b;
+  --info: #a2b0bf;
+  --chart-1: #56b4e9;
+  --chart-2: #f0c35a;
+  --chart-3: #3fd0a4;
+  --chart-4: #e6a2cc;
+  --chart-5: #f08a4b;
+  --chart-6: #9aa7b4;
+  --chart-grid: #1c2632;
+  --shadow-1: 0 0 0 1px var(--border);
+  color-scheme: dark;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-fast: 0ms;
+    --dur-base: 0ms;
+    --dur-story: 0ms;
+  }
+}
