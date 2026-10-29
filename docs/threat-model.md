@@ -116,7 +116,7 @@ The append-only tables have no update or delete grants for the application role,
 - Pull request pipelines never get the LLM key. When a PR's evaluation hits an uncached prompt, that item runs against a fake client and the run is labeled as a harness check. Only `main` and scheduled pipelines call the real model.
 - Secrets sit in three separate CircleCI contexts (LLM evaluation, the GitHub bot, CI signing), each restricted to `main` and scheduled triggers. Passing secrets to forked PRs is off.
 - The bot token can only push to `bot/*` branches and open pull requests. It can't push to `main`.
-- Only `main` and scheduled runs write to the LLM response cache, so a pull request can't poison nightly results.
+- Only `main` and scheduled runs write to the LLM response cache, so a pull request can't poison the scheduled results.
 - The results table in the README is generated from a fixed schema of numbers and model IDs. No model-written text reaches it.
 - CODEOWNERS covers CI configuration, the Makefile, witness data, evaluation thresholds, and policy documents.
 

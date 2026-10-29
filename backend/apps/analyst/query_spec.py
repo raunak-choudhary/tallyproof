@@ -260,6 +260,11 @@ class QuerySpec(_Strict):
             raise SpecError("a list needs a limit")
         if self.shape == "lookup" and not self.filters:
             raise SpecError("a lookup needs filters that pick out one row")
+        if self.shape == "lookup" and (self.order_by or self.limit):
+            raise SpecError(
+                "a lookup takes no order_by or limit; for the largest or smallest record use "
+                "shape aggregate with metric max_amount or min_amount and the fields to show"
+            )
         if self.shape == "absence":
             if self.absence_rule is None:
                 raise SpecError("an absence question needs a rule")

@@ -71,7 +71,7 @@ PostgreSQL 16 is supported until November 2028, which covers Django 5.2's suppor
 
 | Area | Choice | Note |
 |---|---|---|
-| CI | CircleCI | Machine executor for container-based tests, scheduled triggers for nightly runs |
+| CI | CircleCI | Machine executor for container-based tests, a weekly scheduled trigger for live evaluations |
 | Releases | release-please in a minimal GitHub Action | All building and testing stays on CircleCI ([ADR-0011](adr/0011-release-automation-on-github-actions.md)) |
 | Dependency updates | Dependabot | A CI check recompiles the pinned requirements to catch drift |
 | Documentation site | MkDocs Material with mkdocstrings | Material is in maintenance mode, so the configuration avoids features that would block a later move to Zensical |

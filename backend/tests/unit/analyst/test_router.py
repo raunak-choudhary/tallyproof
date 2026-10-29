@@ -11,7 +11,7 @@ AGENCIES = ["Department of Energy", "Department of State"]
 
 
 def ask(question: str, reply: str = "{}") -> tuple[Route, FakeClient]:
-    fake = FakeClient([reply])
+    fake = FakeClient([reply, reply])  # an invalid spec gets one repair attempt
     return (
         route(question, fake, model="m", agencies=AGENCIES, max_tokens=300),
         fake,
@@ -129,3 +129,37 @@ def test_model_refusals_and_policy_are_accepted_with_known_reasons():
     assert decided.refusal_reason == "out_of_scope"
     decided, _ = ask("Can an agency pay in advance?", json.dumps({"category": "policy"}))
     assert decided.category == "policy"
+
+
+def test_the_structured_output_schema_describes_a_whole_spec():
+    """Gemini fills exactly the schema it's given; an empty spec schema got empty specs."""
+    from apps.analyst.query_spec import CATALOG
+    from apps.analyst.router import ROUTER_SCHEMA
+
+    spec = ROUTER_SCHEMA["properties"]["spec"]
+    assert spec["required"] == ["shape", "entity"]
+    assert set(spec["properties"]["entity"]["enum"]) == set(CATALOG)
+    filter_fields = spec["properties"]["filters"]["items"]["properties"]["field"]["enum"]
+    assert {"awarding_agency", "fiscal_year", "piid", "period_outlay"} <= set(filter_fields)
+    assert "description" not in filter_fields
+
+
+def test_an_invalid_spec_gets_one_repair_with_the_exact_error():
+    broken = json.dumps({"category": "lookup", "spec": {"shape": "lookup", "entity": "awards"}})
+    fixed = json.dumps(
+        {
+            "category": "lookup",
+            "spec": {
+                "shape": "lookup",
+                "entity": "awards",
+                "filters": [{"field": "piid", "op": "eq", "value": "P1"}],
+                "fields": ["total_outlays"],
+            },
+        }
+    )
+    fake = FakeClient([broken, fixed])
+    decided = route("Paid on P1?", fake, model="m", agencies=AGENCIES, max_tokens=300)
+    assert decided.category == "lookup"
+    assert decided.spec is not None
+    assert len(fake.requests) == 2
+    assert "a lookup needs filters" in fake.requests[1].messages[-1].content

@@ -78,7 +78,7 @@ Each run writes a machine-readable JSON report and a readable Markdown report to
 | When | Questions | Mode | Gate |
 |---|---|---|---|
 | Every pull request (`eval-smoke`, part of `ci-gate`) | Smoke set | Cached. Uncached items fall back to the fake client and the run is labeled a harness check | Integrity always; quality thresholds once every response is recorded |
-| Nightly (scheduled pipeline) | Full and held-out sets | Live, with the key from the `llm-eval` context | Fails on regression; reports kept as artifacts |
+| Weekly (scheduled trigger, Sundays 03:00 UTC) | Full and held-out sets | Live, with the key from the `llm-eval` context | Fails on regression; reports kept as artifacts |
 | Release tag | Full set | Live | Must pass before release |
 
 Pull request pipelines never receive the LLM key, and forked pull requests run in fake mode only.
@@ -109,4 +109,4 @@ The same questions also run through a naive RAG setup: retrieve the top rows and
 
 ## The README results table
 
-`python -m evals.readme_table <report.json> <commit>` regenerates the table between `<!-- eval-table:start -->` and `<!-- eval-table:end -->` from a quality run, and refuses a harness check, so a placeholder can never be published as a result. The table lists the model IDs, date, number of questions, git commit, and template and held-out scores side by side. The nightly job keeps each report as a CI artifact; the table is updated through a normal pull request, never by pushing to `main`.
+`python -m evals.readme_table <report.json> <commit>` regenerates the table between `<!-- eval-table:start -->` and `<!-- eval-table:end -->` from a quality run, and refuses a harness check, so a placeholder can never be published as a result. The table lists the model IDs, date, number of questions, git commit, and template and held-out scores side by side. The weekly job keeps each report as a CI artifact; the table is updated through a normal pull request, never by pushing to `main`.

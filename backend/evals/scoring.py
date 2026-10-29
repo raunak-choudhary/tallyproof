@@ -97,7 +97,8 @@ def score(
         checks = []
         if expected.amount is not None:
             checks.append(any(_same(v, expected.amount) for v in observed.used_values))
-        if expected.count is not None and category != "lookup":
+        # A total is judged on its amount; the record count matters only for counts.
+        if expected.count is not None and expected.amount is None and category != "lookup":
             checks.append(
                 any(_same(v, expected.count) for v in observed.used_values)
                 or (expected.count == 0 and not observed.cited and answered)

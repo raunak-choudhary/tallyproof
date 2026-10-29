@@ -69,7 +69,7 @@ STATE_DB: dict[str, list[tuple[Any, ...]]] = dict(
 def test_a_numeric_question_is_answered_with_bound_values_and_citations():
     fake = FakeClient(
         model(**{
-            "router.v1": json.dumps({"category": "numeric_aggregate", "spec": SUM_SPEC}),
+            "router.v2": json.dumps({"category": "numeric_aggregate", "spec": SUM_SPEC}),
             "composer.v1": json.dumps(
                 {"answer": "State obligated {{s1}} over {{s2}} actions [[c1]]."}
             ),
@@ -95,7 +95,7 @@ def test_a_free_number_gets_one_repair_and_then_a_refusal():
     fake = FakeClient(
         model(
             **{
-                "router.v1": json.dumps({"category": "numeric_aggregate", "spec": SUM_SPEC}),
+                "router.v2": json.dumps({"category": "numeric_aggregate", "spec": SUM_SPEC}),
                 "composer.v1": replies,
             }
         )
@@ -109,7 +109,7 @@ def test_a_free_number_gets_one_repair_and_then_a_refusal():
     fake = FakeClient(
         model(
             **{
-                "router.v1": json.dumps({"category": "numeric_aggregate", "spec": SUM_SPEC}),
+                "router.v2": json.dumps({"category": "numeric_aggregate", "spec": SUM_SPEC}),
                 "composer.v1": stubborn,
             }
         )
@@ -172,10 +172,10 @@ def test_an_ambiguous_lookup_and_empty_results_are_refused():
     route = json.dumps({"category": "lookup", "spec": spec})
     two = Database(evidence=[("evt_a", 1, Decimal(1)), ("evt_b", 2, Decimal(2))])
     assert (
-        run("Amount on P1?", FakeClient(model(**{"router.v1": route})), two).refusal == "ambiguous"
+        run("Amount on P1?", FakeClient(model(**{"router.v2": route})), two).refusal == "ambiguous"
     )
     assert (
-        run("Amount on P1?", FakeClient(model(**{"router.v1": route})), Database()).refusal
+        run("Amount on P1?", FakeClient(model(**{"router.v2": route})), Database()).refusal
         == "no_evidence"
     )
 
@@ -185,7 +185,7 @@ def test_the_fallback_path_runs_only_guarded_sql_and_is_labeled():
         {"sql": "SELECT event_id, leaf_index, amount AS mean FROM obligations"}
     )
     fake = FakeClient(model(**{
-        "router.v1": json.dumps({
+        "router.v2": json.dumps({
             "category": "numeric_aggregate",
             "spec": {"shape": "aggregate", "entity": "obligations", "metric": "avg"},
         }),
@@ -202,7 +202,7 @@ def test_the_fallback_path_runs_only_guarded_sql_and_is_labeled():
     hostile = FakeClient(
         model(
             **{
-                "router.v1": "not json",
+                "router.v2": "not json",
                 "fallback-sql.v1": json.dumps({"sql": "DELETE FROM obligations"}),
             }
         )
