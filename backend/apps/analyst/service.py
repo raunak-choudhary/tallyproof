@@ -4,6 +4,7 @@ from collections.abc import Sequence
 from functools import lru_cache
 from typing import Any
 
+from django.core.cache import cache
 from django.db import connections
 
 from apps.analyst import limits
@@ -72,6 +73,7 @@ def model_client() -> LLMClient:
         timeout_seconds=settings.llm_timeout_seconds,
         max_retries=settings.llm_max_retries,
         requests_per_minute=settings.llm_requests_per_minute,
+        max_retry_wait=app_settings().analyst_max_retry_wait_seconds,
     )
 
 
@@ -88,14 +90,29 @@ def search_policy(question: str, k: int) -> Sequence[Hit]:
     return policy_index().search(question, k)
 
 
-def agencies(executor: Executor) -> list[str]:
-    """Agency names exactly as the data spells them, for the router's prompt."""
+MAX_AGENCIES = 200
+"""Most agency names the router's prompt lists, so the prompt stays bounded."""
+AGENCY_CACHE_SECONDS = 300
+
+
+def agencies(executor: Executor, *, tree_size: int | None = None) -> list[str]:
+    """Agency names exactly as the data spells them, for the router's prompt.
+
+    With ``tree_size``, the list is cached for that checkpoint, so a question doesn't
+    pay for a scan of every award.
+    """
+    key = f"analyst-agencies:{tree_size}"
+    if tree_size is not None and (cached := cache.get(key)) is not None:
+        return list(cached)
     _, rows = executor.run(
         "SELECT DISTINCT awarding_agency FROM analyst.awards "
-        "WHERE awarding_agency IS NOT NULL ORDER BY 1",
-        [],
+        "WHERE awarding_agency IS NOT NULL ORDER BY 1 LIMIT %s",
+        [MAX_AGENCIES],
     )
-    return [r[0] for r in rows]
+    names = [r[0] for r in rows]
+    if tree_size is not None:
+        cache.set(key, names, AGENCY_CACHE_SECONDS)
+    return names
 
 
 def models() -> Models:
@@ -210,7 +227,7 @@ def answer_question(
         executor=runner,
         search=search or search_policy,
         models=chosen,
-        agencies=agencies(runner),
+        agencies=agencies(runner, tree_size=int(latest)),
         tree_size=int(latest),
     )
     return store(result, chosen, int(latest))
