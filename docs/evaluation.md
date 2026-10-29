@@ -43,7 +43,7 @@ A frozen set of 40 free-form questions (`backend/evals/questions/held_out.toml`)
 
 | Metric | How it's computed |
 |---|---|
-| Citation precision | Cited events that should have been cited, divided by all cited events |
+| Citation precision | Cited events that should have been cited, divided by all cited events. Anomaly lists are left out: the real data holds anomalies nobody planted, which reconciliation rightly finds but the labels can't know about. Those extra findings are counted separately |
 | Citation recall | Events that should have been cited and were, divided by all events that should have been cited |
 | Numeric exactness | Answers whose bound value matches the expected amount to the cent |
 | Reconciliation precision and recall | Breaks found against breaks expected, on data that includes near-miss cases such as legitimate split outlays |

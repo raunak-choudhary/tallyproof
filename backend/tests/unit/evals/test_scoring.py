@@ -7,7 +7,8 @@ from evals.scoring import Observed, gate, metrics, score
 def observed(**kwargs: object) -> Observed:
     base: dict[str, object] = {
         "status": "answered", "refusal": None, "text": "", "used_values": [], "cited": set(),
-        "quotes": [], "fallback": False, "first_free_numbers": 0, "drafts": 1, "final_ok": True,
+        "quotes": [], "sections_cited": [], "fallback": False, "first_free_numbers": 0,
+        "drafts": 1, "final_ok": True,
         "tokens": 10, "latency_ms": 5, "integrity_ok": True,
     }  # fmt: skip
     return Observed(**(base | kwargs))  # type: ignore[arg-type]
@@ -89,3 +90,19 @@ def test_integrity_always_gates_and_quality_only_on_real_runs():
     assert gate({"integrity": 1.0, "numeric_exactness": 0.1}, quality=True) == [
         "numeric_exactness 0.1 < 0.95"
     ]
+
+
+def test_policy_credit_comes_from_cited_sections_and_anomalies_dont_hurt_precision():
+    policy = score(
+        "P", "q", "policy", True, Expected(section="43.104"), observed(sections_cited=["43.104"])
+    )
+    assert policy.policy_section_ok
+    anomaly = score(
+        "A", "q", "anomaly_list", True,
+        Expected(must_cite=frozenset("ab"), may_cite=frozenset("ab")),
+        observed(cited={"a", "b", "real1", "real2"}),
+    )  # fmt: skip
+    values = metrics([anomaly])
+    assert values["citation_precision"] is None
+    assert values["anomaly_findings_beyond_labels"] == 2
+    assert values["anomaly_recall"] == 1.0

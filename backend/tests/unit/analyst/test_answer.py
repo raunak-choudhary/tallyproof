@@ -128,3 +128,12 @@ def test_list_lookup_and_absence_rows_each_get_a_citation():
         tree_size=10,
     )
     assert [x.value for x in e.slots.values()] == ["AWD", Decimal(4)]
+
+
+def test_numbers_from_a_cited_regulation_are_allowed():
+    e = evidence()
+    e.sources["q1"] = QuoteSource(
+        "q1", "evt_far", 9, "43.201", "General.", "issued on Standard Form 30", "x"
+    )
+    assert verify(Draft("Change orders use Standard Form 30 [[q1]]."), e, QUESTION).ok
+    assert not verify(Draft("Change orders use Standard Form 31 [[q1]]."), e, QUESTION).ok
