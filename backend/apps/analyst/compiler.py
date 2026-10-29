@@ -51,7 +51,9 @@ class CompiledQuery:
     ``value_sql`` is ``None`` for shapes whose answer is the evidence rows
     themselves. ``evidence_sql`` returns the citable ID and leaf index first.
     ``evidence_limit`` is one more than the caller may cite, so the caller can
-    tell a complete evidence set from a truncated one.
+    tell a complete evidence set from a truncated one. With ``group_column``, the
+    evidence SQL takes two more parameters after ``evidence_params``: the groups the
+    value query returned, and how many rows each group may cite.
     """
 
     shape: str
@@ -166,9 +168,15 @@ def compile_spec(spec: QuerySpec, *, tree_size: int, max_rows: int) -> CompiledQ
                 f"SELECT {group} AS grp, {expr} AS value, count(*) AS row_count FROM {view} t "
                 f"WHERE {where} GROUP BY {group} ORDER BY value {order} NULLS LAST, grp{top}"
             )
+            # Evidence per returned group, so every group cites its own records. The
+            # caller appends two parameters: the groups, and how many rows each may cite.
+            amount_alias = f"{amount_column} AS amt" if amount else ""
             evidence_sql = (
-                f"SELECT {citable}, {group} AS grp{amount_column} FROM {view} t "
-                f"WHERE {where} ORDER BY {leaf} LIMIT {limit}"
+                f"SELECT cid, cleaf, grp{', amt' if amount else ''} FROM ("
+                f"SELECT t.{_quote(entity.id_column)} AS cid, {leaf} AS cleaf, {group} AS grp"
+                f"{amount_alias}, row_number() OVER (PARTITION BY {group} ORDER BY {leaf}) AS rn "
+                f"FROM {view} t WHERE {where} AND {group} = ANY(%s)"
+                f") ranked WHERE rn <= %s ORDER BY grp, cleaf"
             )
             by = entity.fields[spec.group_by].words
             ranked = f", top {spec.limit} by {metric_words}" if spec.limit else ""
@@ -184,7 +192,7 @@ def compile_spec(spec: QuerySpec, *, tree_size: int, max_rows: int) -> CompiledQ
             extra = "".join(f", t.{_quote(entity.fields[n].column)}" for n in spec.fields)
             evidence_sql = (
                 f"SELECT {citable}{amount_column}{extra} FROM {view} t WHERE {where} "
-                f"ORDER BY {amount} {direction}, {leaf} LIMIT 1"
+                f"AND {amount} IS NOT NULL ORDER BY {amount} {direction} NULLS LAST, {leaf} LIMIT 1"
             )
         else:
             evidence_sql = (
@@ -210,11 +218,11 @@ def compile_spec(spec: QuerySpec, *, tree_size: int, max_rows: int) -> CompiledQ
             f"SELECT {citable}{columns} FROM {view} t WHERE {where} "
             f"ORDER BY {order} {direction} NULLS LAST, {leaf} LIMIT {int(spec.limit)}"
         )
-        ordered = (
-            f", {spec.limit} largest by {entity.fields[spec.order_by].words}"
-            if spec.order_by and spec.descending
-            else f", first {spec.limit}"
-        )
+        if spec.order_by:
+            size = "largest" if spec.descending else "smallest"
+            ordered = f", {spec.limit} {size} by {entity.fields[spec.order_by].words}"
+        else:
+            ordered = f", the {'latest' if spec.descending else 'first'} {spec.limit} in log order"
         return CompiledQuery(spec.shape, subject + ordered, evidence_sql, params, spec.limit)
 
     if spec.shape == "lookup":

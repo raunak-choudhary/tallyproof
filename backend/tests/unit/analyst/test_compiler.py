@@ -71,7 +71,8 @@ def test_values_are_parsed_into_their_types_and_shown_in_words():
     assert 'ORDER BY t."amount" ASC NULLS LAST, t."leaf_index" LIMIT 5' in q.evidence_sql
     assert q.words == (
         "obligations and modifications where amount is below 0.00 and action date is at least "
-        "2023-10-01 and awarding agency is one of A, B and contract number (PIID) is not X, first 5"
+        "2023-10-01 and awarding agency is one of A, B and contract number (PIID) is not X, "
+        "5 smallest by amount"
     )
 
 
@@ -85,6 +86,32 @@ def test_a_grouped_top_n_ranks_groups_and_cites_their_rows():
     assert 't."awarding_agency" IS NOT NULL' in q.value_sql
     assert 't."awarding_agency" IS NOT NULL' in q.evidence_sql
     assert q.words.endswith("leaving out records with no awarding agency")
+    # Evidence comes per returned group: the caller adds the groups and a per-group cap.
+    assert 't."awarding_agency" = ANY(%s)' in q.evidence_sql
+    assert "PARTITION BY" in q.evidence_sql
+    assert q.evidence_sql.count("%s") == len(q.evidence_params) + 2
+
+
+@pytest.mark.parametrize(
+    ("extra", "words"),
+    [
+        ({}, "obligations and modifications, the latest 5 in log order"),
+        ({"descending": False}, "obligations and modifications, the first 5 in log order"),
+        (
+            {"order_by": "amount", "descending": True},
+            "obligations and modifications, 5 largest by amount",
+        ),
+        (
+            {"order_by": "amount", "descending": False},
+            "obligations and modifications, 5 smallest by amount",
+        ),
+    ],
+)
+def test_list_wording_follows_the_order(extra, words):
+    q = compile_spec(
+        spec(shape="list", entity="obligations", limit=5, **extra), tree_size=5, max_rows=10
+    )
+    assert q.words == words
 
 
 def test_an_unranked_grouping_fetches_one_group_past_the_cap():
@@ -100,7 +127,8 @@ def test_min_and_max_cite_the_extreme_row():
         max_rows=10,
     )
     assert q.evidence_sql.startswith('SELECT t."event_id", t."leaf_index", t."amount", t."piid"')
-    assert q.evidence_sql.endswith('ORDER BY t."amount" DESC, t."leaf_index" LIMIT 1')
+    assert 't."amount" IS NOT NULL' in q.evidence_sql
+    assert q.evidence_sql.endswith('ORDER BY t."amount" DESC NULLS LAST, t."leaf_index" LIMIT 1')
     assert q.words == "largest of obligations and modifications"
 
 

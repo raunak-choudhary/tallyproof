@@ -196,6 +196,33 @@ def test_every_value_shown_carries_its_citation():
     )
 
 
+def test_a_sentence_mixing_groups_marks_each_value_with_its_own_citation():
+    e = Evidence()
+    hhs = e.add_citation([("evt_a", 1)], "records where agency is HHS")
+    dot = e.add_citation([("evt_b", 2)], "records where agency is DOT")
+    e.add_slot("text", "HHS", "agency", hhs)
+    e.add_slot("money", Decimal(10), "total", hhs)
+    e.add_slot("text", "DOT", "agency", dot)
+    e.add_slot("money", Decimal(1), "total", dot)
+    swapped = "{{s1}} spent {{s4}} and {{s3}} spent {{s2}} [[c1]] [[c2]]."
+    assert render([swapped], e) == (
+        "HHS [[c1]] spent $1.00 [[c2]] and DOT [[c2]] spent $10.00 [[c1]] [[c2]]."
+    )
+    one_group = "{{s1}} spent {{s2}} [[c1]]."
+    assert render([one_group], e) == "HHS spent $10.00 [[c1]]."
+
+
+def test_a_full_list_says_more_may_match():
+    s = spec(shape="list", entity="obligations", limit=2, fields=["amount"])
+    compiled = compile_spec(s, tree_size=10, max_rows=100)
+    full = from_query(
+        s, compiled, [], [("evt_a", 1, Decimal(1)), ("evt_b", 2, Decimal(2))], tree_size=10
+    )
+    assert full.filter_words.endswith("more records may match")
+    short = from_query(s, compiled, [], [("evt_a", 1, Decimal(1))], tree_size=10)
+    assert "more records may match" not in short.filter_words
+
+
 def test_an_answer_made_only_of_quotes_shows_them():
     assert (
         render([], evidence(), [Quote("q1", "signed by both parties")])

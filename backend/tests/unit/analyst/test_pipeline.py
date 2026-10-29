@@ -352,3 +352,47 @@ def test_too_many_groups_is_too_broad():
 
     answer = run("Total awarded by every agency?", fake, ManyGroups())
     assert (answer.status, answer.refusal) == ("refused", "too_broad")
+
+
+def test_each_group_gets_its_own_evidence_and_break_citations_stay_pinned():
+    by_agency = {**SUM_SPEC, "filters": [], "group_by": "awarding_agency", "limit": 2}
+    fake = FakeClient(model(**{
+        "router.v2": json.dumps({"category": "numeric_aggregate", "spec": by_agency}),
+        "composer.v4": json.dumps({"answer": "{{s1}} spent {{s2}} [[c1]]."}),
+    }))  # fmt: skip
+    seen: list[tuple[str, Sequence[Any]]] = []
+
+    class Grouped(Database):
+        def run(self, sql: str, params: Sequence[Any]) -> tuple[list[str], list[tuple[Any, ...]]]:
+            seen.append((sql, params))
+            if "GROUP BY" in sql:
+                return ["grp", "value", "row_count"], [
+                    ("HHS", Decimal(10), 2),
+                    ("DOT", Decimal(1), 1),
+                ]
+            if "PARTITION BY" in sql:
+                return ["cid", "cleaf", "grp", "amt"], [
+                    ("evt_a", 1, "HHS", Decimal(5)), ("evt_c", 3, "HHS", Decimal(5)),
+                    ("evt_b", 2, "DOT", Decimal(1)),
+                ]  # fmt: skip
+            return super().run(sql, params)
+
+    answer = run("Top two agencies by total?", fake, Grouped())
+    assert answer.status == "answered"
+    evidence_params = next(p for s, p in seen if "PARTITION BY" in s)
+    assert evidence_params[-2:] == [["HHS", "DOT"], 50]  # 100 rows shared by two groups
+    cites = list(answer.evidence.citations.values())
+    assert [c.event_ids for c in cites] == [("evt_a", "evt_c"), ("evt_b",)]
+
+
+def test_break_events_are_pinned_and_keep_their_sample_label():
+    from apps.analyst.answer import Evidence
+    from apps.analyst.pipeline import _expand_breaks
+
+    evidence = Evidence(tree_size=50)
+    evidence.add_citation([("brk_1", 4), ("brk_2", 5)], "breaks", total=9)
+    db = Database(break_events=[("evt_x", 3)])
+    _expand_breaks(evidence, db)
+    assert "leaf_index < %s" in db.sql[0]
+    assert evidence.citations["c1"].sample_of == 9
+    assert evidence.citations["c1"].event_ids == ("evt_x",)

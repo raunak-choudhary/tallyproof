@@ -32,7 +32,10 @@ def run(
 ) -> tuple[list[tuple[Any, ...]], list[tuple[Any, ...]]]:
     compiled = compile_spec(QuerySpec.model_validate(spec), tree_size=tree_size, max_rows=1000)
     value = query(compiled.value_sql, *compiled.value_params) if compiled.value_sql else []
-    return value, query(compiled.evidence_sql, *compiled.evidence_params)
+    params = list(compiled.evidence_params)
+    if compiled.group_column:
+        params += [[row[0] for row in value], 1000]
+    return value, query(compiled.evidence_sql, *params)
 
 
 def eq(field: str, value: object) -> dict[str, object]:
