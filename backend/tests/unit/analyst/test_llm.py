@@ -21,6 +21,7 @@ from apps.analyst.llm import (
     client_for,
 )
 from config.env import LLMSettings
+from tests.fakes import FrozenClock
 
 
 def settings_from(values: dict[str, Any]) -> LLMSettings:
@@ -76,21 +77,8 @@ def ok(text: str = '{"shape": "list"}') -> Reply:
     )
 
 
-class Clock:
-    def __init__(self) -> None:
-        self.now = 100.0
-        self.slept: list[float] = []
-
-    def time(self) -> float:
-        return self.now
-
-    def sleep(self, seconds: float) -> None:
-        self.slept.append(seconds)
-        self.now += seconds
-
-
 def real(
-    session: Session, clock: Clock, *, rpm: int = 60, retries: int = 2
+    session: Session, clock: FrozenClock, *, rpm: int = 60, retries: int = 2
 ) -> OpenAICompatibleClient:
     return OpenAICompatibleClient(
         base_url=BASE,
@@ -105,7 +93,7 @@ def real(
 
 
 def test_the_real_client_sends_the_chat_protocol_with_structured_output():
-    session, clock = Session(ok()), Clock()
+    session, clock = Session(ok()), FrozenClock()
     schema = {"type": "object", "properties": {"shape": {"type": "string"}}}
     response = real(session, clock).complete(request(response_schema=schema))
     assert response.text == '{"shape": "list"}'
@@ -126,7 +114,10 @@ def test_the_real_client_sends_the_chat_protocol_with_structured_output():
 
 
 def test_rate_limits_and_server_errors_are_retried_with_backoff():
-    session, clock = Session(Reply(429, headers={"Retry-After": "7"}), Reply(503), ok()), Clock()
+    session, clock = (
+        Session(Reply(429, headers={"Retry-After": "7"}), Reply(503), ok()),
+        FrozenClock(),
+    )
     assert real(session, clock, rpm=600).complete(request()).text
     assert len(session.calls) == 3
     assert 7.5 in clock.slept  # Retry-After, plus a little margin
@@ -134,14 +125,14 @@ def test_rate_limits_and_server_errors_are_retried_with_backoff():
 
 
 def test_fractional_retry_after_is_honored():
-    session, clock = Session(Reply(429, headers={"Retry-After": "2.48"}), ok()), Clock()
+    session, clock = Session(Reply(429, headers={"Retry-After": "2.48"}), ok()), FrozenClock()
     real(session, clock, rpm=600).complete(request())
     assert clock.slept == [2.98]
 
 
 def test_a_wait_past_the_cap_fails_at_once_instead_of_holding_the_worker():
     session = Session(Reply(429, headers={"Retry-After": "86400"}), ok())
-    clock = Clock()
+    clock = FrozenClock()
     client = OpenAICompatibleClient(
         base_url=BASE, api_key="sk-test", timeout_seconds=5, max_retries=2,
         requests_per_minute=600, session=session, sleep=clock.sleep, clock=clock.time,
@@ -154,7 +145,7 @@ def test_a_wait_past_the_cap_fails_at_once_instead_of_holding_the_worker():
 
 
 def test_requests_are_paced_to_the_rate_limit():
-    session, clock = Session(ok(), ok()), Clock()
+    session, clock = Session(ok(), ok()), FrozenClock()
     client = real(session, clock, rpm=10)
     client.complete(request())
     client.complete(request())
@@ -177,7 +168,7 @@ def test_requests_are_paced_to_the_rate_limit():
 )
 def test_failures_raise_without_leaking_the_key(replies, message):
     with pytest.raises(LLMError, match=message) as caught:
-        real(Session(*replies), Clock()).complete(request())
+        real(Session(*replies), FrozenClock()).complete(request())
     assert "sk-test" not in str(caught.value)
 
 

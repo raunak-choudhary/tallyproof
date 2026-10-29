@@ -1,7 +1,7 @@
 import pytest
 
 from apps.ingestion.control_totals import reconcile_range
-from tests.integration.ingestion.test_ingestor import TOPIC, make_ingestor, valid
+from tests.integration.ingestion.test_ingestor import TOPIC, make_ingestor, message, valid
 
 pytestmark = pytest.mark.django_db
 
@@ -9,7 +9,7 @@ pytestmark = pytest.mark.django_db
 def test_every_message_is_accounted_for_and_amounts_match(migrated):
     ingestor = make_ingestor()
     batch = [valid(0, key="test:a"), valid(1, key="test:b"), valid(2, key="test:a")]
-    batch.append(type(batch[0])(b"not json", 3))
+    batch.append(message(b"not json", 3))
     ingestor.process(batch)
     messages = {m.offset(): m.value() for m in batch}
     report = reconcile_range(TOPIC, 0, messages, 0, 4)
