@@ -66,7 +66,7 @@ Installed today:
 | Lint and format | ESLint, typescript-eslint, Prettier | 10, 8.72, 3.9 | ESLint 9 reached end of life in August 2026 |
 | Package manager | pnpm | 10 | Lockfile committed |
 
-Chosen for the site, added when it's built: shadcn/ui for components, Motion for in-app transitions, GSAP with ScrollTrigger and Lenis for the landing story (GSAP is free, including plugins, under its own license), React Flow for the Merkle tree, Lightweight Charts for time series, and Playwright with axe for browser and accessibility tests. Live data arrives over the WebSocket, so no data-fetching library is planned.
+Chosen for the site, added when it's built: shadcn/ui for components, Motion for in-app transitions, GSAP with ScrollTrigger and Lenis for the landing story (GSAP is free, including plugins, under its own license), React Flow for the Merkle tree, Lightweight Charts for time series, TanStack Query for the REST reads (answers, events, proofs) beside the WebSocket feed, and Playwright with axe for browser and accessibility tests.
 
 ## CI, documentation, and releases
 
