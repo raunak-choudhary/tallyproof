@@ -15,7 +15,7 @@ from typing import Any, Literal, get_args
 
 from pydantic import ValidationError
 
-from apps.analyst.llm import LLMClient, LLMRequest, Message
+from apps.analyst.llm import LLMClient, LLMRequest, Message, as_data
 from apps.analyst.query_spec import CATALOG, QuerySpec
 
 Category = Literal["numeric_aggregate", "lookup", "anomaly_list", "policy", "refusal"]
@@ -313,7 +313,7 @@ def by_model(
         prompt_version=PROMPT_VERSION,
         messages=(
             Message("system", system),
-            Message("user", f"<question>{question}</question>"),
+            Message("user", f"<question>{as_data(question)}</question>"),
         ),
         max_tokens=max_tokens,
         response_schema=ROUTER_SCHEMA,
