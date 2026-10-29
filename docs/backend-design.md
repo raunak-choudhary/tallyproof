@@ -295,7 +295,7 @@ All endpoints except the health checks are under `/api/v1/` and return JSON. The
 | GET | `/api/v1/batches/{batch_id}/consistency` | Proof that a batch's checkpoint extends the one before it; 409 for the first batch |
 | GET | `/api/v1/reconciliation/breaks` | Breaks in the order found, filterable by `break_type` and `award_key` |
 | GET | `/api/v1/reconciliation/breaks/{break_id}` | One break and the events involved, with their roles |
-| POST | `/api/v1/queries` | Ask the analyst a question (`{"question": "..."}`). Answered as of the newest checkpoint, or refused with a code and a reason. Throttled per IP by `API_THROTTLE_ANON_QUERIES` |
+| POST | `/api/v1/queries` | Ask the analyst a question (`{"question": "..."}`). Answered as of the newest checkpoint, or refused with a code and a reason. Throttled per client by `API_THROTTLE_ANON_QUERIES`, with an IPv6 client counted as its /64. Answers 503 with `Retry-After` when every answering slot in the process is taken |
 | GET | `/api/v1/answers/{answer_id}` | A stored answer: text with values filled in, each value's meaning and citation, the filter in words, and every cited event with its proof URL pinned to the answer's checkpoint |
 | GET | `/healthz` | Liveness, no dependencies |
 | GET | `/readyz` | Checks the database and the broker; 503 names whichever is down |
