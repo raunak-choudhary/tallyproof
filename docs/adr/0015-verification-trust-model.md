@@ -44,3 +44,9 @@ The public demo shows levels 1 to 3 in the browser. Level 3 uses a **separate, p
 ## Consequences
 
 The claim becomes: **"Your browser trusts only a pinned key and an externally timestamped checkpoint. Everything else is checked."** That claim is true and defensible.
+
+## Implementation notes (2026-10-29)
+
+The browser verifier (`frontend/src/lib/verify/verifyEvent.ts`) checks the checkpoint's signature against the pinned key, the record's canonical form, the leaf hash, and the inclusion proof to the signed root. That catches levels 1 and 2, and the event page demonstrates both: edit an amount, or rebuild the tree around the edit.
+
+The consistency proof against an externally timestamped checkpoint, which catches level 3, runs today in `make verify-witness` and the integration tests (`tests/integration/ledger/test_tamper.py`), not in the browser. Moving it into the browser, with the witness copy fetched from a second origin, and comparing displayed values with the verified bytes, are planned with the site. Until then the public pages say the browser trusts the pinned key and checks levels 1 and 2.
