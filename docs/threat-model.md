@@ -76,7 +76,7 @@ Injection resistance is an evaluation category with a CI threshold ([evaluation.
 
 ### Tampering and signing keys
 
-Tamper detection is layered: a client-side leaf recomputation, a signature check against a key pinned in the web build, and a consistency proof against a checkpoint someone else timestamped. The full ladder is in [architecture.md](architecture.md#tamper-detection).
+Tamper detection is layered. The browser recomputes the leaf from the record's bytes, walks the inclusion proof to the root, and checks the checkpoint's signature against a key pinned in the web build. The consistency proof against a checkpoint someone else timestamped is checked today by `make verify-witness` and the integration tests, not yet in the browser; that step is planned with the site. The full ladder is in [architecture.md](architecture.md#tamper-detection).
 
 Keys come in three classes, so a leak of one doesn't compromise the others:
 
@@ -111,19 +111,19 @@ The append-only tables have no update or delete grants for the application role,
 
 ### CI
 
-*CI holds no secrets today. The items about the LLM key, the bot token, and the response cache take effect with the analyst and evaluation work.*
+*One secret context exists: `llm-eval`, holding the model provider's key, restricted to the `main` branch and used only by the weekly scheduled job. There is no bot token and no CI signing key.*
 
-- Pull request pipelines never get the LLM key. When a PR's evaluation hits an uncached prompt, that item runs against a fake client and the run is labeled as a harness check. Only `main` and scheduled pipelines call the real model.
-- Secrets sit in three separate CircleCI contexts (LLM evaluation, the GitHub bot, CI signing), each restricted to `main` and scheduled triggers. Passing secrets to forked PRs is off.
-- The bot token can only push to `bot/*` branches and open pull requests. It can't push to `main`.
-- Only `main` and scheduled runs write to the LLM response cache, so a pull request can't poison the scheduled results.
-- The results table in the README is generated from a fixed schema of numbers and model IDs. No model-written text reaches it.
-- CODEOWNERS covers CI configuration, the Makefile, witness data, evaluation thresholds, and policy documents.
+- Pull request pipelines never get the model key. Their evaluation replays responses recorded in `testdata/llm_cache`; any question without a recording falls back to a scripted client and the whole run is labeled a harness check, held to the integrity gate only.
+- Recordings are written only by a deliberate local run with a key and committed like any other change, so they go through review. CI never writes them.
+- Passing secrets to forked pull requests is off.
+- The README results table is rendered from a fixed schema of numbers and model IDs (`backend/evals/readme_table.py`), which refuses harness checks. No model-written text reaches it.
+- CODEOWNERS covers CI configuration, the Makefile, the demo bundle, the policy corpus, the evaluation thresholds and question sets, the recorded model responses, and the ADRs.
+- Planned with the weekly results pull request: a fine-grained token, scoped to this repository's contents and pull requests, that can open a pull request but never push to `main`.
 
 ### Public endpoints
 
 - Every endpoint is public by design, since all served data is public and free of personal data. The API refuses to start unless `DATA_CLASSIFICATION` is `public-no-pii`.
-- Rate limits apply per IP with explicitly configured trusted proxies. With the analyst come a global cap on concurrent analyst requests, a per-IP daily token budget, and a breaker that switches to cached answers when the daily spend cap gets close.
+- Rate limits apply per IP with explicitly configured trusted proxies. Questions to the analyst have their own, tighter limit (`API_THROTTLE_ANON_QUERIES`, 10 a minute). Planned before any public deployment of the analyst: a cap on concurrent analyst requests, a per-IP daily token budget, and a breaker that switches to cached answers. Today the analyst runs only locally and in evaluations.
 - List endpoints use cursors and cap a page at 200 items, and size parameters are validated. Proofs come from one in-memory tree that's extended as the log grows, so a request never rebuilds the log.
 - WebSockets check the origin against `DJANGO_ALLOWED_HOSTS`, cap connections per IP (`WS_MAX_CONNECTIONS_PER_IP`), and limit frame size (`WS_MAX_MESSAGE_BYTES`). A slow client drops its own oldest facts instead of slowing anyone else.
 - Public IDs carry 80 random bits (ULIDs), so they can't be enumerated.
@@ -131,15 +131,15 @@ The append-only tables have no update or delete grants for the application role,
 
 ### The public demo
 
-The demo is a static site with no backend, so its attack surface is the files it serves. A manifest lists the SHA-256 of every bundled file and is signed with the release key, and the browser checks that signature against the fingerprint compiled into the page before it trusts anything else. Deploys are pinned to a git commit shown in the page, and the in-browser tamper demo says plainly that it simulates the attack.
+The demo is a static site with no backend, so its attack surface is the files it serves. A manifest lists the SHA-256 of every bundled file and is signed with the release key, and the browser checks that signature against the fingerprint compiled into the page before it trusts anything else. Deploys are pinned to a git commit shown in the page. The tamper demo edits a copy of the record in the reader's browser; nothing is sent anywhere or changed on the server.
 
 ### Supply chain
 
-Python dependencies are pinned with hashes through pip-tools, and frontend dependencies through the lockfile. Container images and CircleCI images are pinned by exact version tag (not yet by digest), and GitHub Actions by commit. Dependabot proposes updates, and `pip-audit` and `npm audit` run in CI. The embedding model will be pinned to a specific revision when it's added.
+Python dependencies are pinned with hashes through pip-tools, and frontend dependencies through the lockfile. Container images and CircleCI images are pinned by exact version tag (not yet by digest), and GitHub Actions by commit. Dependabot proposes updates, and `pip-audit` and `pnpm audit` run in CI. The embedding model (`BAAI/bge-small-en-v1.5`, through fastembed) downloads by name on first use and isn't yet pinned to a revision or checked against a hash; it only ranks policy text and never touches a number or a proof.
 
 ### LLM cost and where prompts go
 
-*Partly built: per-request token caps, per-run request and token budgets, client-side pacing, and the response cache exist (`backend/apps/analyst/llm.py`). Per-IP daily budgets arrive with the query endpoint.*
+*Partly built: per-request token caps, per-run request and token budgets, client-side pacing, and the response cache exist (`backend/apps/analyst/llm.py`). The query endpoint has its own rate limit. Per-IP daily token budgets and a concurrency cap are planned before any public deployment.*
 
 Per-request token caps, run budgets, response caching, and rate limits bound the cost. A run that would pass its budget stops before the call, with a clear error, instead of producing a surprise bill.
 
