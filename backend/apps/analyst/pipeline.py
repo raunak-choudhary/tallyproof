@@ -32,7 +32,7 @@ from apps.analyst.retrieval import Hit
 from apps.analyst.router import Route, route
 from apps.analyst.sql_guard import GuardError, guard
 
-COMPOSER_VERSION = "composer.v2"
+COMPOSER_VERSION = "composer.v3"
 FALLBACK_VERSION = "fallback-sql.v1"
 POLICY_HITS = 4
 
@@ -192,14 +192,36 @@ def compose(
             return draft, verdict
         messages += [
             Message("assistant", reply),
-            Message(
-                "user",
-                "The answer was rejected for: "
-                + "; ".join(verdict.problems)
-                + ". Rewrite it following the rules.",
-            ),
+            Message("user", repair_message(verdict, evidence)),
         ]
     return None  # pragma: no cover - the loop always returns
+
+
+def repair_message(verdict: Verdict, evidence: Evidence) -> str:
+    """Tell the model what was wrong in words it can act on, not just codes."""
+    hints = []
+    codes = {problem.split(":", 1)[0] for problem in verdict.problems}
+    if "unbound_slot" in codes:
+        hints.append(
+            "This policy question has no slots: write each number exactly as the source shows it."
+            if evidence.sources and not evidence.slots
+            else "Use only the slot labels listed in the evidence."
+        )
+    if "free_number" in codes:
+        hints.append("Replace every number you typed with the slot that holds it.")
+    if "unknown_citation" in codes:
+        hints.append("Cite only the [[c..]] and [[q..]] labels listed in the evidence.")
+    if "quote_mismatch" in codes:
+        hints.append("Copy each quote character for character from its source.")
+    if "no_claims" in codes:
+        hints.append("Each sentence needs a slot or a citation.")
+    return (
+        "The answer was rejected for: "
+        + "; ".join(verdict.problems)
+        + ". "
+        + " ".join(hints)
+        + " Rewrite it following the rules."
+    )
 
 
 def _views_text() -> str:

@@ -70,7 +70,7 @@ def test_a_numeric_question_is_answered_with_bound_values_and_citations():
     fake = FakeClient(
         model(**{
             "router.v2": json.dumps({"category": "numeric_aggregate", "spec": SUM_SPEC}),
-            "composer.v2": json.dumps(
+            "composer.v3": json.dumps(
                 {"answer": "State obligated {{s1}} over {{s2}} actions [[c1]]."}
             ),
         })
@@ -96,7 +96,7 @@ def test_a_free_number_gets_one_repair_and_then_a_refusal():
         model(
             **{
                 "router.v2": json.dumps({"category": "numeric_aggregate", "spec": SUM_SPEC}),
-                "composer.v2": replies,
+                "composer.v3": replies,
             }
         )
     )
@@ -110,7 +110,7 @@ def test_a_free_number_gets_one_repair_and_then_a_refusal():
         model(
             **{
                 "router.v2": json.dumps({"category": "numeric_aggregate", "spec": SUM_SPEC}),
-                "composer.v2": stubborn,
+                "composer.v3": stubborn,
             }
         )
     )
@@ -135,7 +135,7 @@ def test_policy_answers_quote_exactly_and_cite_the_leaf():
     fake = FakeClient(
         model(
             **{
-                "composer.v2": json.dumps(
+                "composer.v3": json.dumps(
                     {
                         "answer": "FAR 43.202 limits this [[q1]].",
                         "quotes": [{"source": "q1", "text": quote}],
@@ -152,7 +152,7 @@ def test_policy_answers_quote_exactly_and_cite_the_leaf():
 
 def test_anomaly_lists_cite_the_events_behind_each_break():
     composer = json.dumps({"answer": "One award was paid more than obligated: {{s2}} [[c1]]."})
-    fake = FakeClient(model(**{"composer.v2": composer}))
+    fake = FakeClient(model(**{"composer.v3": composer}))
     db = Database(
         evidence=[("brk_1", 40, "outlay_exceeds_obligation", "AWD1", Decimal("10.00"))],
         break_events=[("evt_award", 3), ("evt_outlay", 39)],
@@ -190,7 +190,7 @@ def test_the_fallback_path_runs_only_guarded_sql_and_is_labeled():
             "spec": {"shape": "aggregate", "entity": "obligations", "metric": "avg"},
         }),
         "fallback-sql.v1": fallback_sql,
-        "composer.v2": json.dumps({"answer": "The first award averaged {{s1}} [[c1]]."}),
+        "composer.v3": json.dumps({"answer": "The first award averaged {{s1}} [[c1]]."}),
     }))  # fmt: skip
     db = Database(fallback=[("evt_a", 1, Decimal("5.50"))])
     answer = run("Average award size?", fake, db)
@@ -214,3 +214,20 @@ def test_budget_exhaustion_is_a_typed_refusal():
     client = BudgetedClient(FakeClient(lambda r: "{}"), Budget(max_requests=0, max_tokens=1))
     answer = run("How much did State obligate?", client, Database(**STATE_DB))
     assert (answer.status, answer.refusal) == ("refused", "budget_exceeded")
+
+
+def test_repair_messages_explain_what_to_do():
+    from apps.analyst.answer import Evidence, QuoteSource, Verdict
+    from apps.analyst.pipeline import repair_message
+
+    policy = Evidence()
+    policy.sources["q1"] = QuoteSource(
+        "q1", "evt", 1, "32.501-1", "Rates.", "80 percent", "80 percent"
+    )
+    message = repair_message(Verdict(("unbound_slot:s1",), ()), policy)
+    assert "write each number exactly as the source shows it" in message
+    numeric = Evidence()
+    numeric.add_slot("money", Decimal(1), "total", None)
+    message = repair_message(Verdict(("free_number:$1.00", "unknown_citation:c9"), ()), numeric)
+    assert "Replace every number you typed" in message
+    assert "Cite only the" in message
