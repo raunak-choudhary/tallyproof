@@ -1,5 +1,7 @@
 # Direct development dependencies. Compile with `make deps`.
 -c requirements.txt
+-c requirements-docs.txt
+-r requirements-docs.in
 
 pip-tools>=7.6,<8       # compiles and syncs the pinned requirement files
 pytest>=9.1,<10         # test runner
