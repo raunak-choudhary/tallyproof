@@ -66,7 +66,7 @@ Clients only ever see generic error codes, never raw Postgres messages, because 
 | Threat | Control |
 |---|---|
 | Instructions hidden in descriptions or policy text | Untrusted text goes into clearly delimited data blocks, length-capped, and the system prompt says data is never instructions |
-| The model told to state numbers or cite records it didn't retrieve | Numbers come only from query results through typed slots, and citations must reference IDs in the evidence set. The verifier rejects anything else ([ADR-0009](adr/0009-bound-claims-answer-format.md)) |
+| The model told to state numbers or cite records it didn't retrieve | Numbers come only from query results through typed slots, or, in a policy answer, from a word-for-word quote of the regulation that the verifier checks against the cited leaf. Citations must reference IDs in the evidence set. The verifier rejects anything else ([ADR-0009](adr/0009-bound-claims-answer-format.md)) |
 | Injected claims with no numbers in them ("approved by the CFO") | Free-text columns are left out of analyst views unless a query asks for them. Each sentence the model writes must carry a bound value or a citation, or it gets dropped |
 | A poisoned policy document | Policy text enters the corpus only through a reviewed pull request. There's no upload path at runtime |
 | Exfiltration through rendered output | Answers render as plain text plus structured claim components. Model output never becomes links, images, or HTML |
