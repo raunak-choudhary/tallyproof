@@ -286,6 +286,11 @@ def test_repair_messages_explain_what_to_do():
     message = repair_message(Verdict(("free_number:$1.00", "unknown_citation:c9"), ()), numeric)
     assert "Replace every number you typed" in message
     assert "Cite only the" in message
+    codes = ("slot_modified:s1", "quote_required", "inline_quote_unchecked")
+    message = repair_message(Verdict(codes, ()), numeric)
+    assert "Write each slot on its own" in message
+    assert "at least one passage" in message
+    assert "only if it is copied exactly" in message
 
 
 def test_a_total_over_the_citation_cap_is_answered_with_a_labelled_sample():

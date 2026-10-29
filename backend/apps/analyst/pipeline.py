@@ -226,6 +226,18 @@ def repair_message(verdict: Verdict, evidence: Evidence) -> str:
         hints.append("Copy each quote character for character from its source.")
     if "no_claims" in codes:
         hints.append("Each sentence needs a slot or a citation.")
+    if codes & {"slot_modified", "slot_joined"}:
+        hints.append(
+            "Write each slot on its own, with no digit, sign, unit, or scale word attached "
+            "and never next to another slot."
+        )
+    if "quote_required" in codes:
+        hints.append("Give at least one passage from the regulation word for word in quotes.")
+    if "inline_quote_unchecked" in codes:
+        hints.append(
+            "Put text in quotation marks only if it is copied exactly from a source the "
+            "same sentence cites; otherwise paraphrase it without quotation marks."
+        )
     return (
         "The answer was rejected for: "
         + "; ".join(verdict.problems)
