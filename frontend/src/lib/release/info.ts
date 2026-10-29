@@ -15,3 +15,8 @@ export function buildInfo(
   const base = repoUrl?.replace(/\/+$/, "");
   return { commit, short: commit.slice(0, 7), url: base ? `${base}/tree/${commit}` : null };
 }
+
+/** Where the documentation site lives: beside the demo, under the same base path. */
+export function docsPath(basePath: string | undefined = process.env.NEXT_PUBLIC_BASE_PATH): string {
+  return `${(basePath ?? "").replace(/\/+$/, "")}/docs/`;
+}
