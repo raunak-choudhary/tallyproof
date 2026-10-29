@@ -7,6 +7,10 @@ from typing import Any
 import pytest
 from hypothesis import HealthCheck, settings
 
+from tests.containers import database, django_db_setup, migrated, redpanda
+
+__all__ = ["database", "django_db_setup", "migrated", "redpanda"]
+
 # Shared cross-language test vectors live at the repository root.
 VECTORS_DIR = Path(__file__).resolve().parents[2] / "testdata" / "vectors"
 
