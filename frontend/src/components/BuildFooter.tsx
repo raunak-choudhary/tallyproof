@@ -1,7 +1,8 @@
-import { buildInfo } from "@/lib/release/info";
+import { buildInfo, docsPath } from "@/lib/release/info";
 
 // Names the commit the site was built from, so anyone can check the code that
-// verified their proof. Local builds have no commit and show nothing.
+// verified their proof, and links the documentation published beside it. Local
+// builds have no commit and no docs site, and show nothing.
 export function BuildFooter() {
   const info = buildInfo();
   if (!info) {
@@ -23,6 +24,10 @@ export function BuildFooter() {
           {info.short}
         </span>
       )}
+      .{" "}
+      <a href={docsPath()} className="text-accent underline-offset-4 hover:underline">
+        Read the documentation
+      </a>
       .
     </footer>
   );
