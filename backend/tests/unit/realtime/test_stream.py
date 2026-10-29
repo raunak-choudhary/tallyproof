@@ -1,4 +1,5 @@
 import asyncio
+import contextlib
 import json
 from collections import deque
 from types import SimpleNamespace
@@ -121,7 +122,11 @@ def test_the_stream_command_serves_with_limits_from_settings(monkeypatch):
         stream,
         "app_settings",
         lambda: SimpleNamespace(
-            stream_host="127.0.0.1", stream_port=8001, ws_max_message_bytes=4096, log_level="INFO"
+            stream_host="127.0.0.1",
+            stream_port=8001,
+            ws_max_message_bytes=4096,
+            log_level="INFO",
+            trusted_proxy_count=0,
         ),
     )
     call_command("stream")
@@ -132,6 +137,8 @@ def test_the_stream_command_serves_with_limits_from_settings(monkeypatch):
             "port": 8001,
             "ws_max_size": 4096,
             "log_level": "info",
+            # No proxies configured: X-Forwarded-For is never trusted, even from localhost.
+            "proxy_headers": False,
         }
     ]
 
@@ -149,3 +156,47 @@ def test_the_stream_server_serves_no_http():
         assert body["type"] == "http.response.body"
 
     async_to_sync(scenario)()
+
+
+@override_settings(CHANNEL_LAYERS=IN_MEMORY)
+def test_one_ipv6_network_shares_one_cap_and_a_failed_join_leaks_no_slot(monkeypatch):
+    monkeypatch.setattr(consumers, "app_settings", lambda: limits(ws_max_connections_per_ip=1))
+
+    def scope(address: str) -> dict[str, Any]:
+        return {"type": "websocket", "path": "/ws/v1/stream", "headers": [], "client": (address, 1)}
+
+    async def scenario() -> None:
+        first = ApplicationCommunicator(URLRouter(websocket_urlpatterns), scope("2001:db8::1"))
+        await first.send_input({"type": "websocket.connect"})
+        assert (await first.receive_output(timeout=2))["type"] == "websocket.accept"
+        rotated = ApplicationCommunicator(URLRouter(websocket_urlpatterns), scope("2001:db8::2"))
+        await rotated.send_input({"type": "websocket.connect"})
+        assert (await rotated.receive_output(timeout=2))["code"] == consumers.TRY_AGAIN_LATER
+        await first.send_input({"type": "websocket.disconnect", "code": 1000})
+        await first.wait(timeout=2)
+
+    async_to_sync(scenario)()
+    assert "2001:db8::/64" not in consumers._open_per_ip
+
+    async def failing_join(self: Any, group: str, channel: str) -> None:
+        raise RuntimeError("channel layer down")
+
+    async def broken() -> None:
+        client = ApplicationCommunicator(URLRouter(websocket_urlpatterns), scope("198.51.100.4"))
+        layer = get_channel_layer()
+        monkeypatch.setattr(type(layer), "group_add", failing_join)
+        await client.send_input({"type": "websocket.connect"})
+        with contextlib.suppress(RuntimeError):
+            await client.wait(timeout=2)
+
+    async_to_sync(broken)()
+    assert "198.51.100.4" not in consumers._open_per_ip
+
+
+def test_inbound_frames_are_dropped_without_being_decoded():
+    consumer = LedgerStreamConsumer()
+
+    async def scenario() -> None:
+        await consumer.receive(text_data="{" * 100_000)
+
+    async_to_sync(scenario)()  # no JSON decode error: the frame is never parsed
