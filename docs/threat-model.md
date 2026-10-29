@@ -21,7 +21,9 @@ The data is real public U.S. government spending, plus a labeled synthetic anoma
 - It drops columns holding executive names and compensation, contracting officer and point-of-contact names, phone and fax numbers, email addresses, and street address lines. City, state, and country stay, because aggregate analysis needs them.
 - It drops rows for awards made to an individual person or sole proprietor, identified from the source's business-type flags.
 - Every removal is counted by reason in the published data profile.
-- Two tests guard this. One fails the build if any deny-listed column exists in the cleaned schema. The other scans sample values for email and phone patterns.
+- Free text is scrubbed too. A contract's description sometimes carries a contracting contact's work email and phone number; the gold step replaces each with a marker, and the event schema refuses any description that still holds one, so the ledger can't carry them whatever the source (`tallyproof_core/contact_data.py`).
+- Three tests guard this. One fails the build if any deny-listed column exists in the cleaned schema, one checks that contact details are found and removed in every form they take in the source (and that standards numbers, clause numbers, and account codes are left alone), and one scans every dataset committed to this repository for them.
+- A review on 2026-10-29 found two descriptions with contact details in the committed evaluation dataset, before this scrub existed. They were removed, but the commit that added them stays in the repository's history, because history is never rewritten here. The details were a work email and office numbers published by USAspending.
 - Raw downloads stay in an ignored local directory. They're never served, published, or committed.
 
 ## Trust boundaries
