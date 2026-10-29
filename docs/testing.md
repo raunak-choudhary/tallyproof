@@ -39,7 +39,7 @@ In CI, Hypothesis runs derandomized with 300 examples, so a failure reproduces e
 - Seeds are fixed.
 - Combined coverage must stay at or above 85% across `tallyproof_core`, the pipeline, the settings, the Django apps, and the evaluation harness; it is about 93%.
 - Test names describe behavior, for example `test_any_tampered_leaf_fails_verification`.
-- Personal data: one test feeds names, addresses, and phone numbers through cleaning and checks none survive anywhere, another stops the build if a deny-listed column appears, and the committed real sample is checked for personal data.
+- Personal data: one test feeds names, addresses, and phone numbers through cleaning and checks none survive anywhere, another stops the build if a deny-listed column appears, one checks the contact-detail scrub against every form the source uses and the codes it must leave alone, and every committed dataset is scanned for contact details on each run.
 
 ## Fakes
 
