@@ -1,6 +1,7 @@
 """The analyst's curated views: what they show, and what the role can never do."""
 
 from decimal import Decimal
+from importlib import import_module
 
 import pytest
 from django.db import transaction
@@ -130,9 +131,25 @@ def test_the_guard_knows_exactly_the_columns_each_view_has(as_analyst):
 
 def test_guarded_sql_runs_as_the_analyst(ledger):
     guarded = guard(
-        "SELECT o.awarding_agency, count(*) AS n FROM obligations o "
-        "JOIN awards a ON a.award_key = o.award_key GROUP BY o.awarding_agency",
+        "SELECT o.awarding_agency, count(*) AS n FROM obligations o GROUP BY o.awarding_agency",
         max_rows=10,
+        tree_size=10**9,
     )
     (total,) = query("SELECT count(*) FROM obligations")[0]
     assert query(guarded.sql) == [("Department of Energy", total)]
+
+
+def test_the_award_leaf_migration_reverses_cleanly(migrated):
+    award_leaf = import_module("apps.analyst.migrations.0005_award_leaf_index")
+    columns = (
+        "SELECT table_name FROM information_schema.columns "
+        "WHERE table_schema = 'analyst' AND column_name = 'award_leaf_index' ORDER BY 1"
+    )
+    with migrated.connect("superuser") as conn, conn.transaction(force_rollback=True):
+        conn.execute(award_leaf.REVERSE)
+        assert conn.execute(columns).fetchall() == []
+        conn.execute("SET LOCAL ROLE tallyproof_analyst")
+        assert conn.execute("SELECT count(*) FROM analyst.awards").fetchone() == (0,)
+        conn.execute("RESET ROLE")
+        conn.execute(award_leaf.FORWARD)
+        assert conn.execute(columns).fetchall() == [("obligations",), ("outlays",)]

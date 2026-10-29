@@ -51,6 +51,7 @@ VIEW_COLUMNS: dict[str, frozenset[str]] = {
             "action_type",
             "naics_code",
             "psc_code",
+            "award_leaf_index",
         }
     ),
     "outlays": frozenset(
@@ -65,22 +66,7 @@ VIEW_COLUMNS: dict[str, frozenset[str]] = {
             "cumulative_outlay",
             "piid",
             "awarding_agency",
-        }
-    ),
-    "awards": frozenset(
-        {
-            "event_id",
-            "leaf_index",
-            "award_key",
-            "piid",
-            "awarding_agency",
-            "funding_agency",
-            "first_action_date",
-            "last_action_date",
-            "total_obligated",
-            "obligation_events",
-            "total_outlays",
-            "outlay_events",
+            "award_leaf_index",
         }
     ),
     "cash_movements": frozenset(
@@ -104,7 +90,12 @@ VIEW_COLUMNS: dict[str, frozenset[str]] = {
     ),
 }
 """Views the fallback path may read. ``obligation_descriptions`` is left out on
-purpose: its text comes from the source data and may carry planted instructions."""
+purpose: its text comes from the source data and may carry planted instructions.
+``awards`` is left out because its totals add up every leaf in the log, past any
+checkpoint; the compiler builds award totals as of the checkpoint instead."""
+
+AWARD_COLUMNS = frozenset({"piid", "awarding_agency", "funding_agency"})
+"""Columns the obligations and outlays views take from the award's first record."""
 
 JOIN_KEYS = frozenset({"award_key", "event_id", "break_id", "entry_id"})
 
@@ -332,6 +323,7 @@ LEAF_COLUMN = {"breaks": "found_at_leaf_index"}
 
 def _pin(tree: exp.Select, tree_size: int) -> None:
     """Add ``leaf < tree_size`` for every view in every SELECT; no row past it counts."""
+    uses_award_fields = any(c.name in AWARD_COLUMNS for c in tree.find_all(exp.Column))
     for table in list(tree.find_all(exp.Table)):
         if table.name not in VIEW_COLUMNS:
             continue  # a CTE, already pinned where it reads its views
@@ -340,6 +332,16 @@ def _pin(tree: exp.Select, tree_size: int) -> None:
             continue
         column = exp.column(LEAF_COLUMN.get(table.name, "leaf_index"), table=table.alias_or_name)
         select.where(exp.LT(this=column, expression=exp.Literal.number(int(tree_size))), copy=False)
+        if uses_award_fields and "award_leaf_index" in VIEW_COLUMNS[table.name]:
+            # An award first recorded past the checkpoint has no PIID or agency yet.
+            # Orphan rows (no award record at all) keep their nulls.
+            award = exp.Coalesce(
+                this=exp.column("award_leaf_index", table=table.alias_or_name),
+                expressions=[exp.Literal.number(-1)],
+            )
+            select.where(
+                exp.LT(this=award, expression=exp.Literal.number(int(tree_size))), copy=False
+            )
 
 
 def guard(sql: str, *, max_rows: int, tree_size: int | None = None) -> GuardedQuery:
