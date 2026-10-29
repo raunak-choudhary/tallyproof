@@ -39,6 +39,7 @@ from pathlib import Path
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql import functions as F  # noqa: N812 - conventional alias
 
+from tallyproof_core.contact_data import remove_contact_data
 from tallyproof_core.events import EventEnvelope, EventType
 from tallyproof_core.ids import new_id
 from tallyproof_pipeline.outlay_silver import reported_at
@@ -105,7 +106,7 @@ def conform(row: Mapping[str, object], *, seed: int) -> EventEnvelope:
         "amount": amount_text,
         "action_date": action_date.isoformat(),
         "action_type": _optional(row.get("action_type")),
-        "description": _optional(row.get("transaction_description")),
+        "description": remove_contact_data(_optional(row.get("transaction_description"))),
     }
     if modification in BASE_MODIFICATIONS:
         event_type = EventType.OBLIGATION_RECORDED

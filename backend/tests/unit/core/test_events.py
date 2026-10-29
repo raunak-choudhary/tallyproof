@@ -154,3 +154,19 @@ def test_outlay_period_must_be_a_fiscal_month():
     )
     with pytest.raises(ValidationError, match="less than or equal to 12"):
         EventEnvelope.model_validate(outlay)
+
+
+@pytest.mark.parametrize(
+    "description",
+    ["POC JANE.DOE@EXAMPLE.MIL", "questions to (301) 555-0112", "see 301-555-0112 ext 4"],
+)
+def test_a_description_with_contact_details_is_refused(description):
+    payload = {**obligation()["payload"], "description": description}
+    with pytest.raises(ValidationError, match="contact"):
+        EventEnvelope.model_validate(obligation(payload=payload))
+    adjusted = {
+        "award_key": "CONT_AWD_1", "modification_number": "P00001", "amount": "1.00",
+        "action_date": "2025-03-14", "description": description,
+    }  # fmt: skip
+    with pytest.raises(ValidationError, match="contact"):
+        EventEnvelope.model_validate(obligation(event_type="obligation.adjusted", payload=adjusted))
