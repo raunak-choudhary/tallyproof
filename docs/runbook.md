@@ -77,7 +77,7 @@ make console               # optional broker console at http://localhost:8080
 
 `make` always talks to the `colima-tallyproof` Docker context, whatever context is active. Every port binds to 127.0.0.1. The API and workers run on the host from `backend/.venv` rather than in containers, which saves the VM's memory for the broker and database.
 
-On its first start, Postgres creates three roles from `infra/postgres/create-roles.sql`. Only those roles may connect, only the owner can create objects, and the analyst's sessions are read-only with a 3 second statement timeout. After changing a password in `.env`, run `make db-roles` to apply it. The topic script and the role script are both safe to run again.
+On its first start, Postgres creates three roles from `infra/postgres/create-roles.sql`. Only those roles may connect, only the owner can create objects, and the analyst's sessions are read-only, with a 3 second statement timeout, a 1 second lock timeout, 16 MB of working memory, 64 MB of temporary files, and at most 24 connections. After changing a password in `.env`, or after pulling a change to the role script, run `make db-roles` to apply it. The topic script and the role script are both safe to run again.
 
 ### Workers
 

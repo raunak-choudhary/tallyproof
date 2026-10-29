@@ -23,6 +23,12 @@ ALTER ROLE tallyproof_analyst SET default_transaction_read_only = on;
 ALTER ROLE tallyproof_analyst SET statement_timeout = '3s';
 ALTER ROLE tallyproof_analyst SET idle_in_transaction_session_timeout = '5s';
 ALTER ROLE tallyproof_analyst SET search_path = analyst;
+-- Bounds on what one question can hold: locks, disk for sorts and hashes, memory per
+-- operation, and connections. The API opens at most one per thread.
+ALTER ROLE tallyproof_analyst SET lock_timeout = '1s';
+ALTER ROLE tallyproof_analyst SET temp_file_limit = '64MB';
+ALTER ROLE tallyproof_analyst SET work_mem = '16MB';
+ALTER ROLE tallyproof_analyst CONNECTION LIMIT 24;
 
 -- Only these three roles may connect, and only the owner may create objects.
 SELECT format('ALTER DATABASE %I OWNER TO tallyproof_owner', current_database()) \gexec
