@@ -8,6 +8,10 @@ ENV = app_settings()
 
 SECRET_KEY = ENV.secret_key.get_secret_value()
 DEBUG = ENV.debug
+if DEBUG:
+    from config.env import llm_settings, refuse_debug_with_real_provider
+
+    refuse_debug_with_real_provider(debug=True, provider=llm_settings().llm_provider)
 ALLOWED_HOSTS = ENV.allowed_host_list
 
 INSTALLED_APPS = [

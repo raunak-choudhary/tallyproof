@@ -10,11 +10,15 @@ from decimal import Decimal
 from functools import lru_cache
 from pathlib import Path
 from typing import Literal
+from urllib.parse import urlsplit
 
 from pydantic import Field, SecretStr, ValidationError, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
+
+
+LOOPBACK_HOSTS = frozenset({"localhost", "127.0.0.1", "::1"})
 
 
 class ConfigurationError(RuntimeError):
@@ -227,6 +231,18 @@ class LLMSettings(BaseSettings):
         default=REPO_ROOT / "var" / "embeddings", validation_alias="EMBEDDING_CACHE_DIR"
     )
 
+    @field_validator("llm_base_url")
+    @classmethod
+    def _https_off_this_machine(cls, value: str | None) -> str | None:
+        # The API key travels in a header, so it must never cross a network in clear.
+        if value is None:
+            return value
+        parts = urlsplit(value)
+        local = parts.hostname in LOOPBACK_HOSTS
+        if parts.scheme != "https" and not (parts.scheme == "http" and local):
+            raise ValueError("LLM_BASE_URL must use https, except on this machine")
+        return value
+
     @field_validator("llm_cache_dir", "embedding_cache_dir")
     @classmethod
     def _anchor_cache(cls, value: Path) -> Path:
@@ -285,3 +301,16 @@ def checkpointer_settings() -> CheckpointerSettings:
 def llm_settings() -> LLMSettings:
     """Load the model provider settings."""
     return _load(LLMSettings)
+
+
+def refuse_debug_with_real_provider(*, debug: bool, provider: str) -> None:
+    """Refuse Django's debug mode when a real model provider is configured.
+
+    Debug error pages show settings and local variables, and the provider key
+    sits in both while a question is answered.
+    """
+    if debug and provider == "openai_compatible":
+        raise ConfigurationError(
+            "DJANGO_DEBUG is on with a real model provider; debug pages could show the "
+            "provider key. Turn DJANGO_DEBUG off, or set LLM_PROVIDER=fake."
+        )
