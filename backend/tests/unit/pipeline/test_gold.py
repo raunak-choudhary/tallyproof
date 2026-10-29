@@ -126,3 +126,17 @@ def test_events_round_trip_through_gzip_json_lines(tmp_path):
     assert write_events(events, path) == 3
     restored = list(read_events(path))
     assert [e.leaf_hash() for e in restored] == [e.leaf_hash() for e in events]
+
+
+def test_contact_details_are_removed_from_descriptions():
+    row = silver_row(
+        transaction_description="FILING CABINET. POC JANE.DOE@EXAMPLE.MIL (O) 301-555-0112"
+    )
+    event = conform(row, seed=1)
+    assert isinstance(event.payload, ObligationRecorded)
+    assert event.payload.description == (
+        "FILING CABINET. POC [contact removed] (O) [contact removed]"
+    )
+    plain = conform(silver_row(transaction_description=None), seed=1)
+    assert isinstance(plain.payload, ObligationRecorded)
+    assert plain.payload.description is None

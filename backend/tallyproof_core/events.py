@@ -24,6 +24,7 @@ from pydantic import (
 )
 
 from tallyproof_core.canonical import MAX_SAFE_INTEGER, canonicalize
+from tallyproof_core.contact_data import find_contact_data
 from tallyproof_core.hashing import leaf_hash
 from tallyproof_core.ids import parse_id
 from tallyproof_core.money import Money, MoneyError
@@ -44,6 +45,17 @@ MoneyText = Annotated[str, AfterValidator(_money_text)]
 # Pydantic itself rejects strings that are not valid Unicode, such as lone surrogates.
 Text = Annotated[str, Field(min_length=1, max_length=4000)]
 OptionalText = Annotated[str | None, Field(max_length=4000)]
+
+
+def _no_contact_data(value: str | None) -> str | None:
+    if value is not None and find_contact_data(value):
+        raise ValueError("a description may not carry contact details")
+    return value
+
+
+Description = Annotated[OptionalText, AfterValidator(_no_contact_data)]
+"""Free text from the source. The ledger holds no personal data, so a description
+with an email address or a phone number is refused (``tallyproof_core.contact_data``)."""
 SafeInt = Annotated[int, Field(ge=0, le=MAX_SAFE_INTEGER)]
 
 
@@ -75,7 +87,7 @@ class ObligationRecorded(_Strict):
     action_type: OptionalText = None
     naics_code: OptionalText = None
     psc_code: OptionalText = None
-    description: OptionalText = None
+    description: Description = None
 
 
 class ObligationAdjusted(_Strict):
@@ -87,7 +99,7 @@ class ObligationAdjusted(_Strict):
     currency: Literal["USD"] = "USD"
     action_date: date
     action_type: OptionalText = None
-    description: OptionalText = None
+    description: Description = None
 
 
 class OutlayReported(_Strict):
