@@ -127,7 +127,6 @@ CAST_TARGETS = frozenset(
         exp.DataType.Type.DECIMAL,
         exp.DataType.Type.INT,
         exp.DataType.Type.BIGINT,
-        exp.DataType.Type.DOUBLE,
         exp.DataType.Type.TEXT,
         exp.DataType.Type.VARCHAR,
         exp.DataType.Type.DATE,
@@ -145,6 +144,7 @@ class Rejection(StrEnum):
     CONSTRUCT = "construct_not_allowed"
     CAST = "cast_not_allowed"
     JOIN = "join_not_allowed"
+    PROJECTION = "computed_value_not_allowed"
     TOO_COMPLEX = "too_complex"
 
 
@@ -202,20 +202,78 @@ def _check_nodes(tree: exp.Select) -> None:
 
 
 def _check_relations(tree: exp.Select) -> frozenset[str]:
-    ctes = {cte.alias_or_name for cte in tree.find_all(exp.CTE)}
+    """Every relation is an analyst view, or a CTE defined before the place it's used.
+
+    Scoping follows Postgres: a CTE's own body can't see its name or any later CTE,
+    so a body referencing such a name would read the real relation of that name.
+    A WITH anywhere but the top of the query is refused outright.
+    """
+    with_ = tree.args.get("with_")  # sqlglot's key for a query's own WITH
+    for node in tree.find_all(exp.With):
+        if node is not with_:
+            raise GuardError(Rejection.CONSTRUCT)
     used: set[str] = set()
-    for table in tree.find_all(exp.Table):
-        if table.args.get("db") or table.args.get("catalog"):
-            raise GuardError(Rejection.RELATION)
-        name = table.name
-        if name in ctes:
-            continue
-        if name not in VIEW_COLUMNS:
-            raise GuardError(Rejection.RELATION)
-        used.add(name)
+
+    def check(tables: list[exp.Table], visible: set[str]) -> None:
+        for table in tables:
+            if table.args.get("db") or table.args.get("catalog"):
+                raise GuardError(Rejection.RELATION)
+            if table.name in visible:
+                continue
+            if table.name not in VIEW_COLUMNS:
+                raise GuardError(Rejection.RELATION)
+            used.add(table.name)
+
+    ctes = list(with_.expressions) if with_ is not None else []
+    defined: set[str] = set()
+    for cte in ctes:
+        check(list(cte.this.find_all(exp.Table)), set(defined))
+        defined.add(cte.alias_or_name)
+    body = [
+        t for t in tree.find_all(exp.Table) if not any(t.find_ancestor(exp.CTE) is c for c in ctes)
+    ]
+    check(body, defined)
     if not used:
         raise GuardError(Rejection.RELATION)
     return frozenset(used)
+
+
+AGGREGATES = (exp.Sum, exp.Count, exp.Min, exp.Max, exp.Avg)
+
+
+def _bare(value: exp.Expr) -> bool:
+    return isinstance(value, exp.Column | exp.Star)
+
+
+def _check_projections(tree: exp.Select) -> None:
+    """Output values are view columns or plain aggregates of them, never computed.
+
+    A literal, a cast, or arithmetic in the select list would let model-written SQL
+    type a number the ledger doesn't hold and have it shown beside a real citation.
+    """
+    for select in tree.find_all(exp.Select):
+        if isinstance(select.parent, exp.Exists) or isinstance(
+            select.parent and select.parent.parent, exp.Exists
+        ):
+            continue  # an EXISTS subquery's select list never reaches the output
+        for item in select.expressions:
+            value = item.this if isinstance(item, exp.Alias) else item
+            if _bare(value):
+                continue
+            if isinstance(value, AGGREGATES):
+                inner = value.this
+                if isinstance(inner, exp.Distinct):
+                    inner = inner.expressions[0] if len(inner.expressions) == 1 else None
+                if inner is not None and _bare(inner):
+                    continue
+            raise GuardError(Rejection.PROJECTION)
+    named = {
+        item.alias_or_name: (item.this if isinstance(item, exp.Alias) else item)
+        for item in tree.expressions
+    }
+    event, leaf = named.get("event_id"), named.get("leaf_index")
+    if isinstance(event, exp.Column) and isinstance(leaf, exp.Column) and event.table != leaf.table:
+        raise GuardError(Rejection.PROJECTION)  # an ID paired with another row's leaf
 
 
 def _check_columns(tree: exp.Select, relations: frozenset[str]) -> None:
@@ -238,15 +296,20 @@ def _check_joins(tree: exp.Select) -> None:
                 raise GuardError(Rejection.JOIN)
             continue
         on = join.args.get("on")
+        terms = list(on.flatten()) if isinstance(on, exp.And) else [on]
         keys = [
             eq
-            for eq in (on.find_all(exp.EQ) if on is not None else [])
-            if isinstance(eq.left, exp.Column)
+            for eq in terms
+            if isinstance(eq, exp.EQ)
+            and isinstance(eq.left, exp.Column)
             and isinstance(eq.right, exp.Column)
             and eq.left.name == eq.right.name
             and eq.left.name in JOIN_KEYS
+            and eq.left.table
+            and eq.right.table
+            and eq.left.table != eq.right.table
         ]
-        if not keys:
+        if not keys:  # an OR at the top, or a key compared with itself, is a cartesian join
             raise GuardError(Rejection.JOIN)
 
 
@@ -263,7 +326,23 @@ def _limit(tree: exp.Select, max_rows: int) -> None:
     tree.limit(min(value, max_rows) if value is not None else max_rows, copy=False)
 
 
-def guard(sql: str, *, max_rows: int) -> GuardedQuery:
+LEAF_COLUMN = {"breaks": "found_at_leaf_index"}
+"""The column that pins a view's rows to the log; ``leaf_index`` unless named here."""
+
+
+def _pin(tree: exp.Select, tree_size: int) -> None:
+    """Add ``leaf < tree_size`` for every view in every SELECT; no row past it counts."""
+    for table in list(tree.find_all(exp.Table)):
+        if table.name not in VIEW_COLUMNS:
+            continue  # a CTE, already pinned where it reads its views
+        select = table.find_ancestor(exp.Select)
+        if select is None:  # pragma: no cover - every table sits in a SELECT
+            continue
+        column = exp.column(LEAF_COLUMN.get(table.name, "leaf_index"), table=table.alias_or_name)
+        select.where(exp.LT(this=column, expression=exp.Literal.number(int(tree_size))), copy=False)
+
+
+def guard(sql: str, *, max_rows: int, tree_size: int | None = None) -> GuardedQuery:
     """Accept ``sql`` only if every part is allowlisted, and return it rebuilt.
 
     Raises:
@@ -273,6 +352,9 @@ def guard(sql: str, *, max_rows: int) -> GuardedQuery:
     _check_nodes(tree)
     relations = _check_relations(tree)
     _check_columns(tree, relations)
+    _check_projections(tree)
     _check_joins(tree)
+    if tree_size is not None:
+        _pin(tree, tree_size)
     _limit(tree, max_rows)
     return GuardedQuery(tree.sql(dialect=DIALECT, comments=False), relations)
