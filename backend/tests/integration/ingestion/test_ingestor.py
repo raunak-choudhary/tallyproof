@@ -1,6 +1,5 @@
 import base64
 import json
-from dataclasses import dataclass, field
 
 import pytest
 from django.db import connection
@@ -8,6 +7,7 @@ from django.db import connection
 from apps.ingestion import offsets
 from apps.ingestion.consumer import DeadLetterError, Ingestor
 from apps.ingestion.dedupe import PartitionFilters
+from tests.fakes import FakeBroker, FakeMessage
 from tests.integration.ledger.test_append import event
 
 pytestmark = pytest.mark.django_db
@@ -15,49 +15,18 @@ TOPIC = "fin.events.raw.v1"
 DLQ = "fin.events.dlq.v1"
 
 
-@dataclass
-class FakeMessage:
-    _value: bytes | None
-    _offset: int
-    _partition: int = 0
-    _topic: str = TOPIC
-
-    def topic(self) -> str:
-        return self._topic
-
-    def partition(self) -> int:
-        return self._partition
-
-    def offset(self) -> int:
-        return self._offset
-
-    def key(self) -> bytes | None:
-        return b"award"
-
-    def value(self) -> bytes | None:
-        return self._value
+def message(value: bytes, offset: int, partition: int = 0) -> FakeMessage:
+    return FakeMessage(TOPIC, value, offset, partition, b"award")
 
 
-@dataclass
-class FakeSink:
-    unconfirmed: int = 0
-    produced: list[tuple[str, bytes]] = field(default_factory=list)
-
-    def produce(self, topic: str, value: bytes, key: bytes | None = None) -> None:
-        self.produced.append((topic, value))
-
-    def flush(self, timeout: float) -> int:
-        return self.unconfirmed
-
-
-def make_ingestor(sink: FakeSink | None = None, group: str = "ingest-test") -> Ingestor:
-    ingestor = Ingestor(group, DLQ, sink or FakeSink(), PartitionFilters(10_000, 0.001))
+def make_ingestor(sink: FakeBroker | None = None, group: str = "ingest-test") -> Ingestor:
+    ingestor = Ingestor(group, DLQ, sink or FakeBroker(), PartitionFilters(10_000, 0.001))
     ingestor.assign(TOPIC, 0)
     return ingestor
 
 
 def valid(offset: int, key: str | None = None) -> FakeMessage:
-    return FakeMessage(event(key=key).model_dump_json().encode(), offset)
+    return message(event(key=key).model_dump_json().encode(), offset)
 
 
 def stored_offset(group: str = "ingest-test") -> int:
@@ -73,17 +42,16 @@ def test_valid_events_are_appended_and_the_offset_moves_past_the_batch(migrated)
 
 
 def test_invalid_records_go_to_the_dead_letter_topic_without_echoing_values(migrated):
-    sink = FakeSink()
+    sink = FakeBroker()
     ingestor = make_ingestor(sink)
     bad = json.loads(event().model_dump_json())
     bad["payload"]["amount"] = "12.5e3"
-    messages = [FakeMessage(b"not json", 0), FakeMessage(json.dumps(bad).encode(), 1), valid(2)]
+    messages = [message(b"not json", 0), message(json.dumps(bad).encode(), 1), valid(2)]
     outcome = ingestor.process(messages)
     assert (outcome.appended, outcome.dead_lettered) == (1, 2)
     assert stored_offset() == 3
-    topics = {topic for topic, _ in sink.produced}
-    assert topics == {DLQ}
-    record = json.loads(sink.produced[1][1])
+    assert set(sink.topics) == {DLQ}
+    record = json.loads(sink.messages(DLQ)[1].value() or b"")
     assert record["source"] == {"topic": TOPIC, "partition": 0, "offset": 1}
     assert record["problems"][0]["field"].startswith("payload")
     assert "12.5e3" not in json.dumps(record["problems"])
@@ -91,9 +59,9 @@ def test_invalid_records_go_to_the_dead_letter_topic_without_echoing_values(migr
 
 
 def test_nothing_is_committed_when_dead_letters_are_not_confirmed(migrated):
-    ingestor = make_ingestor(FakeSink(unconfirmed=1))
+    ingestor = make_ingestor(FakeBroker(unconfirmed=1))
     with pytest.raises(DeadLetterError):
-        ingestor.process([FakeMessage(b"{}", 0), valid(1)])
+        ingestor.process([message(b"{}", 0), valid(1)])
     assert stored_offset() == 0
     with connection.cursor() as cursor:
         cursor.execute("SELECT count(*) FROM ledger_event")
@@ -139,7 +107,7 @@ def test_assignment_rebuilds_the_filter_from_the_ledger(migrated):
 
 def test_messages_for_partitions_not_owned_are_skipped(migrated):
     ingestor = make_ingestor()
-    outcome = ingestor.process([FakeMessage(b"{}", 0, _partition=7), valid(0)])
+    outcome = ingestor.process([message(b"{}", 0, partition=7), valid(0)])
     assert (outcome.appended, outcome.dead_lettered) == (1, 0)
     ingestor.revoke(TOPIC, 0)
     assert TOPIC not in {t for t, _ in ingestor.generations}

@@ -1,5 +1,4 @@
 import json
-from dataclasses import dataclass, field
 
 import pytest
 
@@ -11,37 +10,8 @@ from tallyproof_pipeline.stream import (
     publish,
     read_invalid,
 )
+from tests.fakes import FakeBroker, FrozenClock
 from tests.unit.pipeline.test_overlay import cash_event, real_events
-
-
-@dataclass
-class FakeProducer:
-    unconfirmed: int = 0
-    reject: bool = False
-    sent: list[tuple[str, bytes, bytes]] = field(default_factory=list)
-
-    def produce(self, topic, *, value, key, on_delivery):  # keywords, like confluent-kafka
-        self.sent.append((topic, key, value))
-        on_delivery("broker said no" if self.reject else None, None)
-
-    def poll(self, timeout):
-        return 0
-
-    def flush(self, timeout):
-        return self.unconfirmed
-
-
-class FakeClock:
-    def __init__(self) -> None:
-        self.now = 0.0
-        self.slept = 0.0
-
-    def __call__(self):
-        return self.now
-
-    def sleep(self, seconds):
-        self.now += seconds
-        self.slept += seconds
 
 
 def invalid_record(source: EventEnvelope) -> dict[str, object]:
@@ -70,17 +40,19 @@ def test_invalid_records_are_merged_in_at_their_arrival_time():
 
 
 def test_published_values_round_trip_through_the_consumer_schema():
-    producer = FakeProducer()
+    producer = FakeBroker()
     events = real_events(5)
     summary = publish(interleave(events, []), producer, "raw", rate_per_sec=1000)
     assert summary.events == 5
-    decoded = [EventEnvelope.model_validate_json(value) for _, _, value in producer.sent]
+    decoded = [
+        EventEnvelope.model_validate_json(m.value() or b"") for m in producer.messages("raw")
+    ]
     assert [e.leaf_hash() for e in decoded] == [e.leaf_hash() for e in events]
 
 
 def test_publishing_is_paced_to_the_rate_and_stops_at_the_limit():
-    clock = FakeClock()
-    producer = FakeProducer()
+    clock = FrozenClock(0.0)
+    producer = FakeBroker()
     summary = publish(
         interleave(real_events(40), []),
         producer,
@@ -90,15 +62,15 @@ def test_publishing_is_paced_to_the_rate_and_stops_at_the_limit():
         clock=clock,
         sleep=clock.sleep,
     )
-    assert summary.events == len(producer.sent) == 20
-    assert clock.slept == pytest.approx(1.9)  # 20 messages at 10 per second
+    assert summary.events == len(producer.messages("raw")) == 20
+    assert sum(clock.slept) == pytest.approx(1.9)  # 20 messages at 10 per second
 
 
 def test_rejected_or_unconfirmed_messages_fail_the_replay():
     with pytest.raises(ReplayError, match="rejected"):
-        publish(interleave(real_events(2), []), FakeProducer(reject=True), "raw", 1000)
+        publish(interleave(real_events(2), []), FakeBroker(reject=True), "raw", 1000)
     with pytest.raises(ReplayError, match="unconfirmed"):
-        publish(interleave(real_events(2), []), FakeProducer(unconfirmed=1), "raw", 1000)
+        publish(interleave(real_events(2), []), FakeBroker(unconfirmed=1), "raw", 1000)
 
 
 def test_missing_invalid_file_means_no_invalid_records(tmp_path):

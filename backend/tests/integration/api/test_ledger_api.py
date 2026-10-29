@@ -9,7 +9,8 @@ from apps.ledger.checkpointer import Checkpointer
 from tallyproof_core.checkpoint import Verifier
 from tallyproof_core.hashing import leaf_hash
 from tallyproof_core.merkle import verify_consistency, verify_inclusion
-from tests.integration.ledger.test_checkpointer import Clock, add_events
+from tests.fakes import FrozenClock
+from tests.integration.ledger.test_checkpointer import add_events
 from tests.unit.pipeline.test_replay_bundle import SIGNER
 
 pytestmark = pytest.mark.django_db
@@ -32,7 +33,7 @@ def client() -> Client:
 @pytest.fixture
 def signed_log(migrated):
     """Seven events with checkpoints at sizes 4 and 7, and one unsigned event."""
-    checkpointer = Checkpointer(SIGNER, 4, 60_000, clock=Clock())
+    checkpointer = Checkpointer(SIGNER, 4, 60_000, clock=FrozenClock())
     add_events(migrated, 4)
     checkpointer.tick()
     add_events(migrated, 3, start=4)

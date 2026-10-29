@@ -8,19 +8,12 @@ from apps.ledger.timestamps import StampResult
 from apps.ledger.witness import verify
 from tallyproof_core.checkpoint import Verifier
 from tallyproof_core.log_tree import LogTree
+from tests.fakes import FrozenClock
 from tests.integration.conftest import Database
 from tests.integration.ledger.test_schema import INSERT, event, row
 from tests.unit.pipeline.test_replay_bundle import SIGNER
 
 pytestmark = pytest.mark.django_db
-
-
-class Clock:
-    def __init__(self) -> None:
-        self.now = 100.0
-
-    def __call__(self) -> float:
-        return self.now
 
 
 def add_events(database: Database, count: int, start: int = 0) -> None:
@@ -31,7 +24,7 @@ def add_events(database: Database, count: int, start: int = 0) -> None:
 
 def test_a_batch_closes_when_it_is_full(migrated):
     add_events(migrated, 5)
-    cp = Checkpointer(SIGNER, batch_max_size=4, batch_max_age_ms=60_000, clock=Clock())
+    cp = Checkpointer(SIGNER, batch_max_size=4, batch_max_age_ms=60_000, clock=FrozenClock())
     signed = cp.tick()
     assert signed is not None
     assert (signed.start_index, signed.tree_size) == (0, 5)
@@ -41,7 +34,7 @@ def test_a_batch_closes_when_it_is_full(migrated):
 
 
 def test_a_batch_closes_when_its_oldest_leaf_is_old_enough(migrated):
-    clock = Clock()
+    clock = FrozenClock()
     add_events(migrated, 2)
     cp = Checkpointer(SIGNER, batch_max_size=256, batch_max_age_ms=2000, clock=clock)
     assert cp.tick() is None
@@ -55,10 +48,10 @@ def test_a_batch_closes_when_its_oldest_leaf_is_old_enough(migrated):
 
 def test_a_restarted_checkpointer_continues_from_the_last_signed_size(migrated):
     add_events(migrated, 3)
-    first = Checkpointer(SIGNER, 1, 60_000, clock=Clock())
+    first = Checkpointer(SIGNER, 1, 60_000, clock=FrozenClock())
     first.tick()
     add_events(migrated, 2, start=3)
-    second = Checkpointer(SIGNER, 1, 60_000, clock=Clock())
+    second = Checkpointer(SIGNER, 1, 60_000, clock=FrozenClock())
     signed = second.tick()
     assert signed is not None
     assert (signed.start_index, signed.tree_size) == (3, 5)
@@ -66,7 +59,7 @@ def test_a_restarted_checkpointer_continues_from_the_last_signed_size(migrated):
 
 def test_it_refuses_to_sign_after_a_signed_leaf_is_rewritten(migrated):
     add_events(migrated, 4)
-    Checkpointer(SIGNER, 1, 60_000, clock=Clock()).tick()
+    Checkpointer(SIGNER, 1, 60_000, clock=FrozenClock()).tick()
     forged = event()  # a whole new, internally consistent row in place of leaf 1
     with migrated.connect("superuser") as conn:
         conn.execute("ALTER TABLE ledger_event DISABLE TRIGGER USER")
@@ -74,14 +67,14 @@ def test_it_refuses_to_sign_after_a_signed_leaf_is_rewritten(migrated):
         conn.execute(INSERT, row(forged, 1))
         conn.execute("ALTER TABLE ledger_event ENABLE TRIGGER USER")
     with pytest.raises(CheckpointerError, match="no longer match"):
-        Checkpointer(SIGNER, 1, 60_000, clock=Clock())
+        Checkpointer(SIGNER, 1, 60_000, clock=FrozenClock())
 
 
 def test_a_missing_leaf_is_detected(migrated):
     add_events(migrated, 2)
     add_events(migrated, 1, start=5)
     with pytest.raises(CheckpointerError, match="leaf 2 is missing"):
-        Checkpointer(SIGNER, 1, 60_000, clock=Clock())
+        Checkpointer(SIGNER, 1, 60_000, clock=FrozenClock())
 
 
 def test_checkpoints_are_exported_timestamped_and_verifiable(migrated, tmp_path, monkeypatch):
@@ -95,7 +88,7 @@ def test_checkpoints_are_exported_timestamped_and_verifiable(migrated, tmp_path,
 
     monkeypatch.setattr(timestamps, "stamp", fake_stamp)
     policy = WitnessPolicy(tmp_path / "checkpoints.jsonl", 3600, ["https://cal.example"])
-    clock = Clock()
+    clock = FrozenClock()
     cp = Checkpointer(SIGNER, 2, 60_000, witness=policy, clock=clock)
     add_events(migrated, 2)
     cp.tick()
@@ -118,7 +111,7 @@ def test_checkpoints_are_exported_timestamped_and_verifiable(migrated, tmp_path,
 
 
 def test_closing_picks_up_new_leaves_and_refuses_an_empty_batch(migrated):
-    cp = Checkpointer(SIGNER, 256, 60_000, clock=Clock())
+    cp = Checkpointer(SIGNER, 256, 60_000, clock=FrozenClock())
     with pytest.raises(CheckpointerError, match="no leaves"):
         cp.close()
     add_events(migrated, 3)
