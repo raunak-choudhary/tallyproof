@@ -190,7 +190,7 @@ def compose(
             draft = _parse_draft(reply)
         except (ValueError, KeyError, TypeError):
             draft = Draft("")
-        verdict = verify(draft, evidence, question)
+        verdict = verify(draft, evidence)
         trace.drafts.append(draft)
         trace.verdicts.append(verdict)
         if verdict.ok or attempt == 1:
