@@ -12,6 +12,7 @@ from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 from typing import Any, Literal, Protocol
 
+from django.db import DatabaseError
 from pydantic import ValidationError
 
 from apps.analyst.answer import (
@@ -50,6 +51,7 @@ RefusalCode = Literal[
     "budget_exceeded",
     "model_unavailable",
     "no_checkpoint",
+    "not_expressible",
 ]
 
 
@@ -70,6 +72,8 @@ class Models:
     max_output_tokens: int
     max_rows: int
     reasoning_effort: str | None = None
+    allow_fallback: bool = False
+    """Whether questions the query spec can't express may fall back to model-written SQL."""
 
 
 @dataclass
@@ -257,13 +261,12 @@ def _fallback(
     )
     try:
         sql = str(json.loads(client.complete(request).text)["sql"])
-        guarded = guard(sql, max_rows=models.max_rows)
+        guarded = guard(sql, max_rows=models.max_rows, tree_size=tree_size)
     except (ValueError, KeyError, TypeError, GuardError):
         return "unsafe_query"
     columns, rows = executor.run(guarded.sql, [])
-    if not rows:
-        return "no_evidence"
-    return from_rows(columns, rows, tree_size=tree_size)
+    evidence = from_rows(columns, rows, tree_size=tree_size)
+    return "no_evidence" if evidence.empty else evidence
 
 
 def _expand_breaks(evidence: Evidence, executor: Executor) -> None:
@@ -294,6 +297,8 @@ def _gather(
         return from_policy(hits, tree_size=tree_size) if hits else "no_evidence"
     spec = decided.spec
     if spec is None:
+        if not models.allow_fallback:
+            return "not_expressible"
         trace.used_fallback = True
         return _fallback(question, client, executor, models, tree_size)
     try:
@@ -342,7 +347,14 @@ def ask(
             return Answer(
                 question, "refused", "refusal", refusal=decided.refusal_reason, trace=trace
             )
-        gathered = _gather(question, decided, client, executor, search, models, tree_size, trace)
+        try:
+            gathered = _gather(
+                question, decided, client, executor, search, models, tree_size, trace
+            )
+        except DatabaseError:
+            # A query that fails as it runs (a timeout, a division by zero) is refused,
+            # never surfaced as a 500, so the caller still charges what the model used.
+            gathered = "unsafe_query"
         if isinstance(gathered, str):
             return Answer(question, "refused", decided.category, refusal=gathered, trace=trace)
         result = compose(question, gathered, client, models, trace)

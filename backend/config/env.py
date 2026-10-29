@@ -54,6 +54,8 @@ class AppSettings(BaseSettings):
     db_owner_url: SecretStr | None = Field(default=None, validation_alias="DB_OWNER_URL")
     db_analyst_url: SecretStr | None = Field(default=None, validation_alias="DB_ANALYST_URL")
     db_analyst_max_rows: int = Field(default=1000, ge=1, validation_alias="DB_ANALYST_MAX_ROWS")
+    analyst_sql_fallback: bool = Field(default=False, validation_alias="ANALYST_SQL_FALLBACK")
+    """Let questions the query spec can't express fall back to guarded, model-written SQL."""
     analyst_max_inflight: int = Field(default=4, ge=1, validation_alias="ANALYST_MAX_INFLIGHT")
     """Questions answered at once in one process; past this, a 503 with Retry-After."""
     analyst_per_ip_daily_tokens: int = Field(

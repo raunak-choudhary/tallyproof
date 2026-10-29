@@ -25,6 +25,7 @@ FAR = PolicyLeaf(
 
 class Database:
     def __init__(self, **answers: list[tuple[Any, ...]]) -> None:
+        self.columns = ["event_id", "leaf_index", "mean"]
         self.answers = answers
         self.sql: list[str] = []
 
@@ -35,7 +36,7 @@ class Database:
         if sql.startswith("SELECT coalesce"):
             return ["value", "row_count"], self.answers.get("value", [])
         if "fallback" in self.answers and "LIMIT" in sql and "ORDER BY t." not in sql:
-            return ["event_id", "leaf_index", "mean"], self.answers["fallback"]
+            return self.columns, self.answers["fallback"]
         return ["event_id", "leaf_index"], self.answers.get("evidence", [])
 
 
@@ -180,7 +181,26 @@ def test_an_ambiguous_lookup_and_empty_results_are_refused():
     )
 
 
-def test_the_fallback_path_runs_only_guarded_sql_and_is_labeled():
+def test_without_the_fallback_an_inexpressible_question_is_refused():
+    fake = FakeClient(model(**{"router.v2": "not json"}))
+    answer = run("Average award size?", fake, Database())
+    assert (answer.status, answer.refusal) == ("refused", "not_expressible")
+    assert "fallback-sql.v1" not in {r.prompt_version for r in fake.requests}
+
+
+FALLBACK = Models(
+    router="router-m", answer="answer-m", max_output_tokens=400, max_rows=100, allow_fallback=True
+)
+
+
+def ask_with_fallback(question: str, client: Any, db: Database) -> Any:
+    return ask(
+        question, client=client, executor=db, search=search([]), models=FALLBACK,
+        agencies=["Department of State"], tree_size=50,
+    )  # fmt: skip
+
+
+def test_the_fallback_path_runs_only_guarded_pinned_sql_and_is_labeled():
     fallback_sql = json.dumps(
         {"sql": "SELECT event_id, leaf_index, amount AS mean FROM obligations"}
     )
@@ -193,12 +213,26 @@ def test_the_fallback_path_runs_only_guarded_sql_and_is_labeled():
         "composer.v4": json.dumps({"answer": "The first award averaged {{s1}} [[c1]]."}),
     }))  # fmt: skip
     db = Database(fallback=[("evt_a", 1, Decimal("5.50"))])
-    answer = run("Average award size?", fake, db)
+    answer = ask_with_fallback("Average award size?", fake, db)
     assert answer.status == "answered"
     assert answer.evidence.assurance == "lower_assurance"
     assert answer.trace.used_fallback
-    assert db.sql == ["SELECT event_id, leaf_index, amount AS mean FROM obligations LIMIT 100"]
+    assert db.sql == [
+        "SELECT event_id, leaf_index, amount AS mean FROM obligations "
+        "WHERE obligations.leaf_index < 50 LIMIT 100"
+    ]
 
+
+FORGED = "SELECT event_id, leaf_index, CAST('987654321.00' AS DECIMAL) AS amount FROM obligations"
+DIVIDES_BY_ZERO = "SELECT event_id, leaf_index FROM obligations WHERE 1 / 0 = 1"
+
+
+def test_the_fallback_refuses_forged_values_and_failing_queries():
+    forged = FakeClient(model(**{
+        "router.v2": "not json",
+        "fallback-sql.v1": json.dumps({"sql": FORGED}),
+    }))  # fmt: skip
+    assert ask_with_fallback("Total?", forged, Database()).refusal == "unsafe_query"
     hostile = FakeClient(
         model(
             **{
@@ -207,7 +241,27 @@ def test_the_fallback_path_runs_only_guarded_sql_and_is_labeled():
             }
         )
     )
-    assert run("Average award size?", hostile, Database()).refusal == "unsafe_query"
+    assert ask_with_fallback("Average award size?", hostile, Database()).refusal == "unsafe_query"
+
+    class Failing(Database):
+        def run(self, sql: str, params: Sequence[Any]) -> tuple[list[str], list[tuple[Any, ...]]]:
+            from django.db import DataError
+
+            raise DataError("division by zero")
+
+    failing = FakeClient(model(**{
+        "router.v2": "not json",
+        "fallback-sql.v1": json.dumps({"sql": DIVIDES_BY_ZERO}),
+    }))  # fmt: skip
+    assert ask_with_fallback("Total?", failing, Failing()).refusal == "unsafe_query"
+
+    uncited = FakeClient(model(**{
+        "router.v2": "not json",
+        "fallback-sql.v1": json.dumps({"sql": "SELECT sum(amount) AS total FROM obligations"}),
+    }))  # fmt: skip
+    db = Database(fallback=[(Decimal(5),)])
+    db.columns = ["total"]
+    assert ask_with_fallback("Total?", uncited, db).refusal == "no_evidence"
 
 
 def test_budget_exhaustion_is_a_typed_refusal():

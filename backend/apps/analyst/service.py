@@ -31,6 +31,7 @@ REFUSAL_MESSAGES = {
     "budget_exceeded": "This address has used today's share of the analyst; try again tomorrow.",
     "model_unavailable": "The language model isn't available right now.",
     "no_checkpoint": "Nothing has been signed into the log yet.",
+    "not_expressible": "The analyst can't express this as a query it knows how to check.",
 }
 
 
@@ -106,6 +107,7 @@ def models() -> Models:
         max_output_tokens=settings.llm_max_output_tokens,
         max_rows=app_settings().db_analyst_max_rows,
         reasoning_effort=settings.llm_reasoning_effort,
+        allow_fallback=app_settings().analyst_sql_fallback,
     )
 
 
@@ -197,15 +199,18 @@ def answer_question(
         )
     runner = executor or AnalystConnection()
     counting = limits.CountingClient(client or model_client())
-    result = ask(
-        question,
-        client=counting,
-        executor=runner,
-        search=search or search_policy,
-        models=chosen,
-        agencies=agencies(runner),
-        tree_size=int(latest),
-    )
-    if address is not None:
-        limits.spend(address, counting.tokens)
+    try:
+        result = ask(
+            question,
+            client=counting,
+            executor=runner,
+            search=search or search_policy,
+            models=chosen,
+            agencies=agencies(runner),
+            tree_size=int(latest),
+        )
+    finally:
+        # Charged whatever happens, so a question that fails midway still counts.
+        if address is not None:
+            limits.spend(address, counting.tokens)
     return store(result, chosen, int(latest))
