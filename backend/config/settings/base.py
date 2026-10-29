@@ -88,7 +88,7 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [],
     "DEFAULT_PERMISSION_CLASSES": [],
     "UNAUTHENTICATED_USER": None,
-    "DEFAULT_THROTTLE_CLASSES": ["rest_framework.throttling.AnonRateThrottle"],
+    "DEFAULT_THROTTLE_CLASSES": ["apps.ledger.api.throttling.ClientRateThrottle"],
     "DEFAULT_THROTTLE_RATES": {
         "anon": ENV.api_throttle_anon_reads,
         "queries": ENV.api_throttle_anon_queries,

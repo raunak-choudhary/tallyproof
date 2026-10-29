@@ -11,13 +11,13 @@ from drf_spectacular.utils import OpenApiResponse, extend_schema
 from rest_framework import serializers, status
 from rest_framework.request import Request
 from rest_framework.response import Response
-from rest_framework.throttling import AnonRateThrottle
 from rest_framework.views import APIView
 
 from apps.analyst.limits import RETRY_AFTER_SECONDS, BusyError, answering_slot
 from apps.analyst.models import AnalystAnswer
 from apps.analyst.service import REFUSAL_MESSAGES, answer_question
 from apps.ledger.api.problems import Problem, not_found
+from apps.ledger.api.throttling import ClientRateThrottle
 
 MAX_QUESTION = 500
 
@@ -26,7 +26,7 @@ def _proof_url(event_id: str, tree_size: int) -> str:
     return f"/api/v1/events/{event_id}/proof?tree_size={tree_size}"
 
 
-class QueryRateThrottle(AnonRateThrottle):
+class QueryRateThrottle(ClientRateThrottle):
     """Questions cost model calls, so they have their own, tighter limit per IP."""
 
     scope = "queries"
