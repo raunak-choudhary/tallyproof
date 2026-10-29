@@ -39,7 +39,7 @@ A few design choices do most of the work:
 
 - The model never writes a number. It fills in a typed query spec, the server turns that into SQL, and the results are dropped into slots in the answer. Any digit the model types on its own gets rejected.
 - Each event is hashed into an [RFC 9162](https://www.rfc-editor.org/rfc/rfc9162.html) Merkle log, the same structure Certificate Transparency uses. Checkpoints are signed with Ed25519 and timestamped by a third party (OpenTimestamps), so even the operator can't quietly rewrite history.
-- Your browser trusts two things: a public key compiled into the page, and a checkpoint someone else timestamped. It recomputes the rest itself. Change one cent in a cited record and verification fails, and the page tells you which check caught it.
+- Your browser trusts one thing: a public key compiled into the page. It recomputes the rest itself: the record's hash, the path to the signed root, and the signature. Change one cent in a cited record and verification fails, and the page tells you which check caught it. Checkpoints are also timestamped by a third party, which catches a rewrite even by someone holding the key; that check runs with `make verify-witness` today and moves into the browser with the site.
 - Answer quality is measured against exact ground truth, not an AI judge. Labeled anomalies are injected into the real data stream, so the right answers are known in advance.
 
 ## The data
