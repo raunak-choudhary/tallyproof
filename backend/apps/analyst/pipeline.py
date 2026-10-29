@@ -298,7 +298,13 @@ def _gather(
     )
     _, rows = executor.run(compiled.evidence_sql, compiled.evidence_params)
     if len(rows) >= compiled.evidence_limit and spec.shape != "list":
-        return "ambiguous" if spec.shape == "lookup" else "too_broad"
+        if spec.shape == "lookup":
+            return "ambiguous"
+        if spec.shape != "aggregate":
+            return "too_broad"  # an absence list has no count query to state the total
+        # The value and the count come from the whole pinned query; the citation
+        # lists the first records in log order and says how many there were.
+        rows = rows[: models.max_rows]
     if not rows and spec.shape != "aggregate":
         return "no_evidence"
     evidence = from_query(spec, compiled, values, rows, tree_size=tree_size)

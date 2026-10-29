@@ -21,6 +21,8 @@ export interface Citation {
   label: string;
   meaning: string;
   events: CitedEvent[];
+  /** How many records contributed, when only the first of them are listed. */
+  sampleOf: number | null;
 }
 
 export interface Quote {
@@ -59,6 +61,7 @@ interface RawAnswer {
   citations: {
     label: string;
     meaning: string;
+    sample_of?: number | null;
     events: { event_id: string; leaf_index: number }[];
   }[];
   quotes: {
@@ -86,6 +89,7 @@ export function toAnswer(raw: RawAnswer): Answer {
       label: c.label,
       meaning: c.meaning,
       events: c.events.map((e) => ({ eventId: e.event_id, leafIndex: e.leaf_index })),
+      sampleOf: c.sample_of ?? null,
     })),
     quotes: raw.quotes.map((q) => ({
       source: q.source,
@@ -129,6 +133,15 @@ export function segments(text: string): Segment[] {
   }
   if (last < text.length) out.push({ kind: "text", text: text.slice(last) });
   return out;
+}
+
+/** The label on a citation that lists only some of the records behind a total. */
+export function sampleNote(citation: Citation, treeSize: number): string | null {
+  if (!citation.sampleOf) return null;
+  const listed = citation.events.length.toLocaleString("en-US");
+  const total = citation.sampleOf.toLocaleString("en-US");
+  const checkpoint = treeSize.toLocaleString("en-US");
+  return `${listed} of ${total} records listed here, each verifiable. The total covers all ${total} as of checkpoint ${checkpoint}.`;
 }
 
 /** What the reader is told about how much has been checked. */

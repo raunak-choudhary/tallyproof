@@ -231,3 +231,47 @@ def test_repair_messages_explain_what_to_do():
     message = repair_message(Verdict(("free_number:$1.00", "unknown_citation:c9"), ()), numeric)
     assert "Replace every number you typed" in message
     assert "Cite only the" in message
+
+
+def test_a_total_over_the_citation_cap_is_answered_with_a_labelled_sample():
+    small = Models(router="router-m", answer="answer-m", max_output_tokens=400, max_rows=2)
+    composed = json.dumps({"answer": "State obligated {{s1}} over {{s2}} actions [[c1]]."})
+    routed = json.dumps({"category": "numeric_aggregate", "spec": SUM_SPEC})
+    fake = FakeClient(model(**{"router.v2": routed, "composer.v3": composed}))
+    db = Database(
+        value=[(Decimal("500.00"), 5)],
+        evidence=[
+            ("evt_a", 1, Decimal(100)),
+            ("evt_b", 2, Decimal(100)),
+            ("evt_c", 3, Decimal(100)),
+        ],
+    )
+    answer = ask(
+        "How much did State obligate?", client=fake, executor=db, search=search([]), models=small,
+        agencies=["Department of State"], tree_size=50,
+    )  # fmt: skip
+    assert answer.status == "answered"
+    assert answer.text == "State obligated $500.00 over 5 actions [[c1]]."
+    assert answer.evidence is not None
+    citation = answer.evidence.citations["c1"]
+    assert citation.event_ids == ("evt_a", "evt_b")
+    assert citation.sample_of == 5
+    assert citation.words == "the first 2 of the 5 records counted, in log order"
+    assert answer.evidence.sampled
+
+
+def test_lookups_and_absence_lists_over_the_cap_still_refuse():
+    small = Models(router="router-m", answer="answer-m", max_output_tokens=400, max_rows=1)
+    absence = {
+        "shape": "absence",
+        "entity": "outlays",
+        "absence_rule": "outlay_without_recorded_award",
+    }
+    route = json.dumps({"category": "anomaly_list", "spec": absence})
+    db = Database(evidence=[("evt_a", 1, "A", Decimal(1)), ("evt_b", 2, "B", Decimal(2))])
+    answer = ask(
+        "Outlays for awards with no obligation on file?",
+        client=FakeClient(model(**{"router.v2": route})), executor=db, search=search([]),
+        models=small, agencies=[], tree_size=50,
+    )  # fmt: skip
+    assert answer.refusal == "too_broad"
