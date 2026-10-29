@@ -4,7 +4,7 @@ Tallyproof is a streaming ledger for public spending data with an AI analyst on 
 
 **Try it:** [raunak-choudhary.github.io/tallyproof](https://raunak-choudhary.github.io/tallyproof/) is a static replay of 2,000 real FY2025 contract records. Open one, press Verify, then change its amount and watch the check fail. Nothing runs on a server: your browser recomputes every hash and checks the signature against a key built into the page.
 
-> **Status, October 2026.** The batch pipeline, the streaming ledger, the proof API, and the browser verifier work end to end on real data. Federal contract events, their payments, and the Treasury's daily cash statement stream through Kafka into an append-only Postgres ledger, get signed into checkpoints that are timestamped on OpenTimestamps, and can be verified in your browser or from a terminal. A double-entry journal and reconciliation breaks are derived from the ledger and pushed live over WebSockets. The AI analyst is next. This note will always say exactly what works.
+> **Status, October 2026.** The batch pipeline, the streaming ledger, the proof API, and the browser verifier work end to end on real data. Federal contract events, their payments, and the Treasury's daily cash statement stream through Kafka into an append-only Postgres ledger, get signed into checkpoints that are timestamped on OpenTimestamps, and can be verified in your browser or from a terminal. A double-entry journal and reconciliation breaks are derived from the ledger and pushed live over WebSockets. The AI analyst answers questions about it, binding every number to a query over the ledger and citing the records behind it. This note will always say exactly what works.
 
 ## Why I built it
 
