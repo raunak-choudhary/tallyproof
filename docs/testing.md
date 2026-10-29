@@ -27,7 +27,7 @@ Hypothesis generates inputs for the code where a single wrong edge case would un
 - **Journal.** Every derived entry balances, and the trial balance is zero.
 - **Canonical JSON, money, IDs, and checkpoints.** Round trips give the same bytes; malformed input is rejected.
 
-Two more checks use seeded randomness or a fixed corpus rather than Hypothesis. Forty random rollbacks against a real Postgres never leave a gap in leaf indexes (`tests/integration/ledger/test_append.py`). The SQL guard rejects a corpus of 60 hostile queries that covers every rule in the threat model (`tests/unit/analyst/test_sql_guard.py`).
+Two more checks use seeded randomness or a fixed corpus rather than Hypothesis. Forty random rollbacks against a real Postgres never leave a gap in leaf indexes (`tests/integration/ledger/test_append.py`). The SQL guard rejects a corpus of 64 hostile queries that covers every rule in the threat model (`tests/unit/analyst/test_sql_guard.py`).
 
 In CI, Hypothesis runs derandomized with 300 examples, so a failure reproduces exactly.
 

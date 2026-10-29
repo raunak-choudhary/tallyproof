@@ -49,7 +49,7 @@ As built in `backend/apps/analyst/answer.py` and `pipeline.py`:
 ## Changes after the security review (2026-10-29)
 
 - **Numbers in any form.** Number words such as "fifteen" or "two hundred", and numerals other than ASCII digits, count as free numbers. A value can't have a digit, sign, unit, or scale word attached, and two values can't run together.
-- **Question digits.** A digit from the question is allowed only when the filter shown with the answer contains it, since a question can say anything.
+- **Question numbers.** A number from the question is allowed only when the filter shown with the answer contains that same number, compared by value, since a question can say anything.
 - **Clauses.** A clause after a semicolon, or after a sentence that ends and starts again in lowercase, needs its own value or citation. Common abbreviations don't end a sentence.
 - **Quotes.** A policy answer must quote at least one passage, and text the model puts in quotation marks inside a sentence must appear in a source the sentence cites.
 - **Verdicts.** A data answer that calls something fraud, a crime, or wrongdoing is rejected.
