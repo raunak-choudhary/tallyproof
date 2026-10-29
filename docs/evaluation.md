@@ -80,7 +80,7 @@ Each run writes a machine-readable JSON report and a readable Markdown report to
 
 | When | Questions | Mode | Gate |
 |---|---|---|---|
-| Every pull request (`eval-smoke`, part of `ci-gate`) | Smoke set | Cached. Uncached items fall back to the fake client and the run is labeled a harness check | Integrity always; quality thresholds once every response is recorded |
+| Every pull request (`eval-smoke`, part of `ci-gate`) | Smoke set | Cached. Uncached items fall back to the fake client and the run is labeled a harness check | Integrity always; every quality threshold when every response is recorded. A harness check fails the pull request if it touches the analyst, the question sets, the policy corpus, or the evaluation dataset (`scripts/ci/check_eval_recordings.py`); record fresh responses with `make eval-record` |
 | Weekly (scheduled trigger, Sundays 03:00 UTC) | Full and held-out sets | Live, with the key from the `llm-eval` context | Fails on regression; reports kept as artifacts |
 | Release tag | Full set | Live | Planned with the first release |
 
