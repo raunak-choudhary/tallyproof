@@ -61,7 +61,7 @@ Clients only ever see generic error codes, never raw Postgres messages, because 
 
 ### Prompt injection
 
-*Built (`backend/apps/analyst/pipeline.py`, `answer.py`): questions, evidence, and policy text go to the model inside delimited data blocks; descriptions stay out of the views the model reads; the verifier drops any sentence without a bound value or citation and rejects free numbers, unknown citations, and inexact quotes. Policy text enters only through a reviewed pull request (`backend/corpus/far`, covered by CODEOWNERS). Rendering rules arrive with the analyst page.*
+*Built (`backend/apps/analyst/pipeline.py`, `answer.py`): questions, evidence, and policy text go to the model inside delimited data blocks; descriptions stay out of the views the model reads; the verifier drops any sentence without a bound value or citation and rejects free numbers, unknown citations, and inexact quotes. Policy text enters only through a reviewed pull request (`backend/corpus/far`, covered by CODEOWNERS). The analyst page renders the model's text as plain text through React, never as HTML, and the only links it makes are to the citation anchors on the same page.*
 
 | Threat | Control |
 |---|---|
