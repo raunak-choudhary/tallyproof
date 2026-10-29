@@ -69,6 +69,7 @@ class Models:
     answer: str
     max_output_tokens: int
     max_rows: int
+    reasoning_effort: str | None = None
 
 
 @dataclass
@@ -175,6 +176,7 @@ def compose(
             messages=tuple(messages),
             max_tokens=models.max_output_tokens,
             response_schema=COMPOSER_SCHEMA,
+            reasoning_effort=models.reasoning_effort,
         )
         reply = client.complete(request).text
         try:
@@ -215,6 +217,7 @@ def _fallback(
             Message("user", f"<question>{question}</question>"),
         ),
         max_tokens=models.max_output_tokens,
+        reasoning_effort=models.reasoning_effort,
         response_schema={
             "type": "object",
             "properties": {"sql": {"type": "string"}},
@@ -295,7 +298,7 @@ def ask(
     try:
         decided = route(
             question, client, model=models.router, agencies=agencies,
-            max_tokens=models.max_output_tokens,
+            max_tokens=models.max_output_tokens, reasoning_effort=models.reasoning_effort,
         )  # fmt: skip
         trace.route = decided
         if decided.category == "refusal":

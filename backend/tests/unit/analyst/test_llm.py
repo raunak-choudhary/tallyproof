@@ -22,6 +22,12 @@ from apps.analyst.llm import (
 )
 from config.env import LLMSettings
 
+
+def settings_from(values: dict[str, Any]) -> LLMSettings:
+    """Settings from these values only, never from the developer's .env."""
+    return LLMSettings(_env_file=None, **values)
+
+
 BASE = "https://llm.invalid/v1beta/openai/"  # .invalid never resolves
 
 
@@ -196,14 +202,14 @@ def test_the_cache_records_replays_and_keys_on_everything_that_matters(tmp_path)
 
 
 def test_client_for_builds_each_mode(tmp_path):
-    settings = LLMSettings.model_validate({"LLM_CACHE_DIR": str(tmp_path)})
+    settings = settings_from({"LLM_CACHE_DIR": str(tmp_path)})
     assert isinstance(client_for("fake", settings, lambda r: "x"), FakeClient)
     assert isinstance(client_for("cached", settings), CachingClient)
     with pytest.raises(ValueError, match="script"):
         client_for("fake", settings)
     with pytest.raises(LLMError, match="LLM_PROVIDER"):
         client_for("live", settings)
-    live = LLMSettings.model_validate(
+    live = settings_from(
         {
             "LLM_PROVIDER": "openai_compatible",
             "LLM_BASE_URL": BASE,
@@ -221,8 +227,6 @@ def test_the_real_provider_needs_its_url_key_and_model(monkeypatch):
     for name in ("LLM_BASE_URL", "LLM_API_KEY", "LLM_ANSWER_MODEL", "LLM_ROUTER_MODEL"):
         monkeypatch.delenv(name, raising=False)
     with pytest.raises(ValueError, match="LLM_BASE_URL, LLM_API_KEY, LLM_ANSWER_MODEL"):
-        LLMSettings.model_validate({"LLM_PROVIDER": "openai_compatible"}, context=None)
-    settings = LLMSettings.model_validate(
-        {"LLM_ANSWER_MODEL": "model-a", "LLM_API_KEY": SecretStr("k")}
-    )
+        settings_from({"LLM_PROVIDER": "openai_compatible"})
+    settings = settings_from({"LLM_ANSWER_MODEL": "model-a", "LLM_API_KEY": SecretStr("k")})
     assert settings.router_model == settings.judge_model == "model-a"
