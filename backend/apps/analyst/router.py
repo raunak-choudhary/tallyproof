@@ -42,13 +42,21 @@ def _words(*patterns: str) -> re.Pattern[str]:
     return re.compile(r"\b(?:" + "|".join(patterns) + r")\b", re.IGNORECASE)
 
 
+JUDGMENT = _words(
+    r"fraud\w*", r"defraud\w*", r"corrupt\w*", r"guilty", r"crimin\w+", r"kickbacks?",
+    r"illegal\w*", r"unlawful\w*", r"embezzl\w*", r"brib\w*", r"launder\w*", r"theft",
+    r"steal\w*", r"stole", r"stolen", r"scam\w*", r"wrongdoing", r"misconduct", r"abus\w+",
+)  # fmt: skip
+"""Words that ask for, or state, a verdict the records can't support."""
+
 REFUSALS: tuple[tuple[RefusalReason, re.Pattern[str]], ...] = (
     (
         "personal_data",
         _words(
             r"home address", r"phone number", r"e-?mail address", r"social security",
             r"date of birth", r"salary", r"salaries", r"net worth", r"who owns",
-            r"whoever owns", r"owner'?s? (?:name|address)",
+            r"whoever owns", r"owner'?s? (?:name|address)", r"CEOs?", r"CFOs?",
+            r"chief (?:executive|financial) officers?", r"chief executives?", r"founders?",
         ),
     ),
     (
@@ -56,12 +64,10 @@ REFUSALS: tuple[tuple[RefusalReason, re.Pattern[str]], ...] = (
         _words(
             r"next (?:year|quarter|month)", r"will \w+ (?:spend|obligate|pay)", r"forecast",
             r"predict\w*", r"projections?", r"projected", r"in 20[3-9]\d",
+            r"(?:FY|fiscal year) ?(?:20)?(?:2[7-9]|[3-9]\d)",
         ),
     ),
-    (
-        "judgment_beyond_data",
-        _words(r"fraud\w*", r"corrupt\w*", r"guilty", r"crimin\w+", r"kickbacks?", r"illegal"),
-    ),
+    ("judgment_beyond_data", JUDGMENT),
     (
         "out_of_scope",
         _words(r"poem", r"joke", r"song", r"story", r"recipe", r"translate", r"write me"),

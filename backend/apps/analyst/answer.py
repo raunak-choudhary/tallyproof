@@ -19,6 +19,7 @@ from typing import Any, Literal
 from apps.analyst.compiler import CompiledQuery
 from apps.analyst.query_spec import CATALOG, FieldType, QuerySpec
 from apps.analyst.retrieval import Hit
+from apps.analyst.router import JUDGMENT
 
 SlotKind = Literal["money", "count", "date", "text"]
 Assurance = Literal["filter_shown", "lower_assurance", "policy"]
@@ -424,7 +425,10 @@ def verify(draft: Draft, evidence: Evidence) -> Verdict:
             problems.append(f"quote_mismatch:{quote.source}")
     if not kept and not draft.quotes:
         problems.append("no_claims")
-    elif evidence.assurance == "policy" and not draft.quotes:
+    if evidence.assurance != "policy" and any(JUDGMENT.search(s) for s in kept):
+        # The records show what happened; an answer about them can't call it a crime.
+        problems.append("judgment_claim")
+    if kept and evidence.assurance == "policy" and not draft.quotes:
         # A policy answer is about the regulation's words, so it must show some of them.
         problems.append("quote_required")
     return Verdict(tuple(dict.fromkeys(problems)), tuple(kept), free)
