@@ -43,7 +43,7 @@ tallyproof/
       reconciliation/         break records and their API
       realtime/               WebSocket consumer and the fan-out worker
       health/                 /healthz and /readyz
-      analyst/, evals/        the AI analyst and its evaluation (next phase)
+      analyst/, evals/        the AI analyst and its evaluation
     tests/                    unit, module, integration, and end-to-end tests
   frontend/                   Next.js app
   infra/                      compose file, database role script, topic setup
