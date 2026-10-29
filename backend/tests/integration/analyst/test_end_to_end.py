@@ -52,7 +52,7 @@ HHS = "Department of Health and Human Services"
 
 def script(request: LLMRequest) -> str:
     """What the model is recorded saying."""
-    if request.prompt_version == "router.v1":
+    if request.prompt_version == "router.v2":
         spec = {
             "shape": "aggregate",
             "entity": "obligations",

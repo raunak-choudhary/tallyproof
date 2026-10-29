@@ -241,8 +241,8 @@ jobs:
           set: smoke
           mode: cached
 
-  # Scheduled only. The llm-eval context holds the provider key and is limited to main.
-  eval-nightly:
+  # Weekly, from a scheduled trigger only. The llm-eval context holds the provider key and is limited to main.
+  eval-weekly:
     machine:
       image: ubuntu-2404:2024.11.1
     resource_class: medium
@@ -296,9 +296,9 @@ workflows:
             - web-checks
             - eval-smoke
 
-  nightly-eval:
+  weekly-eval:
     when:
       equal: [scheduled_pipeline, << pipeline.trigger_source >>]
     jobs:
-      - eval-nightly:
+      - eval-weekly:
           context: llm-eval

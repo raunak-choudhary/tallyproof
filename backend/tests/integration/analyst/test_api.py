@@ -30,7 +30,7 @@ SPEC = {
 
 
 def scripted(request: LLMRequest) -> str:
-    if request.prompt_version == "router.v1":
+    if request.prompt_version == "router.v2":
         return json.dumps({"category": "numeric_aggregate", "spec": SPEC})
     return json.dumps({"answer": "HHS obligated {{s1}} across {{s2}} actions [[c1]]."})
 
