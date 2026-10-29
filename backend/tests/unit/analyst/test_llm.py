@@ -129,8 +129,14 @@ def test_rate_limits_and_server_errors_are_retried_with_backoff():
     session, clock = Session(Reply(429, headers={"Retry-After": "7"}), Reply(503), ok()), Clock()
     assert real(session, clock, rpm=600).complete(request()).text
     assert len(session.calls) == 3
-    assert 7.0 in clock.slept
+    assert 7.5 in clock.slept  # Retry-After, plus a little margin
     assert 2.0 in clock.slept
+
+
+def test_fractional_retry_after_is_honored():
+    session, clock = Session(Reply(429, headers={"Retry-After": "2.48"}), ok()), Clock()
+    real(session, clock, rpm=600).complete(request())
+    assert clock.slept == [2.98]
 
 
 def test_requests_are_paced_to_the_rate_limit():

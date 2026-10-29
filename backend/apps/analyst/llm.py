@@ -202,8 +202,7 @@ class OpenAICompatibleClient:
                 self._sleep(2.0**attempt)
                 continue
             if reply.status_code in RETRY_STATUSES and attempt < self._retries:
-                retry_after = reply.headers.get("Retry-After", "")
-                delay = float(retry_after) if retry_after.isdigit() else 2.0**attempt
+                delay = _retry_after(reply.headers.get("Retry-After", ""), 2.0**attempt)
                 log.warning("llm retry", extra={"status": reply.status_code, "delay": delay})
                 self._sleep(delay)
                 continue
@@ -227,6 +226,14 @@ class OpenAICompatibleClient:
             output_tokens=int(usage.get("completion_tokens", 0)),
             latency_ms=int((self._clock() - started) * 1000),
         )
+
+
+def _retry_after(header: str, fallback: float) -> float:
+    """Seconds to wait from a Retry-After header; providers send whole or fractional seconds."""
+    try:
+        return max(0.0, float(header)) + 0.5
+    except ValueError:
+        return fallback
 
 
 @dataclass(frozen=True)
