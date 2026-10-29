@@ -74,6 +74,7 @@ Chosen for the site, added when it's built: shadcn/ui for components, Motion for
 |---|---|---|---|
 | CI | CircleCI | In use | Machine executor for container-based tests, a weekly scheduled trigger for live evaluations |
 | Demo site | GitHub Pages through a GitHub Actions workflow | In use | Actions pinned by commit ([ADR-0020](adr/0020-github-pages-for-the-demo-site.md)) |
+| Documentation site | MkDocs 1.6 with Material 9.8 and mkdocstrings 1.0 | In use | Built by the same Pages workflow into `/docs/` beside the demo; API pages are read from docstrings without importing the code |
 | Dependency updates | Dependabot | In use | Pinned requirements are recompiled with `make deps`; CI doesn't yet check them for drift |
 | Releases | release-please action 5.0.0 in a minimal GitHub Actions workflow | In use | Pinned by commit; all building and testing stays on CircleCI ([ADR-0011](adr/0011-release-automation-on-github-actions.md)) |
 | Documentation site | MkDocs Material with mkdocstrings | Planned | Material is in maintenance mode, so the configuration will avoid features that would block a later move to Zensical |
