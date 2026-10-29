@@ -12,6 +12,8 @@
   --color-border: var(--border);
   --color-accent: var(--accent);
   --color-accent-fg: var(--accent-fg);
+  --color-accent-2: var(--accent-2);
+  --color-gold: var(--gold);
   --color-ok: var(--ok);
   --color-fail: var(--fail);
   --color-warn: var(--warn);
@@ -22,8 +24,10 @@
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
   --color-chart-6: var(--chart-6);
+  --font-display: var(--font-display);
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
+  --font-script: var(--font-script);
   --radius-sm: var(--radius-sm);
   --radius-md: var(--radius-md);
   --radius-lg: var(--radius-lg);
@@ -52,6 +56,20 @@ h2,
 h3 {
   text-wrap: balance;
   line-height: 1.15;
+}
+
+/* The display voice, for page and scene titles only. */
+.display {
+  font-family: var(--font-display);
+  font-variation-settings:
+    "SOFT" 30,
+    "WONK" 0;
+  letter-spacing: -0.01em;
+}
+
+/* The handwritten voice, for taglines and callouts. Never body text or data. */
+.script {
+  font-family: var(--font-script);
 }
 
 p {

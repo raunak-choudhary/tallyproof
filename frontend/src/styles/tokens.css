@@ -1,32 +1,37 @@
 /* Design tokens. Every colour, size, and duration the site uses, defined once with a
-   value per theme. Components never use raw values. Source of truth for the palette is
-   the Phase 5 design brief; Tailwind reads these through @theme in globals.css. */
+   value per theme. Components never use raw values. Palette "Ink and Ultraviolet",
+   chosen from the Phase 5 specimen: ink surfaces, an electric violet accent, cyan for
+   anything live, gold for the tally mark and the cursive voice. Dark is designed first;
+   the light theme is its own design, not an inversion. Tailwind reads these through
+   @theme in globals.css. */
 
 :root {
-  /* surfaces and text */
-  --bg: #fafaf9;
+  /* surfaces and text (light) */
+  --bg: #f7f7fb;
   --bg-elevated: #ffffff;
-  --bg-sunken: #f0efec;
-  --fg: #15181d;
-  --fg-muted: #5c6470;
-  --border: #e2e1dd;
+  --bg-sunken: #ececf4;
+  --fg: #0e0f17;
+  --fg-muted: #5a6078;
+  --border: #dddee8;
 
-  /* the one accent, and the four verification states */
-  --accent: #0f62fe;
+  /* the accent, the live colour, the tally gold, and the verification states */
+  --accent: #5b3df5;
   --accent-fg: #ffffff;
-  --ok: #1b7f3b;
-  --fail: #c0271d;
-  --warn: #9a6700;
-  --info: #4c5a6b;
+  --accent-2: #0891b2;
+  --gold: #b7791f;
+  --ok: #15803d;
+  --fail: #c2272d;
+  --warn: #b7791f;
+  --info: #5a6078;
 
-  /* chart series: distinguishable under the common forms of colour-blindness */
-  --chart-1: #0072b2;
-  --chart-2: #e69f00;
-  --chart-3: #009e73;
-  --chart-4: #cc79a7;
-  --chart-5: #d55e00;
-  --chart-6: #56636f;
-  --chart-grid: #e8e7e3;
+  /* chart series: vivid, distinguishable under the common forms of colour-blindness */
+  --chart-1: #5b3df5;
+  --chart-2: #0891b2;
+  --chart-3: #d97706;
+  --chart-4: #db2777;
+  --chart-5: #15803d;
+  --chart-6: #5a6078;
+  --chart-grid: #e4e4ee;
 
   /* type: the faces are set on <html> by next/font; these are the scale */
   --text-xs: clamp(0.75rem, 0.72rem + 0.15vw, 0.8125rem);
@@ -40,11 +45,12 @@
   /* space, radius, shadow */
   --gutter: clamp(1rem, 4vw, 2rem);
   --space-section: clamp(3rem, 2rem + 5vw, 7rem);
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
   --radius: var(--radius-md);
-  --shadow-1: 0 1px 2px rgb(21 24 29 / 6%), 0 4px 12px rgb(21 24 29 / 6%);
+  --shadow-1: 0 1px 2px rgb(14 15 23 / 6%), 0 8px 24px rgb(14 15 23 / 8%);
+  --glow: rgb(91 61 245 / 28%);
 
   /* motion */
   --dur-fast: 120ms;
@@ -57,51 +63,57 @@
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #0b0f14;
-    --bg-elevated: #121922;
-    --bg-sunken: #070a0e;
-    --fg: #e8ecf1;
-    --fg-muted: #95a0ad;
-    --border: #243040;
-    --accent: #78a9ff;
-    --accent-fg: #0b0f14;
-    --ok: #42be65;
-    --fail: #ff7b73;
-    --warn: #f1c21b;
-    --info: #a2b0bf;
-    --chart-1: #56b4e9;
-    --chart-2: #f0c35a;
-    --chart-3: #3fd0a4;
-    --chart-4: #e6a2cc;
-    --chart-5: #f08a4b;
-    --chart-6: #9aa7b4;
-    --chart-grid: #1c2632;
+    --bg: #0a0b10;
+    --bg-elevated: #12141c;
+    --bg-sunken: #06070b;
+    --fg: #f2f3f7;
+    --fg-muted: #9ba1b4;
+    --border: #232735;
+    --accent: #8b6cff;
+    --accent-fg: #0a0b10;
+    --accent-2: #22d3ee;
+    --gold: #f5b82e;
+    --ok: #3ddc84;
+    --fail: #ff6b6b;
+    --warn: #f5b82e;
+    --info: #9ba1b4;
+    --chart-1: #8b6cff;
+    --chart-2: #22d3ee;
+    --chart-3: #f5b82e;
+    --chart-4: #ff7ab6;
+    --chart-5: #3ddc84;
+    --chart-6: #9ba1b4;
+    --chart-grid: #1b1e2a;
     --shadow-1: 0 0 0 1px var(--border);
+    --glow: rgb(139 108 255 / 45%);
     color-scheme: dark;
   }
 }
 
 :root[data-theme="dark"] {
-  --bg: #0b0f14;
-  --bg-elevated: #121922;
-  --bg-sunken: #070a0e;
-  --fg: #e8ecf1;
-  --fg-muted: #95a0ad;
-  --border: #243040;
-  --accent: #78a9ff;
-  --accent-fg: #0b0f14;
-  --ok: #42be65;
-  --fail: #ff7b73;
-  --warn: #f1c21b;
-  --info: #a2b0bf;
-  --chart-1: #56b4e9;
-  --chart-2: #f0c35a;
-  --chart-3: #3fd0a4;
-  --chart-4: #e6a2cc;
-  --chart-5: #f08a4b;
-  --chart-6: #9aa7b4;
-  --chart-grid: #1c2632;
+  --bg: #0a0b10;
+  --bg-elevated: #12141c;
+  --bg-sunken: #06070b;
+  --fg: #f2f3f7;
+  --fg-muted: #9ba1b4;
+  --border: #232735;
+  --accent: #8b6cff;
+  --accent-fg: #0a0b10;
+  --accent-2: #22d3ee;
+  --gold: #f5b82e;
+  --ok: #3ddc84;
+  --fail: #ff6b6b;
+  --warn: #f5b82e;
+  --info: #9ba1b4;
+  --chart-1: #8b6cff;
+  --chart-2: #22d3ee;
+  --chart-3: #f5b82e;
+  --chart-4: #ff7ab6;
+  --chart-5: #3ddc84;
+  --chart-6: #9ba1b4;
+  --chart-grid: #1b1e2a;
   --shadow-1: 0 0 0 1px var(--border);
+  --glow: rgb(139 108 255 / 45%);
   color-scheme: dark;
 }
 
