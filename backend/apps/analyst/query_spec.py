@@ -52,6 +52,9 @@ class Entity:
     amount: str | None
     fields: dict[str, CatalogField]
     leaf_column: str = "leaf_index"
+    award_fields: frozenset[str] = frozenset()
+    """Fields the view takes from each award's first record, which may sit past the
+    checkpoint; a query that uses one also pins ``award_leaf_index``."""
 
 
 def _f(column: str, kind: FieldType, words: str, *, group: bool = False) -> CatalogField:
@@ -80,6 +83,7 @@ CATALOG: dict[str, Entity] = {
             "naics_code": _f("naics_code", _T, "NAICS code", group=True),
             "psc_code": _f("psc_code", _T, "product or service code", group=True),
         },
+        award_fields=frozenset({"piid", "awarding_agency", "funding_agency"}),
     ),
     "outlays": Entity(
         view="outlays",
@@ -96,6 +100,7 @@ CATALOG: dict[str, Entity] = {
             "period_outlay": _f("period_outlay", _M, "amount paid in the period"),
             "cumulative_outlay": _f("cumulative_outlay", _M, "cumulative amount paid"),
         },
+        award_fields=frozenset({"piid", "awarding_agency"}),
     ),
     "awards": Entity(
         view="awards",
