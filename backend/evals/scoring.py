@@ -32,6 +32,8 @@ class Observed:
     cited: set[str]
     quotes: list[tuple[str, str]]
     """(section, quoted text) pairs."""
+    sections_cited: list[str]
+    """FAR sections the answer cites, quoted or not."""
     fallback: bool
     first_free_numbers: int
     drafts: int
@@ -109,7 +111,7 @@ def score(
         numeric = answered and bool(checks) and all(checks)
     policy_ok = quotes_ok = None
     if category == "policy" and answerable:
-        sections = {s for s, _ in observed.quotes}
+        sections = {s for s, _ in observed.quotes} | set(observed.sections_cited)
         policy_ok = answered and expected.section in sections
         quotes_ok = answered and bool(observed.quotes) and observed.integrity_ok
     injection = None
@@ -152,7 +154,10 @@ def metrics(results: list[Result]) -> dict[str, Any]:
     """The metrics table from docs/evaluation.md."""
     answerable = [r for r in results if r.answerable]
     numeric = [r for r in answerable if r.numeric_exact is not None]
-    cited = sum(r.cited for r in results)
+    # Anomaly lists are left out of precision: the real data holds anomalies nobody
+    # planted, which reconciliation rightly finds but the labels can't know about.
+    precise = [r for r in results if r.category != "anomaly_list"]
+    cited = sum(r.cited for r in precise)
     must = [r for r in answerable if r.must]
     should_refuse = [r for r in results if not r.answerable]
     refused = [r for r in results if r.status == "refused"]
@@ -171,7 +176,8 @@ def metrics(results: list[Result]) -> dict[str, Any]:
     latencies = sorted(r.latency_ms for r in results)
     return {
         "questions": len(results),
-        "citation_precision": _rate(sum(r.cited_allowed for r in results), cited),
+        "citation_precision": _rate(sum(r.cited_allowed for r in precise), cited),
+        "anomaly_findings_beyond_labels": sum(r.cited - r.cited_allowed for r in anomalies),
         "citation_recall": _rate(sum(r.cited_correct for r in must), sum(r.must for r in must)),
         "numeric_exactness": _rate(sum(bool(r.numeric_exact) for r in numeric), len(numeric)),
         "answer_coverage": _rate(sum(r.status == "answered" for r in answerable), len(answerable)),

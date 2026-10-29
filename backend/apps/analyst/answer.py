@@ -254,7 +254,10 @@ def _normalize(text: str) -> str:
 def _allowed_digits(question: str, evidence: Evidence) -> set[str]:
     allowed = set(DIGITS.findall(question))
     for source in evidence.sources.values():
+        # Numbers in a cited regulation (form numbers, rates, section references) are
+        # part of the source the reader can verify, not numbers the model made up.
         allowed.update(DIGITS.findall(source.section))
+        allowed.update(DIGITS.findall(source.excerpt))
     return allowed
 
 

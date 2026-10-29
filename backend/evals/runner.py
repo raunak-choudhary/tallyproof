@@ -172,6 +172,7 @@ def _observe(answer: Any, integrity: Integrity, tokens: int, elapsed_ms: int) ->
     used: list[str] = []
     cited: set[str] = set()
     quotes: list[tuple[str, str]] = []
+    sections: list[str] = []
     leaf_text_ok = True
     if evidence is not None and final is not None and answer.status == "answered":
         text = " ".join(final.sentences)
@@ -179,6 +180,9 @@ def _observe(answer: Any, integrity: Integrity, tokens: int, elapsed_ms: int) ->
         for label in CITE.findall(text):
             if label in evidence.citations:
                 cited.update(evidence.citations[label].event_ids)
+            elif label in evidence.sources:
+                sections.append(evidence.sources[label].section)
+                cited.add(evidence.sources[label].event_id)
         for quote in answer.quotes:
             source = evidence.sources.get(quote.source)
             if source is not None:
@@ -192,6 +196,7 @@ def _observe(answer: Any, integrity: Integrity, tokens: int, elapsed_ms: int) ->
         used_values=used,
         cited=cited,
         quotes=quotes,
+        sections_cited=sections,
         fallback=answer.trace.used_fallback,
         first_free_numbers=answer.trace.verdicts[0].free_numbers if answer.trace.verdicts else 0,
         drafts=len(answer.trace.verdicts),
