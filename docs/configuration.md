@@ -35,7 +35,7 @@ Every setting comes from environment variables, loaded through one typed setting
 | `DB_OWNER_URL` | for migrations | | Owner role used only by `make migrate`; never given to the API or workers |
 | `DB_ANALYST_URL` | yes | | Read-only role for the analyst |
 | `DB_ANALYST_STATEMENT_TIMEOUT_MS` | planned | `3000` | Today the role script sets the analyst's 3 second timeout directly |
-| `DB_ANALYST_MAX_ROWS` | no | `1000` | Most records one answer may cite; a question needing more is refused as too broad |
+| `DB_ANALYST_MAX_ROWS` | no | `1000` | Most records one answer cites. A larger total is still computed over every record, and its citation is labelled as a sample; a lookup matching more than one record is refused as ambiguous, and a list of records with no matching award is refused past this size |
 
 ## Kafka and ingestion
 

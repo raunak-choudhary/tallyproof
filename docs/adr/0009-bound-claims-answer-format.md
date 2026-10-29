@@ -42,5 +42,6 @@ As built in `backend/apps/analyst/answer.py` and `pipeline.py`:
 - **Citations and quotes.** Records are cited as `[[c1]]`; regulation sources as `[[q1]]`, with exact quotes given separately and checked as substrings of the cited leaf after collapsing whitespace. When a sentence shows a value without its citation, rendering adds the citation right after the value.
 - **Numbers from a source.** A digit sequence that appears in a cited regulation excerpt, such as a form number or a rate, is allowed in a policy answer.
 - **Repair.** One repair attempt carries the verifier's findings as plain instructions, not just codes.
+- **Large totals.** A total over more records than one answer cites (`DB_ANALYST_MAX_ROWS`) is computed over all of them; its citation lists the first records in log order with `sample_of` set to the full count, and the page labels it.
 - **Refusal codes.** Thirteen typed reasons, not five: `forecast`, `personal_data`, `judgment_beyond_data`, `out_of_scope`, `no_data`, `no_evidence`, `ambiguous`, `too_broad`, `unsafe_query`, `unverifiable_claim`, `budget_exceeded`, `model_unavailable`, and `no_checkpoint`.
 - **The interactive value.** The analyst page lists each value with its meaning and opens the records behind it with Verify. Showing the compiled SQL beside a value is planned with the site.
