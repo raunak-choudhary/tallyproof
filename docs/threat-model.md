@@ -55,7 +55,7 @@ In the query guard, which parses SQL with sqlglot before anything runs:
 
 - Exactly one `SELECT` statement. Anything else is rejected, including set operations and data-modifying CTEs.
 - Allowlists for relations, columns, functions, operators, and cast targets. Schema-qualified names, `pg_*` and `information_schema` relations, `WITH RECURSIVE`, nested `WITH`, CTE names that shadow another relation, set-returning functions, `LATERAL`, locking clauses, and casts to `reg*` types are all rejected. The awards view is left out, because its totals ignore the checkpoint.
-- A selected value must be a bare view column or a plain aggregate of one, so a query can't put a literal or an expression beside a real event ID and have it cited. The event ID and leaf index must come from the same table, and rows without both give no evidence.
+- A selected value must be a bare view column or a plain aggregate of one, so a query can't put a literal or an expression beside a real event ID and have it cited. When the output carries event IDs, the query reads one view directly, with no join, CTE, or subquery in its FROM, and every output is a bare column under its own name, so a value from another row can't sit beside a cited event and a label can't misname it. Rows without an event ID and leaf index give no evidence.
 - Joins need an equality between the same key on two different tables, with no top-level `OR`, so `ON a.k = a.k OR true` doesn't sneak a cartesian product through.
 - Every view is pinned to the checkpoint, and so is each award's first record when the query uses an award field.
 - Limits on AST depth and node count, plus an injected `LIMIT`.
@@ -70,7 +70,7 @@ Clients only ever see generic error codes, never raw Postgres messages, because 
 | Threat | Control |
 |---|---|
 | Instructions hidden in descriptions or policy text | Untrusted text goes into clearly delimited data blocks, length-capped, and the system prompt says data is never instructions |
-| The model told to state numbers or cite records it didn't retrieve | Numbers come only from query results through typed slots, or, in a policy answer, from a word-for-word quote of the regulation that the verifier checks against the cited leaf. Citations must reference IDs in the evidence set. The verifier also catches numbers written as words, numerals other than ASCII digits, a value with a digit, sign, or scale word attached, and two values run together. A digit from the question is allowed only when the filter shown with the answer contains it. It rejects anything else ([ADR-0009](adr/0009-bound-claims-answer-format.md)) |
+| The model told to state numbers or cite records it didn't retrieve | Numbers come only from query results through typed slots, or, in a policy answer, from a word-for-word quote of the regulation that the verifier checks against the cited leaf. Citations must reference IDs in the evidence set. The verifier also catches numbers written as words, numerals other than ASCII digits, a value with a digit, sign, or scale word attached, and two values run together. A number from the question is allowed only when the filter shown with the answer contains that same number; whole numbers are compared, so a figure can't be rebuilt from the filter's digit groups. It rejects anything else ([ADR-0009](adr/0009-bound-claims-answer-format.md)) |
 | A claim smuggled into an uncited clause | Each clause after a semicolon, or after a sentence that ends and starts again in lowercase, needs its own bound value or citation |
 | A value read as another group's | When one sentence mixes values from several citations, each value is shown with its own |
 | A made-up quotation | A policy answer must give at least one passage word for word, and text the model puts in quotation marks inside a sentence must appear in a source that sentence cites |
@@ -169,10 +169,13 @@ The live provider is Groq's free tier running `openai/gpt-oss-120b`, chosen afte
 - The verifier recognizes number words from a fixed list. It leaves out "one", which reads as a pronoun far more often than a count, and unusual spellings of a number could still slip past it.
 - The in-flight cap and the daily token budget are counted per process unless Django's cache is shared, such as through Redis.
 - A client with more than a /64 of IPv6 space can still spread its requests across networks.
+- A text filter the model chooses, such as an agency name, can carry digits, and numbers shown in the filter are allowed in the prose. The filter is shown to the reader beside the answer, so such a number is visible as part of what was asked.
 - One person wrote both the anomaly injector and the detectors. Near-miss cases and a held-out question set limit how much that bias can flatter the results ([evaluation.md](evaluation.md)).
 
 ## Review record
 
 On 2026-10-29 two independent reviews went over the analyst and the API: one tried to break the analyst's promises from the outside, and one audited the code for vulnerabilities. Both reproduced their findings with probe scripts. They found 22 problems: one critical, eight high, seven medium, and six low. Every one is fixed, each with a test that failed before the fix, and the controls above describe the result. Attempts that failed are covered by the existing tests, among them union queries, comma joins, window functions, `pg_sleep`, dollar quoting, Unicode digits in a draft, and spoofed forwarded addresses.
 
-This document was signed off against commit `622b5a8`.
+A second pass the same day, by a separate security reviewer over the merged code (`apps/analyst`, `apps/ledger/api`, and `config`), found three more: numbers rebuilt from the filter's digit groups, values from another row or under another name in fallback SQL, and a crash on a model reply that was valid JSON but not an object. All three are fixed, each with a test that reproduced it first.
+
+This document was signed off against commit `622b5a8` and, after the second pass, against the commit that tags `v0.1.0`.
