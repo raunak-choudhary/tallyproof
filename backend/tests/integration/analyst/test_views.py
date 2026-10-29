@@ -17,17 +17,10 @@ from tests.unit.pipeline.test_overlay import cash_event, real_events
 
 pytestmark = pytest.mark.django_db
 
-VIEWS = {
-    "awards",
-    "break_events",
-    "breaks",
-    "cash_movements",
-    "journal",
-    "obligation_descriptions",
-    "obligations",
-    "outlays",
-    "policy_sections",
-}
+VIEWS = {"awards", "break_events", "breaks", "cash_movements", "journal", "obligations", "outlays"}
+"""Views the analyst role can read. The views exist for the owner too, but these two
+hold source text and the policy corpus, which the analyst role never reads directly."""
+PRIVATE = {"obligation_descriptions", "policy_sections"}
 HIDDEN = {"canonical_bytes", "leaf_hash", "kafka_topic", "kafka_offset", "correlation_id", "id"}
 
 
@@ -99,6 +92,36 @@ def test_cash_and_journal_rows_are_visible(ledger):
 def test_the_analyst_cannot_read_tables_behind_the_views(as_analyst):
     with pytest.raises(Exception, match="permission denied"), transaction.atomic():
         query("SELECT count(*) FROM public.ledger_event")
+
+
+@pytest.mark.parametrize("view", sorted(PRIVATE))
+def test_the_analyst_cannot_read_source_text_or_the_policy_view(as_analyst, view):
+    with pytest.raises(Exception, match="permission denied"), transaction.atomic():
+        query(f"SELECT count(*) FROM analyst.{view}")  # noqa: S608 - fixed view names
+
+
+def test_new_views_are_not_readable_by_default(migrated):
+    with migrated.connect("superuser") as conn:
+        rows = conn.execute(
+            "SELECT d.defaclacl::text FROM pg_default_acl d "
+            "JOIN pg_namespace n ON n.oid = d.defaclnamespace WHERE n.nspname = 'analyst'"
+        ).fetchall()
+    assert not any("tallyproof_analyst" in acl for (acl,) in rows)
+
+
+def test_the_analyst_role_has_its_resource_limits(migrated):
+    with migrated.connect("superuser") as conn:
+        limit, config = conn.execute(
+            "SELECT r.rolconnlimit, s.setconfig FROM pg_roles r "
+            "LEFT JOIN pg_db_role_setting s ON s.setrole = r.oid AND s.setdatabase = 0 "
+            "WHERE r.rolname = 'tallyproof_analyst'"
+        ).fetchone()
+    assert limit == 24
+    settings = dict(item.split("=", 1) for item in config)
+    assert settings["lock_timeout"] == "1s"
+    assert settings["temp_file_limit"] == "64MB"
+    assert settings["work_mem"] == "16MB"
+    assert settings["statement_timeout"] == "3s"
 
 
 def test_the_analyst_cannot_write_even_with_read_only_mode_switched_off(migrated):
