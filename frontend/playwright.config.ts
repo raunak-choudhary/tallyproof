@@ -7,7 +7,7 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
   // CI executors report many cores but have little memory; 18 browsers at once got the job killed.
-  workers: process.env.CI ? 2 : undefined,
+  ...(process.env.CI ? { workers: 2 } : {}),
   reporter: process.env.CI ? [["list"], ["html", { open: "never" }]] : "list",
   use: {
     baseURL: process.env.E2E_BASE_URL ?? "http://localhost:3100",
