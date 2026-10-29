@@ -15,6 +15,7 @@ invalidates exactly the entries it affects.
 import hashlib
 import json
 import logging
+import re
 import time
 from collections.abc import Callable, Sequence
 from dataclasses import asdict, dataclass, field
@@ -90,6 +91,19 @@ class LLMClient(Protocol):
     def complete(self, request: LLMRequest) -> LLMResponse:
         """Return the model's response to ``request``."""
         ...
+
+
+DELIMITER = re.compile(r"<\s*/?\s*(?:question|evidence|source)\b[^>]*>", re.IGNORECASE)
+
+
+def as_data(text: str) -> str:
+    """Text to place between a prompt's delimiter tags, unable to close or open one.
+
+    Prompts mark the question, evidence, and sources with tags and tell the model
+    the text inside is data. A question that typed ``</question>`` itself could end
+    that block early, so those tags are removed from anything put inside one.
+    """
+    return DELIMITER.sub(" ", text)
 
 
 def estimate_tokens(text: str) -> int:
