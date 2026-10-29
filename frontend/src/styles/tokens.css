@@ -17,11 +17,11 @@
   /* the accent, the live colour, the tally gold, and the verification states */
   --accent: #5b3df5;
   --accent-fg: #ffffff;
-  --accent-2: #0891b2;
-  --gold: #b7791f;
+  --accent-2: #0e7490;
+  --gold: #8a5a0a;
   --ok: #15803d;
   --fail: #c2272d;
-  --warn: #b7791f;
+  --warn: #8a5a0a;
   --info: #5a6078;
 
   /* chart series: vivid, distinguishable under the common forms of colour-blindness */
