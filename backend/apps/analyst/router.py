@@ -75,6 +75,30 @@ POLICY = _words(
     r"under the rules?", r"required to", r"allowed to", r"must a contractor",
 )  # fmt: skip
 
+ASKS_WHAT_THE_TEXT_SAYS = _words(
+    r"says?", r"said", r"defines?", r"defined", r"definition", r"means?", r"meaning",
+    r"requires?", r"required", r"when is", r"when are", r"what counts as",
+    r"what is considered", r"how does (?:the )?(?:FAR|regulation)",
+)  # fmt: skip
+NAMES_A_PARTY = re.compile(
+    r"\b(?:this|that|these|those) (?:vendor|contractor|company|agency|award|contract|record)s?\b"
+    r"|\bcommit(?:s|ted|ting)?\b|\bdid\b|\bguilty\b"
+    r"|\b(?=[A-Z0-9-]*\d)[A-Z0-9][A-Z0-9-]{7,}\b",
+    re.IGNORECASE,
+)
+"""A verdict about someone: a pointed reference, "did they", "committed", or an ID like a PIID."""
+
+
+def _asks_what_the_rules_say(question: str) -> bool:
+    """Whether a question about the regulation asks what its text says, not for a verdict."""
+    about_policy = bool(FAR.search(question) or POLICY.search(question))
+    return (
+        about_policy
+        and bool(ASKS_WHAT_THE_TEXT_SAYS.search(question))
+        and not NAMES_A_PARTY.search(question)
+    )
+
+
 ANOMALIES: tuple[tuple[re.Pattern[str], QuerySpec], ...] = tuple(
     (pattern, QuerySpec(shape="absence", entity="outlays", absence_rule=rule))
     if rule
@@ -130,10 +154,11 @@ ANOMALIES: tuple[tuple[re.Pattern[str], QuerySpec], ...] = tuple(
 
 def by_rules(question: str) -> Route | None:
     """Route by fixed rules, or return ``None`` if no rule applies."""
-    about_policy = bool(FAR.search(question) or POLICY.search(question))
+    rules_text = _asks_what_the_rules_say(question)
     for reason, pattern in REFUSALS:
-        # "What does the FAR say about fraud?" asks what the rules say, not for a verdict.
-        if about_policy and reason == "judgment_beyond_data":
+        # "What does the FAR say about fraud?" asks what the rules say, not for a verdict;
+        # "Is this contractor committing fraud under the FAR?" still asks for one.
+        if rules_text and reason == "judgment_beyond_data":
             continue
         if pattern.search(question):
             return Route("refusal", "rules", refusal_reason=reason)
