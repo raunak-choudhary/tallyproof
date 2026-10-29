@@ -165,6 +165,8 @@ class Oracle:
             return Expected(count=len(rows), must_cite=ids, may_cite=ids)
         if kind == "top":
             totals: dict[str, Decimal] = defaultdict(Decimal)
+            rows = [r for r in rows if r.fields.get(expect["group_by"]) is not None]
+            ids = frozenset(r.event_id for r in rows)
             for r in rows:
                 totals[r.fields[expect["group_by"]]] += r.fields["amount"]
             group = min(totals, key=lambda g: (-totals[g], g))

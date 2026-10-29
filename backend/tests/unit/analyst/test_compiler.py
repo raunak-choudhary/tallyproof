@@ -80,6 +80,10 @@ def test_a_grouped_top_n_ranks_groups_and_cites_their_rows():
     assert 'GROUP BY t."awarding_agency" ORDER BY value DESC NULLS LAST, grp LIMIT 1' in q.value_sql
     assert q.group_column == "grp"
     assert "by awarding agency, top 1 by total" in q.words
+    # A record with no agency isn't a group, and the reader is told it was left out.
+    assert 't."awarding_agency" IS NOT NULL' in q.value_sql
+    assert 't."awarding_agency" IS NOT NULL' in q.evidence_sql
+    assert q.words.endswith("leaving out records with no awarding agency")
 
 
 def test_min_and_max_cite_the_extreme_row():
