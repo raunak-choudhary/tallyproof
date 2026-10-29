@@ -6,6 +6,7 @@ checks the checkpoint's signature against ``CHECKPOINT_PUBLIC_KEY``. Nothing the
 API says is taken as a verdict.
 """
 
+import json
 import random
 
 import requests
@@ -41,6 +42,14 @@ class Command(BaseCommand):
             proof = http.get(f"{api}/api/v1/events/{event_id}/proof", timeout=10).json()
         if "audit_path_hex" not in proof:
             raise CommandError(f"no proof yet: {proof.get('detail', proof)}")
+        # A valid record and proof for some other event would verify too, so the
+        # record must name the event that was asked for.
+        served = json.loads(event["canonical"]).get("event_id")
+        if served != event_id:
+            raise CommandError(
+                f"record: FAILED (the record served is for {served}, not {event_id})"
+            )
+        self.stdout.write(f"record: ok (it is {event_id})")
 
         verifier = Verifier.from_verifier_key(app_settings().checkpoint_public_key)
         try:
