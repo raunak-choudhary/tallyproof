@@ -20,4 +20,7 @@ class Command(BaseCommand):
             port=settings.stream_port,
             ws_max_size=settings.ws_max_message_bytes,
             log_level=settings.log_level.lower(),
+            # Client addresses key the per-IP connection cap, so forwarded headers
+            # count only when a proxy is configured in front (TRUSTED_PROXY_COUNT).
+            proxy_headers=settings.trusted_proxy_count > 0,
         )
