@@ -24,3 +24,6 @@ Each record explains the context, the decision, the reasons, the alternatives co
 | 0018 | Uvicorn instead of Daphne for the WebSocket server | Accepted |
 | 0019 | Derived state is projected from the ledger, not consumed from Kafka | Accepted |
 | 0020 | GitHub Pages for the public demo, deployed by GitHub Actions | Accepted |
+| 0021 | One OpenAI-compatible model client, running on Groq's free tier | Accepted |
+| 0022 | fastembed and an in-memory index for policy retrieval | Accepted |
+| 0023 | Evaluation runs are recorded as reports, in a throwaway ledger | Accepted |

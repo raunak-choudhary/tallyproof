@@ -43,3 +43,9 @@ In the browser:
 ## Hosting
 
 Vercel static hosting. GitHub Pages build kept as a fallback target, since a static export works on both.
+
+## Implementation notes (2026-10-29)
+
+The bundle the site serves today is smaller than the layout above. It holds `manifest.json` with a detached signature `manifest.sig` (checked against the pinned key before anything else is trusted), `log-key.json`, `events.jsonl` (2,000 real events with leaf indexes), and `checkpoints.jsonl`. Inclusion proofs are computed in the browser from the published leaf hashes, so there's no `proofs/` folder.
+
+Not built yet, and planned with the site: `answers/` (a live run's answers to the demo questions, so the analyst page works without a backend), `evals/` (exported evaluation reports, see [ADR-0023](0023-evaluation-runs-recorded-as-reports.md)), and `stream.jsonl` for replaying the live view. Until then the analyst and the live views need the local stack, and the site says so.

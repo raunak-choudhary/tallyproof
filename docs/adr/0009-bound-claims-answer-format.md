@@ -32,3 +32,15 @@ First-pass and post-repair rejection rates are reported per question category, s
 - Numeric exactness becomes a property of the SQL, not the prose. Errors move to "wrong query", which evals measure.
 - Answers can sound slightly templated. Acceptable for finance.
 - The UI renders each slot as an interactive value: click to see the SQL, the contributing events, and Verify.
+
+## Implementation notes (2026-10-29)
+
+As built in `backend/apps/analyst/answer.py` and `pipeline.py`:
+
+- **One slot syntax.** Every value is `{{s1}}`, `{{s2}}`, and so on, and each slot carries its kind (money, count, date, text), its meaning, and the citation behind it. The typed prefixes above (`v`, `d`, `n`, `id`) were simpler to explain than to keep the model consistent with.
+- **No derived expressions yet.** `{{v3 = v1 - v2}}` isn't implemented; a question needing a difference has to be answered as two values today.
+- **Citations and quotes.** Records are cited as `[[c1]]`; regulation sources as `[[q1]]`, with exact quotes given separately and checked as substrings of the cited leaf after collapsing whitespace. When a sentence shows a value without its citation, rendering adds the citation right after the value.
+- **Numbers from a source.** A digit sequence that appears in a cited regulation excerpt, such as a form number or a rate, is allowed in a policy answer.
+- **Repair.** One repair attempt carries the verifier's findings as plain instructions, not just codes.
+- **Refusal codes.** Thirteen typed reasons, not five: `forecast`, `personal_data`, `judgment_beyond_data`, `out_of_scope`, `no_data`, `no_evidence`, `ambiguous`, `too_broad`, `unsafe_query`, `unverifiable_claim`, `budget_exceeded`, `model_unavailable`, and `no_checkpoint`.
+- **The interactive value.** The analyst page lists each value with its meaning and opens the records behind it with Verify. Showing the compiled SQL beside a value is planned with the site.
