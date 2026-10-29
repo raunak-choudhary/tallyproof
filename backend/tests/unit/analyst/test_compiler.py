@@ -34,9 +34,10 @@ def test_an_aggregate_binds_every_value_and_pins_the_checkpoint():
     assert q.value_sql == (
         'SELECT coalesce(sum(t."amount"), 0) AS value, count(*) AS row_count '
         'FROM analyst."obligations" t WHERE t."leaf_index" < %s '
+        'AND t."award_leaf_index" < %s '
         'AND t."awarding_agency" = %s AND t."fiscal_year" = %s'
     )
-    assert q.value_params == [717, "Department of Health and Human Services", 2024]
+    assert q.value_params == [717, 717, "Department of Health and Human Services", 2024]
     assert q.evidence_sql.startswith('SELECT t."event_id", t."leaf_index", t."amount" FROM')
     assert q.evidence_sql.endswith('ORDER BY t."leaf_index" LIMIT 1001')
     assert q.words == (
@@ -64,7 +65,7 @@ def test_values_are_parsed_into_their_types_and_shown_in_words():
         tree_size=10,
         max_rows=100,
     )
-    assert q.evidence_params == [10, Decimal(0), date(2023, 10, 1), ["A", "B"], "X"]
+    assert q.evidence_params == [10, 10, Decimal(0), date(2023, 10, 1), ["A", "B"], "X"]
     assert 't."awarding_agency" = ANY(%s)' in q.evidence_sql
     assert 't."piid" IS DISTINCT FROM %s' in q.evidence_sql
     assert 'ORDER BY t."amount" ASC NULLS LAST, t."leaf_index" LIMIT 5' in q.evidence_sql
@@ -251,3 +252,36 @@ def test_the_largest_amount_a_column_holds_is_accepted():
         "filters": [{"field": "amount", "op": "gte", "value": "99999999999999999.99"}],
     })  # fmt: skip
     assert spec.filters[0].value == "99999999999999999.99"
+
+
+def test_award_fields_count_only_awards_recorded_before_the_checkpoint():
+    q = hhs()
+    compiled = compile_spec(q, tree_size=5, max_rows=10)
+    assert 't."award_leaf_index" < %s' in compiled.evidence_sql
+    assert compiled.value_sql is not None
+    assert 't."award_leaf_index" < %s' in compiled.value_sql
+    assert compiled.value_params.count(5) == 2
+    plain = compile_spec(
+        spec(shape="aggregate", entity="obligations", metric="count"), tree_size=5, max_rows=10
+    )
+    assert "award_leaf_index" not in plain.evidence_sql
+
+
+def test_award_totals_are_built_only_from_leaves_before_the_checkpoint():
+    q = compile_spec(
+        spec(
+            shape="list",
+            entity="awards",
+            limit=5,
+            order_by="total_obligated",
+            descending=True,
+            filters=[{"field": "piid", "op": "eq", "value": "X1"}],
+        ),
+        tree_size=7,
+        max_rows=10,
+    )
+    assert "analyst.awards" not in q.evidence_sql
+    assert q.evidence_sql.count("< %s") == 4
+    # The derived table reads three pinned sources before the outer WHERE.
+    assert q.evidence_params[:4] == [7, 7, 7, 7]
+    assert q.evidence_params[-1] == "X1"

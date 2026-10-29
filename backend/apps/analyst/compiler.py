@@ -64,6 +64,31 @@ class CompiledQuery:
     group_column: str | None = None
 
 
+AWARDS_AS_OF = """(
+  SELECT f.event_id, f.leaf_index, f.award_key, f.piid, f.awarding_agency,
+         f.funding_agency, o.first_action_date, o.last_action_date, o.total_obligated,
+         o.obligation_events,
+         coalesce(p.total_outlays, 0)::numeric(19, 2) AS total_outlays,
+         coalesce(p.outlay_events, 0) AS outlay_events
+  FROM (SELECT DISTINCT ON (award_key) award_key, event_id, leaf_index, piid,
+               awarding_agency, funding_agency
+        FROM analyst.obligations
+        WHERE event_type = 'obligation.recorded' AND leaf_index < %s
+        ORDER BY award_key, leaf_index) f
+  JOIN (SELECT award_key, sum(amount) AS total_obligated, count(*) AS obligation_events,
+               min(action_date) AS first_action_date, max(action_date) AS last_action_date
+        FROM analyst.obligations WHERE leaf_index < %s GROUP BY award_key) o USING (award_key)
+  LEFT JOIN (SELECT award_key, sum(period_outlay) AS total_outlays, count(*) AS outlay_events
+             FROM analyst.outlays WHERE leaf_index < %s GROUP BY award_key) p USING (award_key)
+)"""
+"""The awards view as of a checkpoint. The ``analyst.awards`` view adds up every
+leaf in the log; this derived table adds up only the leaves before the checkpoint,
+so its three ``%s`` all take the tree size."""
+
+PINNED_SOURCES = {"awards": (AWARDS_AS_OF, 3)}
+"""Entities read from a derived table instead of their view, and its parameter count."""
+
+
 def _quote(identifier: str) -> str:
     # Catalog names are plain lowercase words; quoting is belt and braces.
     if not identifier.replace("_", "").isalnum() or not identifier.islower():
@@ -79,6 +104,13 @@ def _where(spec: QuerySpec, entity: Entity, tree_size: int) -> tuple[str, list[P
     clauses = [f"t.{_quote(entity.leaf_column)} < %s"]
     params: list[Param] = [tree_size]
     words: list[str] = []
+    used = {f.field for f in spec.filters} | set(spec.fields)
+    used |= {name for name in (spec.group_by, spec.order_by) if name is not None}
+    if used & entity.award_fields:
+        # The award's agency and PIID come from its first record; as of this
+        # checkpoint, an award first recorded later has neither.
+        clauses.append('t."award_leaf_index" < %s')
+        params.append(tree_size)
     for f in spec.filters:
         catalog_field = entity.fields[f.field]
         column = f"t.{_quote(catalog_field.column)}"
@@ -103,6 +135,9 @@ def compile_spec(spec: QuerySpec, *, tree_size: int, max_rows: int) -> CompiledQ
     entity = CATALOG[spec.entity]
     view = f"analyst.{_quote(entity.view)}"
     where, params, conditions = _where(spec, entity, tree_size)
+    if spec.entity in PINNED_SOURCES:
+        view, count = PINNED_SOURCES[spec.entity]
+        params = [*([tree_size] * count), *params]
     citable = f"t.{_quote(entity.id_column)}, t.{_quote(entity.leaf_column)}"
     leaf = f"t.{_quote(entity.leaf_column)}"
     subject = entity.words + (f" where {conditions}" if conditions else "")

@@ -149,3 +149,50 @@ def test_an_earlier_checkpoint_sees_only_its_own_leaves(tree_size):
     )
     assert value[0][0] == len(evidence) <= 100
     assert all(row[1] < 100 for row in evidence)
+
+
+def test_award_totals_and_fields_as_of_an_earlier_checkpoint(tree_size):
+    early = tree_size // 3
+    _, awards = run(
+        {
+            "shape": "list",
+            "entity": "awards",
+            "limit": 100,
+            "fields": ["award_key", "total_obligated", "total_outlays"],
+        },
+        early,
+    )
+    assert awards
+    for _, leaf, award_key, obligated, paid in awards:
+        assert leaf < early
+        (expected,) = query(
+            "SELECT coalesce(sum(amount), 0) FROM obligations "
+            "WHERE award_key = %s AND leaf_index < %s",
+            award_key,
+            early,
+        )[0]
+        (expected_paid,) = query(
+            "SELECT coalesce(sum(period_outlay), 0) FROM outlays "
+            "WHERE award_key = %s AND leaf_index < %s",
+            award_key,
+            early,
+        )[0]
+        assert (obligated, paid) == (expected, expected_paid)
+    _, rows = run(
+        {
+            "shape": "list",
+            "entity": "obligations",
+            "limit": 100,
+            "fields": ["award_key", "awarding_agency"],
+        },
+        early,
+    )
+    for _, _, award_key, agency in rows:
+        if agency is None:
+            continue
+        (first,) = query(
+            "SELECT min(leaf_index) FROM obligations "
+            "WHERE award_key = %s AND event_type = 'obligation.recorded'",
+            award_key,
+        )[0]
+        assert first < early
