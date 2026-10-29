@@ -232,6 +232,12 @@ jobs:
       - run:
           name: Lint, type-check, and test the web app
           command: make web-check
+      - run:
+          name: Browser tests at six viewports in both themes
+          command: make web-e2e
+      - store_artifacts:
+          path: frontend/playwright-report
+          destination: playwright-report
 
   # Pull requests replay recorded model responses and never receive a key. Until
   # recordings exist, the run is a harness check: integrity gates, quality doesn't.

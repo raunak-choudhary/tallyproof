@@ -32,7 +32,7 @@ COMPOSE := docker --context colima-$(COLIMA_PROFILE) compose --env-file .env -f 
 SPARK_VERSION ?= 4.1
 export SPARK_VERSION
 
-.PHONY: help docs docs-build doctor venv deps deps-sync require-venv lint format typecheck test check audit vectors vectors-check web-install web-lint web-typecheck web-test web-build web-check web-audit web-live data-fetch data-outlays data-build data-build-outlays data-quality data-profile require-no-containers data-gold keygen replay data-sample eval eval-record eval-questions eval-dataset test-integration coverage coverage-report require-colima up down reset ps logs db-roles migrate ingest checkpointer project relay fanout stream check-derived rebuild-derived check-totals dead-letters verify-witness data-replay data-treasury policy-fetch policy-publish demo demo-stop tamper schemas register-schemas verify-event console clean
+.PHONY: help docs docs-build doctor venv deps deps-sync require-venv lint format typecheck test check audit vectors vectors-check web-install web-lint web-typecheck web-test web-build web-e2e web-check web-audit web-live data-fetch data-outlays data-build data-build-outlays data-quality data-profile require-no-containers data-gold keygen replay data-sample eval eval-record eval-questions eval-dataset test-integration coverage coverage-report require-colima up down reset ps logs db-roles migrate ingest checkpointer project relay fanout stream check-derived rebuild-derived check-totals dead-letters verify-witness data-replay data-treasury policy-fetch policy-publish demo demo-stop tamper schemas register-schemas verify-event console clean
 
 help: ## List available commands
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -194,6 +194,9 @@ web-test: ## Run the web app's unit tests
 
 web-build: ## Build the static web app (needs the replay bundle and pinned key)
 	cd $(WEB) && pnpm run build
+
+web-e2e: ## Browser tests: the responsive contract and accessibility on every page (installs Chromium once)
+	cd $(WEB) && pnpm run e2e:install && pnpm run e2e
 
 web-live: ## Run the web app against the local live API, trusting the dev key from .env
 	cd $(WEB) && NEXT_PUBLIC_API_URL=http://127.0.0.1:8000 \
