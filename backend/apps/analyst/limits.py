@@ -7,8 +7,10 @@ daily allowance. Two limits keep that bounded:
   one process. Past that, a question gets a 503 with ``Retry-After`` straight away,
   instead of waiting behind slow model calls and tying up a worker.
 - **Per address.** Each client address may spend ``ANALYST_PER_IP_DAILY_TOKENS``
-  model tokens a day. Past that, questions are refused with ``budget_exceeded``
-  without calling the model.
+  model tokens a day. Tokens are charged after every model call, and no call is
+  made once the address is past its budget, so a question stops midway and is
+  refused with ``budget_exceeded``.
+- **Per call.** No prompt longer than ``LLM_MAX_INPUT_TOKENS`` (estimated) is sent.
 
 Both live in this process's memory (the in-flight count) and in Django's cache (the
 token counts). With several processes each enforces its own share; a shared cache
@@ -24,7 +26,13 @@ from functools import lru_cache
 
 from django.core.cache import cache
 
-from apps.analyst.llm import LLMClient, LLMRequest, LLMResponse
+from apps.analyst.llm import (
+    BudgetExceededError,
+    LLMClient,
+    LLMRequest,
+    LLMResponse,
+    estimate_tokens,
+)
 from config.env import app_settings
 
 RETRY_AFTER_SECONDS = 30
@@ -81,13 +89,30 @@ def spend(address: str, tokens: int) -> None:
 
 @dataclass
 class CountingClient:
-    """Passes requests through and counts the tokens they used."""
+    """Passes requests through, counts their tokens, and charges them to an address.
+
+    Each call is refused before it is made if its prompt is past ``max_input_tokens``
+    or the address is already past today's budget.
+    """
 
     inner: LLMClient
+    address: str | None = None
+    max_input_tokens: int | None = None
     tokens: int = field(default=0)
 
     def complete(self, request: LLMRequest) -> LLMResponse:
-        """Call the inner client and add up the tokens."""
+        """Check the limits, call the inner client, and charge the tokens it used."""
+        if self.max_input_tokens is not None:
+            prompt = estimate_tokens("".join(m.content for m in request.messages))
+            if prompt > self.max_input_tokens:
+                raise BudgetExceededError(
+                    f"input of about {prompt} tokens is past the cap of {self.max_input_tokens}"
+                )
+        if self.address is not None and over_budget(self.address):
+            raise BudgetExceededError("this address has used today's token budget")
         response = self.inner.complete(request)
-        self.tokens += response.input_tokens + response.output_tokens
+        used = response.input_tokens + response.output_tokens
+        self.tokens += used
+        if self.address is not None:
+            spend(self.address, used)
         return response
