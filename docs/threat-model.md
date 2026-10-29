@@ -123,7 +123,7 @@ The append-only tables have no update or delete grants for the application role,
 ### Public endpoints
 
 - Every endpoint is public by design, since all served data is public and free of personal data. The API refuses to start unless `DATA_CLASSIFICATION` is `public-no-pii`.
-- Rate limits apply per IP with explicitly configured trusted proxies. Questions to the analyst have their own, tighter limit (`API_THROTTLE_ANON_QUERIES`, 10 a minute). Planned before any public deployment of the analyst: a cap on concurrent analyst requests, a per-IP daily token budget, and a breaker that switches to cached answers. Today the analyst runs only locally and in evaluations.
+- Rate limits apply per IP with explicitly configured trusted proxies. Questions to the analyst have their own, tighter limit (`API_THROTTLE_ANON_QUERIES`, 10 a minute). Each process answers at most `ANALYST_MAX_INFLIGHT` questions at once and returns a 503 with `Retry-After` past that, and each client address may spend `ANALYST_PER_IP_DAILY_TOKENS` model tokens a day before its questions are refused without a model call. A breaker that switches to cached answers is planned before any public deployment; today the analyst runs only locally and in evaluations.
 - List endpoints use cursors and cap a page at 200 items, and size parameters are validated. Proofs come from one in-memory tree that's extended as the log grows, so a request never rebuilds the log.
 - WebSockets check the origin against `DJANGO_ALLOWED_HOSTS`, cap connections per IP (`WS_MAX_CONNECTIONS_PER_IP`), and limit frame size (`WS_MAX_MESSAGE_BYTES`). A slow client drops its own oldest facts instead of slowing anyone else.
 - Public IDs carry 80 random bits (ULIDs), so they can't be enumerated.
@@ -139,7 +139,7 @@ Python dependencies are pinned with hashes through pip-tools, and frontend depen
 
 ### LLM cost and where prompts go
 
-*Partly built: per-request token caps, per-run request and token budgets, client-side pacing, and the response cache exist (`backend/apps/analyst/llm.py`). The query endpoint has its own rate limit. Per-IP daily token budgets and a concurrency cap are planned before any public deployment.*
+*Partly built: per-request token caps, per-run request and token budgets, client-side pacing, and the response cache exist (`backend/apps/analyst/llm.py`). The query endpoint has its own rate limit, a cap on questions answered at once, and a daily token budget per client address (`backend/apps/analyst/limits.py`).*
 
 Per-request token caps, run budgets, response caching, and rate limits bound the cost. A run that would pass its budget stops before the call, with a clear error, instead of producing a surprise bill.
 

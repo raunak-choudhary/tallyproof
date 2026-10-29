@@ -14,6 +14,7 @@ from rest_framework.response import Response
 from rest_framework.throttling import AnonRateThrottle
 from rest_framework.views import APIView
 
+from apps.analyst.limits import RETRY_AFTER_SECONDS, BusyError, answering_slot
 from apps.analyst.models import AnalystAnswer
 from apps.analyst.service import REFUSAL_MESSAGES, answer_question
 from apps.ledger.api.problems import Problem, not_found
@@ -95,7 +96,11 @@ class QueryView(APIView):
 
     @extend_schema(
         request=QuestionSerializer,
-        responses={201: AnswerSerializer, 400: OpenApiResponse(description="Invalid question")},
+        responses={
+            201: AnswerSerializer,
+            400: OpenApiResponse(description="Invalid question"),
+            503: OpenApiResponse(description="Every answering slot is taken; see Retry-After"),
+        },
     )
     def post(self, request: Request) -> Response:
         """Answer the question as of the newest checkpoint, or refuse with a reason."""
@@ -107,7 +112,19 @@ class QueryView(APIView):
                 "Invalid question",
                 f"Send a question of 3 to {MAX_QUESTION} characters.",
             )
-        stored = answer_question(incoming.validated_data["question"])
+        address = QueryRateThrottle().get_ident(request)
+        try:
+            with answering_slot():
+                stored = answer_question(incoming.validated_data["question"], address=address)
+        except BusyError as error:
+            busy = Problem(
+                503,
+                "analyst-busy",
+                "The analyst is busy",
+                "Every answering slot is taken; try again shortly.",
+            )
+            busy.wait = RETRY_AFTER_SECONDS  # DRF turns this into a Retry-After header
+            raise busy from error
         return Response(
             AnswerSerializer(stored).data,
             status=status.HTTP_201_CREATED,

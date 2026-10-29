@@ -136,8 +136,8 @@ The analyst calls its model through one client that speaks the OpenAI chat-compl
 | `LLM_RUN_MAX_REQUESTS` | no | `900` | Per evaluation run; the run stops before passing it. Kept under Groq's 1,000 a day |
 | `LLM_RUN_MAX_TOKENS` | no | `3000000` | Per evaluation run |
 | `LLM_CACHE_DIR` | no | `testdata/llm_cache` | Recorded responses, committed so CI can replay them without a key |
-| `ANALYST_MAX_INFLIGHT` | planned | `4` | Concurrent analyst requests |
-| `ANALYST_PER_IP_DAILY_TOKENS` | planned | `50000` | Daily token budget per client IP |
+| `ANALYST_MAX_INFLIGHT` | no | `4` | Questions answered at once in one process; past this, a 503 with `Retry-After` |
+| `ANALYST_PER_IP_DAILY_TOKENS` | no | `50000` | Model tokens one client address may spend a day (UTC); past this, questions are refused with `budget_exceeded`. Counted in Django's cache, so per process unless the cache is shared |
 | `EMBEDDING_MODEL` | no | `BAAI/bge-small-en-v1.5` | Local embedding model for policy retrieval, run through fastembed; downloads once |
 | `EMBEDDING_CACHE_DIR` | no | `var/embeddings` | The downloaded model and cached chunk vectors |
 
