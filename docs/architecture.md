@@ -129,7 +129,6 @@ U->>W: Click Verify on a citation
 W->>A: GET /api/v1/events/{event_id}/proof
 A-->>W: Event bytes, leaf index, audit path, signed checkpoint
 W->>W: Hash the leaf, walk the path, check the signature with the pinned key
-W->>W: Check consistency with the externally timestamped checkpoint and compare displayed values
 W-->>U: Verified, or the exact check that failed
 ```
 
@@ -174,16 +173,16 @@ The application role has no update or delete grants on the append-only tables, t
 
 ## Tamper detection
 
-The browser trusts two things: a release public key compiled into the web build, and a checkpoint timestamped by a third party. Everything else it checks itself ([ADR-0015](adr/0015-verification-trust-model.md)).
+The browser trusts one thing today: a release public key compiled into the web build. From that it checks the record's bytes, the leaf hash, the inclusion proof, and the checkpoint's signature itself. The design adds a second anchor, a checkpoint timestamped by a third party, checked through a consistency proof; today that check runs in `make verify-witness` and the integration tests, and moving it into the browser is planned with the site ([ADR-0015](adr/0015-verification-trust-model.md)).
 
-| Level | What the attacker can do | What catches it |
-|---|---|---|
-| 1 | Edit a stored event | The browser recomputes the leaf and it no longer reproduces the signed root, and displayed values no longer match the verified bytes |
-| 2 | Edit the event and rebuild the tree, without the signing key | The checkpoint signature fails against the pinned key |
-| 3 | Edit, rebuild, and re-sign with a stolen key | The consistency proof against the externally timestamped checkpoint fails |
-| 4 | All of the above, before the next external timestamp | Not detectable. The window is `WITNESS_INTERVAL_SECONDS`, and the README says so |
+| Level | What the attacker can do | What catches it | Where it's checked today |
+|---|---|---|---|
+| 1 | Edit a stored event | The recomputed leaf no longer reproduces the signed root | In the browser, and in the integration tests |
+| 2 | Edit the event and rebuild the tree, without the signing key | The checkpoint signature fails against the pinned key | In the browser, and in the integration tests |
+| 3 | Edit, rebuild, and re-sign with a stolen key | The consistency proof against the externally timestamped checkpoint fails | `make verify-witness` and the integration tests; the browser check is planned |
+| 4 | All of the above, before the next external timestamp | Not detectable. The window is `WITNESS_INTERVAL_SECONDS`, and the README says so | |
 
-`make tamper LEVEL=1`, `2`, or `3` carries out each attack on a local ledger, and `make tamper RESTORE=1` puts it back; integration tests show each level is caught by the check in this table. The public demo walks through levels 1 to 3 in the browser, using a published demo key in a clearly labeled demo log. Level 4 is explained, not demonstrated.
+`make tamper LEVEL=1`, `2`, or `3` carries out each attack on a local ledger, and `make tamper RESTORE=1` puts it back; integration tests show each level is caught by the check in this table. The public demo lets you edit a record's amount, and rebuild the tree around the edit, in the browser, which demonstrates levels 1 and 2. Level 3 in the browser comes with the planned consistency check; level 4 is explained, not demonstrated.
 
 ## Known limits
 
