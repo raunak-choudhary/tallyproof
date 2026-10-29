@@ -12,6 +12,11 @@ import { leafHash } from "@/lib/verify/hashing";
 import type { VerifyResult } from "@/lib/verify/verifyEvent";
 import { forgeCheckpointWithNewRoot, verifyEvent } from "@/lib/verify/verifyEvent";
 
+import { MerkleRadial } from "@/features/proof/MerkleRadial";
+import type { Climb } from "@/lib/charts/merkleClimb";
+import { climb } from "@/lib/charts/merkleClimb";
+import { inclusionProof } from "@/lib/verify/merkle";
+
 import { VerificationSteps } from "./VerificationSteps";
 
 type Mode = "original" | "edited" | "rebuilt";
@@ -27,6 +32,7 @@ export function EventVerifier({ eventId }: { eventId: string }) {
   const [amount, setAmount] = useState<string>("");
   const [mode, setMode] = useState<Mode>("original");
   const [result, setResult] = useState<VerifyResult | null>(null);
+  const [path, setPath] = useState<Climb | null>(null);
 
   useEffect(() => {
     loadBundle(replayBase(), pinnedVerifierKey())
@@ -77,6 +83,14 @@ export function EventVerifier({ eventId }: { eventId: string }) {
           )
         : bundle.leaves;
     setMode(nextMode);
+    setPath(
+      climb(
+        leafHash(utf8(canonical)),
+        record.leafIndex,
+        leaves.length,
+        inclusionProof(leaves, record.leafIndex),
+      ),
+    );
     setResult(
       verifyEvent({
         canonical,
@@ -144,6 +158,11 @@ export function EventVerifier({ eventId }: { eventId: string }) {
         </div>
 
         {result && <VerificationSteps result={result} tampered={mode !== "original"} />}
+        {result && path && (
+          <div className="mt-6">
+            <MerkleRadial climbResult={path} signedRoot={result.checkpoint?.rootHash ?? null} />
+          </div>
+        )}
       </section>
     </div>
   );
