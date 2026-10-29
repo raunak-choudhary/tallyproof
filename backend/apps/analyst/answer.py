@@ -223,6 +223,8 @@ def from_rows(
         tree_size=tree_size,
     )
     has_ids = len(columns) > 1 and columns[0] == "event_id" and columns[1] == "leaf_index"
+    if not has_ids:
+        return evidence  # nothing citable: every value would stand without a record behind it
     for row in rows:
         cite = (
             evidence.add_citation([row], f"row {len(evidence.citations) + 1}") if has_ids else None
