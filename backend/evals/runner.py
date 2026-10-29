@@ -100,6 +100,7 @@ def _client(mode: str) -> tuple[Meter, "Models"]:
             recorded.get("answer_model", "none"),
             int(recorded.get("max_output_tokens", settings.llm_max_output_tokens)),
             max_rows,
+            recorded.get("reasoning_effort"),
         )
         return Meter(CachingClient(settings.llm_cache_dir), fallback=fake), chosen
     chosen = Models(
@@ -107,6 +108,7 @@ def _client(mode: str) -> tuple[Meter, "Models"]:
         settings.llm_answer_model or "none",
         settings.llm_max_output_tokens,
         max_rows,
+        settings.llm_reasoning_effort,
     )
     manifest.parent.mkdir(parents=True, exist_ok=True)
     manifest.write_text(
@@ -115,6 +117,7 @@ def _client(mode: str) -> tuple[Meter, "Models"]:
                 "router_model": chosen.router,
                 "answer_model": chosen.answer,
                 "max_output_tokens": chosen.max_output_tokens,
+                "reasoning_effort": chosen.reasoning_effort,
             },
             indent=2,
         )

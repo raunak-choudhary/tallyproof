@@ -51,6 +51,9 @@ class LLMRequest:
     temperature: float = 0.0
     response_schema: dict[str, Any] | None = None
     """JSON Schema the answer must follow, sent as structured output when set."""
+    reasoning_effort: str | None = None
+    """For models that think before answering. Thinking counts against ``max_tokens``,
+    so a high effort can leave no room for the answer itself."""
 
     def cache_key(self) -> str:
         """A stable hash of the request; any change to it is a new key."""
@@ -168,6 +171,8 @@ class OpenAICompatibleClient:
             "max_tokens": request.max_tokens,
             "temperature": request.temperature,
         }
+        if request.reasoning_effort is not None:
+            body["reasoning_effort"] = request.reasoning_effort
         if request.response_schema is not None:
             body["response_format"] = {
                 "type": "json_schema",

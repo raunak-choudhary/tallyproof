@@ -189,6 +189,11 @@ class LLMSettings(BaseSettings):
     llm_requests_per_minute: int = Field(
         default=10, ge=1, validation_alias="LLM_REQUESTS_PER_MINUTE"
     )
+    llm_reasoning_effort: Literal["none", "minimal", "low", "medium", "high"] | None = Field(
+        default=None, validation_alias="LLM_REASONING_EFFORT"
+    )
+    """How hard a thinking model reasons first. Gemini's thinking counts against the
+    output limit, so leaving it at the provider's default can cut answers short."""
     llm_max_input_tokens: int = Field(default=8000, ge=1, validation_alias="LLM_MAX_INPUT_TOKENS")
     llm_max_output_tokens: int = Field(default=1200, ge=1, validation_alias="LLM_MAX_OUTPUT_TOKENS")
     llm_run_max_requests: int = Field(default=1500, ge=1, validation_alias="LLM_RUN_MAX_REQUESTS")

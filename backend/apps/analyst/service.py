@@ -104,6 +104,7 @@ def models() -> Models:
         answer=settings.llm_answer_model or "none",
         max_output_tokens=settings.llm_max_output_tokens,
         max_rows=app_settings().db_analyst_max_rows,
+        reasoning_effort=settings.llm_reasoning_effort,
     )
 
 

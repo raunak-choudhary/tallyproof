@@ -127,6 +127,7 @@ The analyst calls its model through one client that speaks the OpenAI chat-compl
 | `LLM_ANSWER_MODEL` | with the real provider | | Model ID for composing answers; never hardcoded |
 | `LLM_ROUTER_MODEL` | no | the answer model | Model ID for query specs |
 | `LLM_JUDGE_MODEL` | no | the answer model | Model ID for the narrative-faithfulness judge |
+| `LLM_REASONING_EFFORT` | no | the provider's default | `none`, `minimal`, `low`, `medium`, or `high`. Gemini counts thinking against the output limit, so its default can cut answers short; `low` is recommended |
 | `LLM_TIMEOUT_SECONDS` | no | `30` | Per request |
 | `LLM_MAX_RETRIES` | no | `3` | Retries for rate limits and server errors, with backoff |
 | `LLM_REQUESTS_PER_MINUTE` | no | `10` | Client-side pacing, kept under the free tier's limit |
