@@ -53,28 +53,30 @@ PostgreSQL 16 is supported until November 2028, which covers Django 5.2's suppor
 
 ## Frontend
 
+Installed today:
+
 | Area | Choice | Version | Note |
 |---|---|---|---|
 | Framework | Next.js App Router | 16.4 | Static export for the public demo ([ADR-0005](adr/0005-replay-mode-public-demo.md)) |
 | UI | React | 19.3 | |
 | Language | TypeScript | 6.0 | Version 7 is out, but typescript-eslint doesn't support it yet |
 | Styling | Tailwind CSS | 4.3 | Design tokens as CSS variables |
-| Components | shadcn/ui | 4 | |
-| Motion | Motion and GSAP | 14.6, 3.15 | GSAP is free, including plugins, under its own license |
-| Data fetching | TanStack Query | 5 | |
 | Verification | @noble/ed25519, @noble/hashes, canonicalize | 3.2, 2.4, 5.1 | Identical behavior in every browser ([ADR-0007](adr/0007-signed-checkpoints-and-witnessing.md)) |
-| Tests | Vitest, Playwright | 5, 1.64 | |
+| Tests | Vitest | 5.0 | |
 | Lint and format | ESLint, typescript-eslint, Prettier | 10, 8.72, 3.9 | ESLint 9 reached end of life in August 2026 |
 | Package manager | pnpm | 10 | Lockfile committed |
 
+Chosen for the site, added when it's built: shadcn/ui for components, Motion for in-app transitions, GSAP with ScrollTrigger and Lenis for the landing story (GSAP is free, including plugins, under its own license), React Flow for the Merkle tree, Lightweight Charts for time series, and Playwright with axe for browser and accessibility tests. Live data arrives over the WebSocket, so no data-fetching library is planned.
+
 ## CI, documentation, and releases
 
-| Area | Choice | Note |
-|---|---|---|
-| CI | CircleCI | Machine executor for container-based tests, a weekly scheduled trigger for live evaluations |
-| Releases | release-please in a minimal GitHub Action | All building and testing stays on CircleCI ([ADR-0011](adr/0011-release-automation-on-github-actions.md)) |
-| Dependency updates | Dependabot | A CI check recompiles the pinned requirements to catch drift |
-| Documentation site | MkDocs Material with mkdocstrings | Material is in maintenance mode, so the configuration avoids features that would block a later move to Zensical |
+| Area | Choice | Status | Note |
+|---|---|---|---|
+| CI | CircleCI | In use | Machine executor for container-based tests, a weekly scheduled trigger for live evaluations |
+| Demo site | GitHub Pages through a GitHub Actions workflow | In use | Actions pinned by commit ([ADR-0020](adr/0020-github-pages-for-the-demo-site.md)) |
+| Dependency updates | Dependabot | In use | Pinned requirements are recompiled with `make deps`; CI doesn't yet check them for drift |
+| Releases | release-please in a minimal GitHub Action | Planned | All building and testing stays on CircleCI ([ADR-0011](adr/0011-release-automation-on-github-actions.md)) |
+| Documentation site | MkDocs Material with mkdocstrings | Planned | Material is in maintenance mode, so the configuration will avoid features that would block a later move to Zensical |
 
 ## Worth revisiting later
 
