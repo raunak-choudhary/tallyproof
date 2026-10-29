@@ -10,7 +10,7 @@
         "role": "user"
       }
     ],
-    "model": "openai/gpt-oss-120b",
+    "model": "recorded-router",
     "prompt_version": "router.v2"
   },
   "response": {
