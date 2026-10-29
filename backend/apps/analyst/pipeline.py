@@ -168,6 +168,8 @@ def _evidence_block(evidence: Evidence) -> str:
 
 def _parse_draft(text: str) -> Draft:
     data = json.loads(text)
+    if not isinstance(data, dict):
+        raise ValueError("the reply is not a JSON object")
     quotes = tuple(
         Quote(str(q["source"]), str(q["text"]))
         for q in data.get("quotes") or []

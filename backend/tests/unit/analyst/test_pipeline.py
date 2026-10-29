@@ -5,6 +5,8 @@ from collections.abc import Callable, Sequence
 from decimal import Decimal
 from typing import Any
 
+import pytest
+
 from apps.analyst.llm import Budget, BudgetedClient, FakeClient, LLMRequest
 from apps.analyst.pipeline import Models, ask
 from apps.analyst.query_spec import MAX_LIST_ROWS
@@ -202,9 +204,7 @@ def ask_with_fallback(question: str, client: Any, db: Database) -> Any:
 
 
 def test_the_fallback_path_runs_only_guarded_pinned_sql_and_is_labeled():
-    fallback_sql = json.dumps(
-        {"sql": "SELECT event_id, leaf_index, amount AS mean FROM obligations"}
-    )
+    fallback_sql = json.dumps({"sql": "SELECT event_id, leaf_index, amount FROM obligations"})
     fake = FakeClient(model(**{
         "router.v2": json.dumps({
             "category": "numeric_aggregate",
@@ -219,7 +219,7 @@ def test_the_fallback_path_runs_only_guarded_pinned_sql_and_is_labeled():
     assert answer.evidence.assurance == "lower_assurance"
     assert answer.trace.used_fallback
     assert db.sql == [
-        "SELECT event_id, leaf_index, amount AS mean FROM obligations "
+        "SELECT event_id, leaf_index, amount FROM obligations "
         "WHERE obligations.leaf_index < 50 LIMIT 100"
     ]
 
@@ -399,3 +399,14 @@ def test_break_events_are_pinned_and_keep_their_sample_label():
     assert "leaf_index < %s" in db.sql[0]
     assert evidence.citations["c1"].sample_of == 9
     assert evidence.citations["c1"].event_ids == ("evt_x",)
+
+
+@pytest.mark.parametrize("reply", ["[1]", '"x"', "5", "null"])
+def test_a_composer_reply_that_is_not_an_object_is_refused_not_a_crash(reply):
+    fake = FakeClient(model(**{
+        "router.v2": json.dumps({"category": "numeric_aggregate", "spec": SUM_SPEC}),
+        "composer.v4": reply,
+    }))  # fmt: skip
+    db = Database(value=[(Decimal("500.00"), 2)], evidence=[("evt_a", 1, Decimal(500))])
+    answer = run("How much did State obligate?", fake, db)
+    assert answer.status == "refused"
