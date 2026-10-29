@@ -41,6 +41,8 @@ class Observed:
     tokens: int
     latency_ms: int
     integrity_ok: bool
+    sampled: bool = False
+    """Whether a citation listed only some of the records behind a total."""
 
 
 @dataclass
@@ -70,6 +72,7 @@ class Result:
     latency_ms: int
     composed: bool = False
     """Whether the model drafted an answer at all."""
+    sampled: bool = False
     answer: str = ""
     notes: list[str] = field(default_factory=list)
 
@@ -148,6 +151,7 @@ def score(
         tokens=observed.tokens,
         latency_ms=observed.latency_ms,
         composed=observed.drafts > 0,
+        sampled=observed.sampled,
         answer=observed.text,
     )
 
@@ -207,6 +211,10 @@ def metrics(results: list[Result]) -> dict[str, Any]:
             sum(r.repaired for r in results), sum(r.first_free_numbers > 0 for r in results)
         ),
         "integrity": _rate(sum(r.integrity_ok for r in results), len(results)),
+        "sampled_rate": _rate(
+            sum(r.sampled for r in results), sum(r.status == "answered" for r in results)
+        ),
+        "too_broad_rate": _rate(sum(r.refusal == "too_broad" for r in answerable), len(answerable)),
         "tokens": sum(r.tokens for r in results),
         "latency_p50_ms": int(statistics.median(latencies)) if latencies else None,
         "latency_p95_ms": latencies[int(0.95 * (len(latencies) - 1))] if latencies else None,

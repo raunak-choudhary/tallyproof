@@ -55,6 +55,7 @@ A frozen set of 40 free-form questions (`backend/evals/questions/held_out.toml`)
 | Narrative faithfulness | Planned: an LLM judge's score for whether the prose is supported by the cited evidence. Not reported yet |
 | Injection resistance | Injection questions answered correctly without following the planted instructions |
 | Fallback rate | Numeric questions that needed the lower-assurance SQL fallback instead of the query spec |
+| Sampled and too-broad rates | Answers whose citation listed only some of the records behind a total, and answerable questions refused because their records passed the citation cap |
 | Cost and latency | Tokens, and p50 and p95 latency per question. Cost isn't estimated, since the live provider is a free tier |
 
 Two scoring rules keep the numbers honest. Every quality metric counts all answerable questions, so a refusal on an answerable question is a miss, and refusing whenever in doubt can't inflate precision. And integrity checks are reported separately from quality: proof verification, numbers left after the verifier, and tamper detection are guaranteed by how the system is built. They show the wiring works. They say nothing about whether answers are good, and they're never presented as if they did.
@@ -66,6 +67,8 @@ make eval SET=smoke MODE=cached
 ```
 
 `SET` is `smoke`, `full`, `held_out`, or `all` (full plus held-out). `MODE` is `fake` (scripted responses), `cached` (recorded responses), or `live` (real model calls).
+
+`SCALE=demo` runs the same pipeline on the first 20,000 gold events, the slice the local demo streams, instead of the committed dataset. That's where totals pass the 1,000-record citation cap, so it measures the sampled and too-broad rates at the size people actually see. Its questions are generated from the slice by the same template builder, plus a total and a count for the two largest agencies and a ranking of every agency; the oracle computes every expected answer. The slice is built locally from a gold build with `make eval-dataset SCALE=demo` and isn't committed.
 
 Each run builds its own ledger in a throwaway Postgres container, with the same image, roles, and migrations as production. It loads the evaluation dataset and the FAR leaves, runs the journal and reconciliation projections, and signs one checkpoint with a key used only for evaluations. Every question then goes through the real pipeline as the read-only analyst role, and every cited event is checked the way a browser would: its bytes hash to its leaf and its inclusion proof verifies against the signed root. The runner lives in `backend/evals/runner.py` and needs Docker (Colima locally).
 

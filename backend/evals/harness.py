@@ -13,6 +13,7 @@ import secrets
 from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass
+from pathlib import Path
 
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
@@ -91,8 +92,8 @@ def database() -> Iterator[None]:
         yield
 
 
-def build() -> Built:
-    """Load the dataset and the FAR leaves, project, and sign one checkpoint."""
+def build(dataset: Path = OUT_DIR) -> Built:
+    """Load a dataset and the FAR leaves, project, and sign one checkpoint."""
     from django.db import transaction
 
     from apps.ledger.append import Delivery, append
@@ -104,7 +105,7 @@ def build() -> Built:
 
     edition, sections = read_corpus(REPO_ROOT / "backend" / "corpus" / "far")
     policy = to_events(edition, sections)
-    events = [*read_events(OUT_DIR / "events.jsonl.gz"), *policy]
+    events = [*read_events(dataset / "events.jsonl.gz"), *policy]
     with transaction.atomic():
         append([Delivery(e, "eval", 0, i) for i, e in enumerate(events)])
     catch_up(JournalProjection())
