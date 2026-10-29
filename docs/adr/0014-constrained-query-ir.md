@@ -57,3 +57,10 @@ The catalog follows the federal data rather than the invoice and payment names a
 - A grouped aggregate may be limited to its top groups ("which agency obligated the most"), which the original sketch allowed only for lists. Its evidence is every row of the returned groups.
 
 The only absence rule so far is outlays whose award has no recorded obligation.
+
+## Changes after the security review (2026-10-29)
+
+- The guarded SQL path is off unless `ANALYST_SQL_FALLBACK` is set. A question the spec can't express is refused as `not_expressible`. When the fallback is on, its query may select only bare view columns or plain aggregates of them, it is pinned to the checkpoint, and it can't read the awards view.
+- Award fields on obligations and outlays (contract number and agencies) come from the award's first record, so a query that uses one also pins that record's leaf (`award_leaf_index`). Award totals are built in the compiled query from leaves before the checkpoint, not read from the `awards` view.
+- A grouped aggregate's evidence is fetched per returned group, with the citation cap shared between them, instead of every row of the returned groups. An unranked grouping returns at most 100 groups; more is refused as too broad.
+- Filter values must fit their columns: amounts fit `numeric(19, 2)` in whole cents, and integers fit a `bigint`.
