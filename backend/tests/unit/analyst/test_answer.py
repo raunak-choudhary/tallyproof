@@ -269,3 +269,16 @@ def test_text_quoted_inline_must_come_from_a_source_the_sentence_cites():
     assert verify(invented, policy_evidence()).problems == ("inline_quote_unchecked",)
     uncited = Draft('Total {{s1}} was "signed by both parties" [[c1]].')
     assert verify(uncited, evidence()).problems == ("inline_quote_unchecked",)
+
+
+def test_a_data_answer_may_not_pass_a_verdict():
+    accusing = Draft("State obligated {{s1}}, which looks like fraud [[c1]].")
+    assert verify(accusing, evidence()).problems == ("judgment_claim",)
+    plain = Draft("State obligated {{s1}} [[c1]].")
+    assert verify(plain, evidence()).ok
+    # A policy answer may name what the regulation is about.
+    quoted = Draft(
+        "The FAR covers fraud in its own words [[q1]].",
+        (Quote("q1", "signed by both parties"),),
+    )
+    assert verify(quoted, policy_evidence()).ok

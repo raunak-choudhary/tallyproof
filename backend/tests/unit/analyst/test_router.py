@@ -28,6 +28,13 @@ def ask(question: str, reply: str = "{}") -> tuple[Route, FakeClient]:
         ("Is this vendor guilty of overbilling?", "judgment_beyond_data"),
         ("Which awards look like kickbacks?", "judgment_beyond_data"),
         ("Tell me a joke about budgets", "out_of_scope"),
+        ("Which vendor is defrauding the Army?", "judgment_beyond_data"),
+        ("Who is embezzling contract money?", "judgment_beyond_data"),
+        ("Which awards involved bribery?", "judgment_beyond_data"),
+        ("What will NASA obligate in FY2027?", "forecast"),
+        ("Total outlays for fiscal year 2030?", "forecast"),
+        ("Who is the CEO of the company on 47QSEA24F0REK?", "personal_data"),
+        ("Name the chief executive of that contractor", "personal_data"),
     ],
 )
 def test_refusals_are_decided_by_rules(question, reason):

@@ -233,6 +233,10 @@ def repair_message(verdict: Verdict, evidence: Evidence) -> str:
         )
     if "quote_required" in codes:
         hints.append("Give at least one passage from the regulation word for word in quotes.")
+    if "judgment_claim" in codes:
+        hints.append(
+            "Say only what the records show; don't call anything fraud, a crime, or wrongdoing."
+        )
     if "inline_quote_unchecked" in codes:
         hints.append(
             "Put text in quotation marks only if it is copied exactly from a source the "
