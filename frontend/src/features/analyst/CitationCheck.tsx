@@ -9,17 +9,21 @@ import type { VerifyResult } from "@/lib/verify/verifyEvent";
 import { verifyEvent } from "@/lib/verify/verifyEvent";
 
 // One cited record and a button that checks it in this browser: the record's
-// bytes, its proof at the answer's checkpoint, and that checkpoint's signature.
+// bytes, its proof at the answer's checkpoint, that checkpoint's signature, and
+// that the record, leaf, and checkpoint are the ones the answer cited. With a
+// quote, the quoted text must appear in the record itself.
 export function CitationCheck({
   base,
   eventId,
   leafIndex,
   treeSize,
+  quote,
 }: {
   base: string;
   eventId: string;
   leafIndex: number;
   treeSize: number;
+  quote?: string;
 }) {
   const [state, setState] = useState<"idle" | "checking" | "done" | "error">("idle");
   const [result, setResult] = useState<VerifyResult | null>(null);
@@ -41,6 +45,7 @@ export function CitationCheck({
           auditPath: proof.auditPath,
           checkpointNote: proof.checkpointNote,
           pinnedKey: pinnedVerifierKey(),
+          expected: { eventId, leafIndex, treeSize, ...(quote === undefined ? {} : { quote }) },
         }),
       );
       setState("done");

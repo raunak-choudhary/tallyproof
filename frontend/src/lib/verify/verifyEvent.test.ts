@@ -29,6 +29,51 @@ const leaves = records.map((r) => leafHash(utf8(r)));
 const note = signNote(`${NAME}\n7\n${toBase64(root(leaves))}\n`);
 
 describe("verifyEvent", () => {
+  const cited = (override: Record<string, unknown>, leafIndex = 3) =>
+    verifyEvent({
+      canonical: records[3]!,
+      leafIndex,
+      publishedLeaves: leaves,
+      checkpointNote: note,
+      pinnedKey,
+      expected: { eventId: "evt_3", leafIndex: 3, treeSize: 7, ...override },
+    });
+
+  it("ties the proof to the cited event, leaf, and checkpoint", () => {
+    const result = cited({});
+    expect(result.steps.at(-1)).toMatchObject({ id: "match", ok: true });
+    expect(result.ok).toBe(true);
+  });
+
+  it.each([
+    ["another event", { eventId: "evt_4" }],
+    ["another leaf", { leafIndex: 4 }],
+    ["another checkpoint", { treeSize: 9 }],
+  ])("fails when the record or proof is for %s", (_, mismatch) => {
+    const result = cited(mismatch);
+    expect(result.steps.find((s) => s.id === "match")?.ok).toBe(false);
+    expect(result.steps.find((s) => s.id === "inclusion")?.ok).toBe(true);
+    expect(result.ok).toBe(false);
+  });
+
+  it("checks a quote against the record's own text", () => {
+    const text = "Only contracting officers may execute change orders.";
+    const record = canonicalize({ event_id: "evt_q", payload: { text } });
+    const single = leafHash(utf8(record));
+    const quoteNote = signNote(`${NAME}\n1\n${toBase64(root([single]))}\n`);
+    const check = (quote: string) =>
+      verifyEvent({
+        canonical: record,
+        leafIndex: 0,
+        publishedLeaves: [single],
+        checkpointNote: quoteNote,
+        pinnedKey,
+        expected: { eventId: "evt_q", leafIndex: 0, treeSize: 1, quote },
+      });
+    expect(check("contracting officers may execute").ok).toBe(true);
+    expect(check("anyone may execute change orders").ok).toBe(false);
+  });
+
   it("passes every step for an untouched record", () => {
     const result = verifyEvent({
       canonical: records[3]!,
