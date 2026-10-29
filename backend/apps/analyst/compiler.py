@@ -121,6 +121,9 @@ def compile_spec(spec: QuerySpec, *, tree_size: int, max_rows: int) -> CompiledQ
         amount_column = f", {amount}" if amount else ""
         if spec.group_by is not None:
             group = f"t.{_quote(entity.fields[spec.group_by].column)}"
+            # Records whose group is unknown (a modification whose award falls before
+            # the slice has no agency) aren't a group; leave them out, and say so.
+            where = f"{where} AND {group} IS NOT NULL"
             top = f" LIMIT {int(spec.limit)}" if spec.limit else ""
             order = "DESC" if spec.descending else "ASC"
             value_sql = (
@@ -133,7 +136,9 @@ def compile_spec(spec: QuerySpec, *, tree_size: int, max_rows: int) -> CompiledQ
             )
             by = entity.fields[spec.group_by].words
             ranked = f", top {spec.limit} by {metric_words}" if spec.limit else ""
-            words = f"{metric_words} of {subject}, by {by}{ranked}"
+            words = (
+                f"{metric_words} of {subject}, by {by}{ranked}, leaving out records with no {by}"
+            )
             return CompiledQuery(
                 spec.shape, words, evidence_sql, list(params), limit, value_sql, params, "grp"
             )

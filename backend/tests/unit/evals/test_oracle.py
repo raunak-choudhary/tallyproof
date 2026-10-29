@@ -85,3 +85,25 @@ def test_policy_questions_allow_the_sections_subpart(oracle):
     assert {"43.201", "43.202", "43.204"} <= expected.may_cite
     assert "43.103" not in expected.may_cite
     assert "4.705-1" in oracle.expected({"kind": "policy", "section": "4.705-1"}).may_cite
+
+
+def test_the_top_group_never_is_an_unknown_one():
+    from evals.dataset import OUT_DIR
+    from evals.oracle import Record
+
+    oracle = Oracle(OUT_DIR)
+    unknown = [
+        Record(
+            f"evt_x{i}",
+            "obligation.adjusted",
+            "AWD_X",
+            {"awarding_agency": None, "amount": Decimal(10**12)},
+        )
+        for i in range(3)
+    ]
+    oracle.records = [*oracle.records, *unknown]
+    expected = oracle.expected(
+        {"kind": "top", "entity": "obligations", "group_by": "awarding_agency"}
+    )
+    assert expected.group == "Department of Health and Human Services"
+    assert not expected.may_cite & {r.event_id for r in unknown}
