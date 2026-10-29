@@ -4,6 +4,7 @@ from collections.abc import Iterator
 from typing import Any
 
 import pytest
+from django.core.cache import cache
 from django.db import connection
 
 from tests.integration.conftest import Database
@@ -48,3 +49,11 @@ class AsAnalyst:
             cursor.execute("RESET ROLE")
             cursor.execute("RESET search_path")
         return columns, rows
+
+
+@pytest.fixture(autouse=True)
+def fresh_cache() -> Iterator[None]:
+    """Cached agency lists and token counts don't carry over between tests."""
+    cache.clear()
+    yield
+    cache.clear()
