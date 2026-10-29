@@ -12,7 +12,7 @@ import structlog
 from confluent_kafka import Consumer
 from django.core.management.base import BaseCommand
 
-from apps.realtime.fanout import broadcast, to_fact
+from apps.realtime.fanout import pump
 from config.env import app_settings
 from config.logging import configure
 
@@ -52,17 +52,7 @@ class Command(BaseCommand):
         )
         loop = asyncio.new_event_loop()  # one loop for the whole run: one Redis pool
         try:
-            while not stopping:
-                facts = []
-                for message in consumer.consume(num_messages=200, timeout=1.0):
-                    topic = message.topic()
-                    if message.error() is not None or topic is None:
-                        continue
-                    fact = to_fact(topic, message.value())
-                    if fact is not None:
-                        facts.append(fact)
-                if facts:
-                    loop.run_until_complete(broadcast(facts))
+            loop.run_until_complete(pump(consumer, lambda: stopping))
         finally:
             consumer.close()
             loop.close()

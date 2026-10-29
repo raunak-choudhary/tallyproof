@@ -59,7 +59,7 @@ django_settings_module = "config.settings.test"
 
 [[tool.mypy.overrides]]
 # asgiref's test helpers are untyped.
-module = ["tests.unit.realtime.*"]
+module = ["tests.unit.realtime.*", "tests.module.realtime.*"]
 disallow_untyped_calls = false
 
 [[tool.mypy.overrides]]
