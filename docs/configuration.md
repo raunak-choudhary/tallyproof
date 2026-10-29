@@ -143,12 +143,9 @@ The analyst calls its model through one client that speaks the OpenAI chat-compl
 
 On the free tier, Google may use prompts and responses to improve its products. Prompts carry only public USAspending data and FAR text, so nothing private is exposed; the threat model records this.
 
-## Evaluation (planned)
+## Evaluation
 
-| Variable | Required | Default | Purpose |
-|---|---|---|---|
-| `EVAL_MAX_USD_PER_RUN` | no | `1.00` | Spending limit per evaluation run |
-| `EVAL_THRESHOLDS_PATH` | no | `evals/thresholds.toml` | |
+The evaluation runner has no settings of its own. A run is bounded by `LLM_RUN_MAX_REQUESTS` and `LLM_RUN_MAX_TOKENS` above, replays or records responses in `LLM_CACHE_DIR`, and reads its gates from `backend/evals/thresholds.toml`, a reviewed file rather than a variable so a gate can't be loosened from the environment. The question set and mode are arguments: `make eval SET=smoke|full|held_out|all MODE=fake|cached|live`.
 
 ## Frontend
 
@@ -165,10 +162,10 @@ The frontend reads its own `frontend/.env.example`, not the repository's `.env`.
 
 ## CI secrets
 
-CI needs no secrets today: every job runs on public code and generates any key it needs at runtime. The analyst and evaluation work will add three CircleCI contexts, never configuration files, each restricted to `main` and scheduled pipelines so pull request pipelines receive none of them. Publishing the demo site needs none either: the GitHub Pages workflow uses the built-in token and the public repository variable `PINNED_VERIFIER_KEY` ([ADR-0020](adr/0020-github-pages-for-the-demo-site.md)).
+Every pull request job runs on public code and generates any key it needs at runtime, so pull requests receive no secrets. Publishing the demo site needs none either: the GitHub Pages workflow uses the built-in token and the public repository variable `PINNED_VERIFIER_KEY` ([ADR-0020](adr/0020-github-pages-for-the-demo-site.md)).
 
-Planned contexts:
+One CircleCI context exists:
 
-- `llm-eval`: `LLM_API_KEY` (a dedicated key with its own limits), `LLM_BASE_URL`, `LLM_ANSWER_MODEL`.
-- `bot`: `GITHUB_BOT_TOKEN`, limited to pushing `bot/*` branches and opening pull requests. It can't push to `main`.
-- `signing-ci`: the CI signing key. The release key never enters CI.
+- `llm-eval`, used only by the weekly scheduled evaluation and restricted to this project and the `main` branch: `LLM_PROVIDER`, `LLM_BASE_URL`, `LLM_API_KEY` (a key used only by CI), `LLM_ANSWER_MODEL`, `LLM_REASONING_EFFORT`. `LLM_REQUESTS_PER_MINUTE` and `LLM_MAX_RETRIES` can be added to pace the run under the free tier's limits.
+
+Planned: a fine-grained GitHub token in the same context, scoped to this repository's contents and pull requests, so the weekly job can open a pull request with the refreshed results table. It can't push to `main`. The release signing key never enters CI.
