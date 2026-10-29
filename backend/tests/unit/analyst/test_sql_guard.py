@@ -36,6 +36,23 @@ HOSTILE = [
     ("SELECT * FROM analyst.obligations", Rejection.RELATION),
     ("SELECT * FROM pg_catalog.pg_roles", Rejection.RELATION),
     ("SELECT * FROM pg_shadow", Rejection.RELATION),
+    # A value from another row or table beside a cited event, or under another name
+    (
+        "SELECT a.event_id, a.leaf_index, b.amount FROM obligations a JOIN obligations b ON a.award_key = b.award_key",
+        Rejection.PROJECTION,
+    ),
+    (
+        "SELECT o.event_id, o.leaf_index, p.period_outlay AS amount FROM obligations o JOIN outlays p ON o.award_key = p.award_key",
+        Rejection.PROJECTION,
+    ),
+    (
+        "SELECT event_id, leaf_index, cumulative_outlay AS period_outlay FROM outlays",
+        Rejection.PROJECTION,
+    ),
+    (
+        "WITH x AS (SELECT a.event_id, a.leaf_index, b.amount FROM obligations a JOIN obligations b ON a.award_key = b.award_key) SELECT event_id, leaf_index, amount FROM x",
+        Rejection.PROJECTION,
+    ),
     # Award totals add up leaves past any checkpoint, so the fallback can't read them
     ("SELECT event_id, leaf_index, total_obligated FROM awards", Rejection.RELATION),
     ("SELECT * FROM information_schema.tables", Rejection.RELATION),
@@ -149,7 +166,7 @@ def test_a_larger_limit_is_tightened_and_a_smaller_one_kept():
 
 def test_every_view_is_pinned_to_the_checkpoint():
     sql = guard(
-        "SELECT o.event_id, o.leaf_index, o.piid FROM obligations o "
+        "SELECT o.piid, p.period_outlay FROM obligations o "
         "JOIN outlays p ON p.award_key = o.award_key",
         max_rows=10,
         tree_size=500,

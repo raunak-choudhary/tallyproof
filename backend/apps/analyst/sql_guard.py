@@ -265,6 +265,33 @@ def _check_projections(tree: exp.Select) -> None:
     event, leaf = named.get("event_id"), named.get("leaf_index")
     if isinstance(event, exp.Column) and isinstance(leaf, exp.Column) and event.table != leaf.table:
         raise GuardError(Rejection.PROJECTION)  # an ID paired with another row's leaf
+    _check_cited_rows(tree, named)
+
+
+def _check_cited_rows(tree: exp.Select, named: dict[str, exp.Expression]) -> None:
+    """Rows that will be cited carry only their own values, under their own names.
+
+    When the output holds event IDs, every value beside an ID is cited as that
+    event's. So the query reads one view directly, with no join, CTE, or subquery
+    in its FROM that could put another row's value beside the ID, and every output
+    is a bare column under its own name, so a label can't misname it.
+    """
+    stars = any(
+        isinstance(v, exp.Star) or (isinstance(v, exp.Column) and isinstance(v.this, exp.Star))
+        for v in named.values()
+    )
+    if "event_id" not in named and not stars:
+        return
+    source = tree.args.get("from_")
+    table = source.this if source is not None else None
+    if tree.args.get("joins") or not isinstance(table, exp.Table) or table.name not in VIEW_COLUMNS:
+        raise GuardError(Rejection.PROJECTION)
+    for item in tree.expressions:
+        value = item.this if isinstance(item, exp.Alias) else item
+        if isinstance(value, exp.Star):
+            continue
+        if not isinstance(value, exp.Column) or item.alias_or_name != value.name:
+            raise GuardError(Rejection.PROJECTION)
 
 
 def _check_columns(tree: exp.Select, relations: frozenset[str]) -> None:
@@ -354,8 +381,8 @@ def guard(sql: str, *, max_rows: int, tree_size: int | None = None) -> GuardedQu
     _check_nodes(tree)
     relations = _check_relations(tree)
     _check_columns(tree, relations)
-    _check_projections(tree)
     _check_joins(tree)
+    _check_projections(tree)
     if tree_size is not None:
         _pin(tree, tree_size)
     _limit(tree, max_rows)
