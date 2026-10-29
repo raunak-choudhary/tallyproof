@@ -323,7 +323,7 @@ def ask(
         question,
         "answered",
         category,
-        text=render(verdict.sentences, gathered),
+        text=render(verdict.sentences, gathered, draft.quotes),
         evidence=gathered,
         quotes=draft.quotes,
         trace=trace,

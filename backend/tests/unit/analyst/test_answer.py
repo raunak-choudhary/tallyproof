@@ -137,3 +137,22 @@ def test_numbers_from_a_cited_regulation_are_allowed():
     )
     assert verify(Draft("Change orders use Standard Form 30 [[q1]]."), e, QUESTION).ok
     assert not verify(Draft("Change orders use Standard Form 31 [[q1]]."), e, QUESTION).ok
+
+
+def test_every_value_shown_carries_its_citation():
+    e = Evidence()
+    a = e.add_citation([("evt_a", 1)], "row 1")
+    b = e.add_citation([("evt_b", 2)], "row 2")
+    e.add_slot("text", "AWD-1", "award key", a)
+    e.add_slot("text", "AWD-2", "award key", b)
+    assert (
+        render(["Duplicates: {{s1}} and {{s2}} [[c2]]."], e)
+        == "Duplicates: AWD-1 [[c1]] and AWD-2 [[c2]]."
+    )
+
+
+def test_an_answer_made_only_of_quotes_shows_them():
+    assert (
+        render([], evidence(), [Quote("q1", "signed by both parties")])
+        == '"signed by both parties" [[q1]]'
+    )
