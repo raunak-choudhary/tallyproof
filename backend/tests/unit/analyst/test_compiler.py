@@ -211,3 +211,37 @@ def test_every_catalog_name_is_a_plain_identifier():
         for name in (entity.view, entity.id_column, entity.leaf_column, *entity.fields):
             assert name.replace("_", "").isalnum()
             assert name.islower()
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("amount", "1e100000000000000"),
+        ("amount", "-1e17"),
+        ("amount", "100000000000000000"),
+        ("amount", "1" * 40),
+        ("amount", "1e-100000000000000"),
+        ("amount", "0.001"),
+        ("fiscal_year", 2**63),
+        ("fiscal_year", "9" * 30),
+    ],
+)
+def test_values_past_the_column_range_are_rejected(field, value):
+    spec = {
+        "shape": "list",
+        "entity": "obligations",
+        "limit": 5,
+        "filters": [{"field": field, "op": "eq", "value": value}],
+    }
+    with pytest.raises(ValidationError, match=r"out of range|not a valid"):
+        QuerySpec.model_validate(spec)
+
+
+def test_the_largest_amount_a_column_holds_is_accepted():
+    spec = QuerySpec.model_validate({
+        "shape": "list",
+        "entity": "obligations",
+        "limit": 5,
+        "filters": [{"field": "amount", "op": "gte", "value": "99999999999999999.99"}],
+    })  # fmt: skip
+    assert spec.filters[0].value == "99999999999999999.99"
