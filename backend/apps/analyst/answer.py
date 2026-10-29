@@ -57,6 +57,8 @@ class Citation:
     event_ids: tuple[str, ...]
     leaf_indexes: tuple[int, ...]
     words: str
+    sample_of: int | None = None
+    """How many records contributed, when the citation lists only the first of them."""
 
 
 @dataclass(frozen=True)
@@ -91,13 +93,25 @@ class Evidence:
         self.slots[label] = Slot(label, kind, value, words, citation)
         return label
 
-    def add_citation(self, rows: Sequence[tuple[Any, ...]], words: str) -> str:
-        """Add a citation for rows whose first two columns are event ID and leaf index."""
+    def add_citation(
+        self, rows: Sequence[tuple[Any, ...]], words: str, total: int | None = None
+    ) -> str:
+        """Add a citation for rows whose first two columns are event ID and leaf index.
+
+        ``total`` is how many records contributed; when it's more than the rows given,
+        the citation is a labelled sample of them.
+        """
         label = f"c{len(self.citations) + 1}"
+        sample_of = total if total is not None and total > len(rows) else None
         self.citations[label] = Citation(
-            label, tuple(r[0] for r in rows), tuple(int(r[1]) for r in rows), words
+            label, tuple(r[0] for r in rows), tuple(int(r[1]) for r in rows), words, sample_of
         )
         return label
+
+    @property
+    def sampled(self) -> bool:
+        """Whether any citation lists only some of the records behind it."""
+        return any(c.sample_of for c in self.citations.values())
 
     @property
     def empty(self) -> bool:
@@ -124,6 +138,12 @@ def _field_slots(
         evidence.add_slot(_KIND[catalog_field.type], value, catalog_field.words, cite)
 
 
+def _counted(cited: int, total: int) -> str:
+    if cited < total:
+        return f"the first {cited:,} of the {total:,} records counted, in log order"
+    return f"the {total:,} records counted"
+
+
 def from_query(
     spec: QuerySpec,
     compiled: CompiledQuery,
@@ -139,7 +159,9 @@ def from_query(
         money: SlotKind = "count" if spec.metric == "count" else "money"
         if spec.group_by is None:
             value, row_count = value_rows[0]
-            cite = evidence.add_citation(evidence_rows, f"the {row_count:,} records counted")
+            cite = evidence.add_citation(
+                evidence_rows, _counted(len(evidence_rows), int(row_count)), int(row_count)
+            )
             if value is not None:
                 evidence.add_slot(
                     money, value if money == "money" else int(value), compiled.words, cite
@@ -151,7 +173,10 @@ def from_query(
         group_words = entity.fields[spec.group_by].words
         for group, value, row_count in value_rows:
             rows = [r for r in evidence_rows if r[2] == group]
-            cite = evidence.add_citation(rows, f"records where {group_words} is {group}")
+            words = f"records where {group_words} is {group}"
+            if len(rows) < row_count:
+                words += f", the first {len(rows):,} of {int(row_count):,} in log order"
+            cite = evidence.add_citation(rows, words, int(row_count))
             evidence.add_slot("text", str(group), group_words, cite)
             evidence.add_slot(
                 money, value if money == "money" else int(value), compiled.words, cite

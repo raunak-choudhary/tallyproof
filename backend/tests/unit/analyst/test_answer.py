@@ -156,3 +156,12 @@ def test_an_answer_made_only_of_quotes_shows_them():
         render([], evidence(), [Quote("q1", "signed by both parties")])
         == '"signed by both parties" [[q1]]'
     )
+
+
+def test_a_citation_says_when_it_is_a_sample():
+    e = Evidence()
+    full = e.add_citation([("evt_a", 1), ("evt_b", 2)], "all", total=2)
+    part = e.add_citation([("evt_a", 1)], "some", total=40)
+    assert e.citations[full].sample_of is None
+    assert e.citations[part].sample_of == 40
+    assert e.sampled

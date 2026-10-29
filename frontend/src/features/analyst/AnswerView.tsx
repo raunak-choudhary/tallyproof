@@ -3,7 +3,7 @@
 import { useState } from "react";
 
 import type { Answer, Citation } from "@/lib/analyst/api";
-import { assuranceNote, segments } from "@/lib/analyst/api";
+import { assuranceNote, sampleNote, segments } from "@/lib/analyst/api";
 
 import { CitationCheck } from "./CitationCheck";
 
@@ -27,8 +27,14 @@ function CitationBlock({
     >
       <p className="font-medium">
         <span className="font-mono text-accent">[{citation.label}]</span> {citation.meaning}
-        <span className="text-fg-muted"> · {citation.events.length} records</span>
+        <span className="text-fg-muted">
+          {" "}
+          · {(citation.sampleOf ?? citation.events.length).toLocaleString("en-US")} records
+        </span>
       </p>
+      {sampleNote(citation, treeSize) && (
+        <p className="mt-1 text-sm text-warn">{sampleNote(citation, treeSize)}</p>
+      )}
       <ul className="mt-2 divide-y divide-border">
         {events.map((e) => (
           <CitationCheck

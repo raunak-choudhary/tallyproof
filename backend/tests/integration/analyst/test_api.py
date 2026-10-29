@@ -123,3 +123,32 @@ def test_questions_have_their_own_rate_limit(client, monkeypatch):
 def test_stored_answers_can_not_be_changed(migrated):
     with migrated.connect("app") as conn, pytest.raises(errors.InsufficientPrivilege):
         conn.execute("UPDATE analyst_answer SET text = ''")
+
+
+def test_a_total_over_the_cap_keeps_the_full_total_and_labels_its_sample(client, monkeypatch):
+    from apps.analyst.pipeline import Models
+
+    seal()
+    capped = Models("m", "m", 400, 10)
+    monkeypatch.setattr(
+        api,
+        "answer_question",
+        partial(
+            answer_question,
+            executor=AsAnalyst(),
+            client=FakeClient(scripted),
+            search=lambda q, k: [],
+            chosen=capped,
+        ),
+    )
+    body = client.post(
+        "/api/v1/queries", {"question": "How much did HHS obligate?"}, "application/json"
+    ).json()
+    assert body["status"] == "answered"
+    assert body["text"] == "HHS obligated $17,049,347.67 across 29 actions [[c1]]."
+    (citation,) = body["citations"]
+    assert citation["sample_of"] == 29
+    assert len(citation["events"]) == 10
+    assert citation["meaning"] == "the first 10 of the 29 records counted, in log order"
+    leaves = [e["leaf_index"] for e in citation["events"]]
+    assert leaves == sorted(leaves)
