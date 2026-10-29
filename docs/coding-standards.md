@@ -27,6 +27,7 @@
 - Pull requests are rebase-merged, so every commit lands on `main` and every commit has to pass the commit message check, not just the pull request title.
 - When one branch needs code from another that isn't merged yet, it's stacked on top of that branch and rebased onto `main` after the first one merges. Sibling branches are never merged into each other.
 - Every pull request gets a review pass with written comments before it merges.
+- Releases come from the commit history. A GitHub Actions workflow runs [release-please](https://github.com/googleapis/release-please) on every push to `main` and keeps a release pull request open with the next version and its changelog: `feat` commits raise the minor version before 1.0, `fix` commits the patch version, and a breaking change the minor version until 1.0. Merging that pull request writes `CHANGELOG.md`, sets the version in `backend/pyproject.toml` and `frontend/package.json`, and tags the release.
 
 ## Naming
 
