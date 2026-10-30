@@ -13,6 +13,7 @@ from apps.ledger.checkpointer import Checkpointer, WitnessPolicy, try_lock
 from apps.ledger.totals import TotalsSigner
 from config.env import checkpointer_settings
 from config.logging import configure
+from config.tracing import configure_tracing
 from tallyproof_core.checkpoint import Signer, decode_private_key
 
 log = logging.getLogger(__name__)
@@ -27,6 +28,7 @@ class Command(BaseCommand):
     def handle(self, *args: object, **options: object) -> None:
         """Run until SIGINT or SIGTERM."""
         configure()
+        configure_tracing("tallyproof-checkpointer")
         env = checkpointer_settings()
         key_text = env.checkpoint_signing_key_file.read_text(encoding="utf-8")
         signer = Signer(env.merkle_log_origin, decode_private_key(key_text))

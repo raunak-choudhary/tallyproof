@@ -102,6 +102,10 @@ class AppSettings(BaseSettings):
         default="INFO", validation_alias="LOG_LEVEL"
     )
     log_format: Literal["json", "console"] = Field(default="json", validation_alias="LOG_FORMAT")
+    otel_exporter_otlp_endpoint: str | None = Field(
+        default=None, validation_alias="OTEL_EXPORTER_OTLP_ENDPOINT"
+    )
+    """Where traces go, for example a local collector's OTLP HTTP port. Unset: no tracing."""
 
     redis_url: str = Field(default="redis://127.0.0.1:6379/0", validation_alias="REDIS_URL")
     stream_host: str = Field(default="127.0.0.1", validation_alias="STREAM_HOST")

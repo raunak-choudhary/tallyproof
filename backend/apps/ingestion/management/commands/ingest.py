@@ -10,6 +10,7 @@ from apps.ingestion.consumer import Ingestor, producer_for_dead_letters, run
 from apps.ingestion.dedupe import PartitionFilters
 from config.env import app_settings
 from config.logging import configure
+from config.tracing import configure_tracing
 
 
 class Command(BaseCommand):
@@ -20,6 +21,7 @@ class Command(BaseCommand):
     def handle(self, *args: object, **options: object) -> None:
         """Run until SIGINT or SIGTERM, finishing the current batch first."""
         configure()
+        configure_tracing("tallyproof-ingest")
         env = app_settings()
         stopping = False
 
