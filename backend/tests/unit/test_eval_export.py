@@ -60,6 +60,7 @@ def test_export_copies_reports_and_indexes_them_oldest_first(tmp_path):
     assert entry["metrics"]["numeric_exactness"] == 1.0
     assert entry["metrics"]["citation_recall"] is None
     assert entry["gate_failures"] == []
+    assert index["gates"]["integrity"]["integrity"] == 1.0
 
 
 def test_harness_checks_are_refused(tmp_path):
