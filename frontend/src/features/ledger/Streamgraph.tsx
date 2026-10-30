@@ -73,9 +73,9 @@ export function Streamgraph({
       </figcaption>
       <svg
         viewBox={`0 0 ${width} ${height + 24}`}
-        className="mt-2 block w-full"
+        className="mt-2 block w-full rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
         role="img"
-        aria-label={`${title}: ${layout.months.length} bins by ${unit}, ${layout.layers.length} groups`}
+        aria-label={`${title}: ${layout.months.length} bins by ${unit}, ${layout.layers.length} groups. Left and right arrows move between bins; Enter lists the bin's records.`}
         onMouseMove={(e) => setHover(monthAt(e.clientX, e.currentTarget.getBoundingClientRect()))}
         onMouseLeave={() => setHover(null)}
         onTouchStart={(e) => {
@@ -83,6 +83,24 @@ export function Streamgraph({
           if (t) setHover(monthAt(t.clientX, e.currentTarget.getBoundingClientRect()));
         }}
         onClick={() => onPickMonth?.(month)}
+        tabIndex={0}
+        onKeyDown={(e) => {
+          const last = layout.months.length - 1;
+          const move: Record<string, number> = {
+            ArrowLeft: Math.max(0, shown - 1),
+            ArrowRight: Math.min(last, shown + 1),
+            Home: 0,
+            End: last,
+          };
+          if (e.key in move) {
+            e.preventDefault();
+            setHover(move[e.key]!);
+          } else if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onPickMonth?.(month);
+          }
+        }}
+        onBlur={() => setHover(null)}
       >
         {layout.layers.map((layer) => (
           <path
