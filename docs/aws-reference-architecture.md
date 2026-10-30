@@ -1,6 +1,6 @@
 # Running Tallyproof on AWS
 
-Tallyproof runs on one laptop with open-source components, and nothing in this repository is deployed to AWS. Each component does have a direct AWS counterpart, though, and this page shows how the system would map onto AWS and what would change at production scale. Service details were checked against AWS documentation in October 2026.
+Tallyproof runs on one laptop with open-source components, and nothing in this repository is deployed to AWS. Each component does have a direct AWS counterpart, though, and this page shows how the system would map onto AWS and what would change at production scale. The same mapping is written as Terraform, never applied, in `infra/terraform/aws/`. Service details were checked against AWS documentation in October 2026.
 
 ## Component mapping
 
