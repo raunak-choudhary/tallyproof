@@ -76,6 +76,15 @@ class PipelineSettings(BaseSettings):
     treasury_poll_seconds: int = Field(
         default=3600, ge=60, validation_alias="DATA_TREASURY_POLL_SECONDS"
     )
+    lake_batch_rows: int = Field(default=100_000, ge=1, validation_alias="LAKE_BATCH_ROWS")
+    """Events per Iceberg commit when sinking the event stream into the lake."""
+    lake_bloom_expected_items: int = Field(
+        default=2_000_000, ge=1, validation_alias="LAKE_BLOOM_EXPECTED_ITEMS"
+    )
+    """Keys the lake's duplicate filter is sized for; the full stream has about 1.7 million."""
+    lake_bloom_target_fpr: float = Field(
+        default=0.001, gt=0, lt=1, validation_alias="DEDUPE_TARGET_FPR"
+    )
     spark_master: str = Field(default="local[3]", validation_alias="SPARK_MASTER")
     spark_driver_memory: str = Field(default="2g", validation_alias="SPARK_DRIVER_MEMORY")
     spark_shuffle_partitions: int = Field(
@@ -113,6 +122,16 @@ class PipelineSettings(BaseSettings):
     def gold_dir(self) -> Path:
         """Conformed ledger events."""
         return self.data_dir / "gold"
+
+    @property
+    def lake_dir(self) -> Path:
+        """Iceberg tables and their SQLite catalog."""
+        return self.data_dir / "lake"
+
+    @property
+    def lake_catalog_uri(self) -> str:
+        """The Iceberg catalog: a SQLite file beside the tables. On AWS, the Glue Data Catalog."""
+        return f"sqlite:///{self.lake_dir / 'catalog.db'}"
 
     @property
     def work_dir(self) -> Path:
