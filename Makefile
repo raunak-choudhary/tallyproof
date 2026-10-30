@@ -32,7 +32,7 @@ COMPOSE := docker --context colima-$(COLIMA_PROFILE) compose --env-file .env -f 
 SPARK_VERSION ?= 4.1
 export SPARK_VERSION
 
-.PHONY: help docs docs-build doctor venv deps deps-sync require-venv lint format typecheck test check audit vectors vectors-check web-install web-lint web-typecheck web-test web-build web-e2e web-check web-audit web-live data-fetch data-outlays data-build data-build-outlays data-quality data-profile require-no-containers data-gold keygen replay replay-witness data-sample eval eval-record eval-questions eval-dataset test-integration coverage coverage-report require-colima up down reset ps logs db-roles migrate ingest checkpointer project relay fanout stream check-derived rebuild-derived check-totals dead-letters verify-witness data-replay data-treasury policy-fetch policy-publish demo demo-stop tamper schemas register-schemas verify-event console clean
+.PHONY: help docs docs-build doctor venv deps deps-sync require-venv lint format typecheck test check audit vectors vectors-check web-install web-lint web-typecheck web-test web-build web-e2e web-check web-audit web-live data-fetch data-outlays data-build data-build-outlays data-quality data-profile require-no-containers data-gold keygen replay replay-witness data-sample eval eval-record eval-export eval-questions eval-dataset test-integration coverage coverage-report require-colima up down reset ps logs db-roles migrate ingest checkpointer project relay fanout stream check-derived rebuild-derived check-totals dead-letters verify-witness data-replay data-treasury policy-fetch policy-publish demo demo-stop tamper schemas register-schemas verify-event console clean
 
 help: ## List available commands
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -157,6 +157,11 @@ eval: require-venv $(INTEGRATION_NEEDS) ## Run an evaluation in a throwaway data
 
 eval-record: require-venv $(INTEGRATION_NEEDS) ## Record fresh model responses for the smoke set (needs the provider key in .env); commit testdata/llm_cache after
 	cd $(BACKEND) && $(INTEGRATION_ENV) LLM_REQUESTS_PER_MINUTE=4 LLM_MAX_RETRIES=6 .venv/bin/python -m evals.runner --set smoke --mode live
+
+REPORTS ?=
+eval-export: require-venv ## Publish chosen quality runs to the dashboard: REPORTS="var/eval/<run>/report.json ..." (harness checks are refused)
+	@test -n "$(REPORTS)" || { echo "set REPORTS to one or more var/eval/<run>/report.json"; exit 2; }
+	cd $(BACKEND) && .venv/bin/python -m evals.export $(addprefix ../,$(REPORTS))
 
 docs: require-venv ## Serve the documentation site with live reload at http://127.0.0.1:8100
 	NO_MKDOCS_2_WARNING=1 $(VENV)/bin/mkdocs serve --dev-addr 127.0.0.1:8100

@@ -74,7 +74,7 @@ Each run builds its own ledger in a throwaway Postgres container, with the same 
 
 The LLM client sits behind an interface with three implementations: a scripted fake, the real client, and a caching wrapper. The cache key is a hash of the model ID, prompt version, prompt bytes, and parameters, so changing a prompt invalidates exactly the entries it affects. Token and cost budgets per run stop the runner with a clear error before it overspends.
 
-Each run writes a machine-readable JSON report and a readable Markdown report to `var/eval/<timestamp>/`, and CI keeps both as artifacts. The reports, not database rows, are the record of a run, since each run's database is thrown away; the dashboard reads them. Thresholds live in `backend/evals/thresholds.toml`, and the process exits non-zero when a gated metric falls below its threshold.
+Each run writes a machine-readable JSON report and a readable Markdown report to `var/eval/<timestamp>/`, and CI keeps both as artifacts. The reports, not database rows, are the record of a run, since each run's database is thrown away; the dashboard reads them. Publishing a run to the dashboard is a deliberate step: `make eval-export REPORTS=var/eval/<timestamp>/report.json` copies the report to `frontend/public/replay/evals/` and rebuilds the index there, and the copy is committed through a normal pull request. The export refuses harness checks and any report carrying contact details. Thresholds live in `backend/evals/thresholds.toml`, and the process exits non-zero when a gated metric falls below its threshold.
 
 ## In CI
 
