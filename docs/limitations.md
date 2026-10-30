@@ -46,7 +46,20 @@ over a billion are verified the same way, by the same code in the browser.
 | Today | Why | At full scale | What to change | On AWS |
 |---|---|---|---|---|
 | The public site is static, on GitHub Pages, and verifies a committed bundle of 2,000 real events | Free, never sleeps, and the browser does all the verifying; no server can go down or be tampered with | The same static site in front of a live API | `NEXT_PUBLIC_API_URL` at build time turns on the live pages; the API runs wherever it runs | S3 and CloudFront for the site; the API on ECS |
-| There is no public live backend, so the analyst page works only against the local stack. Answering the demo questions from a precomputed bundle is planned | Running a model-backed public endpoint on a free tier invites exhaustion; the project's claims don't depend on it | A rate-limited live endpoint with the in-flight cap and per-address budget | Deploy the API with the limits on; the site switches modes by one setting | The same |
+| There is no public live backend, by decision, so the analyst page works only against the local stack. Answering the demo questions from a precomputed bundle is planned | A public model-backed endpoint on a free tier would spend the shared daily quota for anyone who found it, and would add a server to attack, while every claim the project makes is checked in the browser without one ([threat model](threat-model.md#public-endpoints)) | A rate-limited live endpoint with the in-flight cap and per-address budget | Deploy the API with the limits on; the site switches modes by one setting | The same |
+
+## In Terraform
+
+`infra/terraform/aws/` writes the AWS column above down as Terraform, one module per service. It has never been applied, and its README says how to validate it.
+
+| Module | Rows above it covers |
+|---|---|
+| `modules/kms` | The signing key in a file |
+| `modules/s3` | Parquet and Iceberg files on local disk; witness copies under Object Lock |
+| `modules/msk` | One Redpanda broker |
+| `modules/aurora` | One Postgres in a 3 GiB VM, with a read replica for the analyst |
+| `modules/ecs` | The API and workers as host processes |
+| `modules/glue` | The local Iceberg catalog and the schema registry |
 
 ## Everything else is at full scope
 
