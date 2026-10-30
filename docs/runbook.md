@@ -178,6 +178,16 @@ make rebuild-derived VIEW=reconciliation
 
 Rebuilding needs the owner role, because the derived tables are append-only to the app role. Do it after changing a reconciliation rule.
 
+## Evolving the event schema
+
+Events change by adding optional payload fields, never by changing or removing one, so every event already in the log stays valid and keeps its bytes.
+
+1. Add the field to the payload model in `backend/tallyproof_core/events.py` with a default of `None`.
+2. `make schemas` writes the new JSON Schema; commit it as the next `events.vN.json` beside the earlier ones, and point `SCHEMA_FILE` in `backend/apps/ingestion/schemas.py` at it.
+3. `make register-schemas` refuses to register it unless the registry accepts it as backward compatible with the version before.
+
+Version 2 added `recipient_parent_uei` to new obligations this way. Old and new events flow through the same consumer, sit in the same log, and post the same journal lines; tests show both, against a real registry and a real database.
+
 ## Dead letters and control totals
 
 ```bash

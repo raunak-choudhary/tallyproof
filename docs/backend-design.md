@@ -105,7 +105,7 @@ A policy event carries the whole section, so a quote can be checked against the 
 
 Outlays in the source are cumulative from the start of the fiscal year. The cleaning step derives each period's outlay as the difference from the previous period for the same award and account, and quarantines rows where that goes negative without a matching correction.
 
-Event schemas are Pydantic models exported as JSON Schema draft-07 with internal references only, so they work in both Redpanda's Schema Registry and AWS Glue Schema Registry. Schemas are registered with backward compatibility enforced.
+Event schemas are Pydantic models exported as JSON Schema draft-07 with internal references only, so they work in both Redpanda's Schema Registry and AWS Glue Schema Registry. Schemas are registered with backward compatibility enforced. They evolve by adding optional payload fields: registry version 2 (`backend/schemas/events.v2.json`) adds `recipient_parent_uei` to `obligation.recorded`, beside version 1 (`events.v1.json`). The envelope's `schema_version` describes the hashed envelope format and stays 1, because an event that leaves a new field empty keeps exactly the bytes it always had. Redpanda's checker refuses even widening that field from 1 to "1 or 2", which settled the choice: payloads are versioned in the registry, not in the hashed bytes.
 
 ### What gets hashed
 
