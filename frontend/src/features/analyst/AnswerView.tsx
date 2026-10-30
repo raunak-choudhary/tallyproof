@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 
-import type { Answer, Citation } from "@/lib/analyst/api";
+import type { Answer, Citation, Slot } from "@/lib/analyst/api";
 import { assuranceNote, sampleNote, segments } from "@/lib/analyst/api";
 
 import { CitationCheck } from "./CitationCheck";
 import { CitationSwarm } from "./CitationSwarm";
+import { TotalCheck } from "./TotalCheck";
 
 const SHOWN = 10;
 
@@ -14,11 +15,16 @@ function CitationBlock({
   base,
   citation,
   treeSize,
+  slots,
 }: {
   base: string;
   citation: Citation;
   treeSize: number;
+  slots: Slot[];
 }) {
+  const mine = slots.filter((s) => s.citation === citation.label);
+  const amount = mine.find((s) => s.kind === "money")?.value;
+  const counted = mine.find((s) => s.kind === "count")?.value;
   const [all, setAll] = useState(false);
   const events = all ? citation.events : citation.events.slice(0, SHOWN);
   return (
@@ -35,6 +41,15 @@ function CitationBlock({
       </p>
       {sampleNote(citation, treeSize) && (
         <p className="mt-1 text-sm text-warn">{sampleNote(citation, treeSize)}</p>
+      )}
+      {citation.totalProofUrl && (
+        <TotalCheck
+          base={base}
+          path={citation.totalProofUrl}
+          treeSize={treeSize}
+          {...(amount === undefined ? {} : { amount })}
+          {...(counted === undefined ? {} : { count: Number(counted) })}
+        />
       )}
       {citation.events.length > 1 && <CitationSwarm base={base} events={citation.events} />}
       <ul className="mt-2 divide-y divide-border">
@@ -151,7 +166,13 @@ export function AnswerView({ base, answer }: { base: string; answer: Answer }) {
           <h3 className="font-semibold">Citations</h3>
           <ul className="mt-2 space-y-3">
             {answer.citations.map((c) => (
-              <CitationBlock key={c.label} base={base} citation={c} treeSize={answer.treeSize} />
+              <CitationBlock
+                key={c.label}
+                base={base}
+                citation={c}
+                treeSize={answer.treeSize}
+                slots={answer.slots}
+              />
             ))}
           </ul>
         </div>

@@ -23,6 +23,8 @@ export interface Citation {
   events: CitedEvent[];
   /** How many records contributed, when only the first of them are listed. */
   sampleOf: number | null;
+  /** Where to fetch a proof of the whole total, when the signed sum tree can prove it. */
+  totalProofUrl: string | null;
 }
 
 export interface Quote {
@@ -62,6 +64,7 @@ interface RawAnswer {
     label: string;
     meaning: string;
     sample_of?: number | null;
+    total_proof_url?: string | null;
     events: { event_id: string; leaf_index: number }[];
   }[];
   quotes: {
@@ -90,6 +93,7 @@ export function toAnswer(raw: RawAnswer): Answer {
       meaning: c.meaning,
       events: c.events.map((e) => ({ eventId: e.event_id, leafIndex: e.leaf_index })),
       sampleOf: c.sample_of ?? null,
+      totalProofUrl: c.total_proof_url ?? null,
     })),
     quotes: raw.quotes.map((q) => ({
       source: q.source,
@@ -164,6 +168,9 @@ export function sampleNote(citation: Citation, treeSize: number): string | null 
   const listed = citation.events.length.toLocaleString("en-US");
   const total = citation.sampleOf.toLocaleString("en-US");
   const checkpoint = treeSize.toLocaleString("en-US");
+  if (citation.totalProofUrl) {
+    return `${listed} of ${total} records listed here as examples, each verifiable. The total over all ${total} is proven as a whole below, without listing them.`;
+  }
   return `${listed} of ${total} records listed here, each verifiable. The total covers all ${total} as of checkpoint ${checkpoint}.`;
 }
 

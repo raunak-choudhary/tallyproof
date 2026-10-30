@@ -1,6 +1,7 @@
 // A small client for the live proof API. It returns what the API sent; deciding
 // whether any of it is true is the verifier's job, not this module's.
 import { fromHex } from "@/lib/verify/bytes";
+import type { TotalProofJson } from "@/lib/verify/sumTree";
 
 export interface LiveEvent {
   eventId: string;
@@ -98,4 +99,25 @@ export async function fetchProof(
     auditPath: body.audit_path_hex.map(fromHex),
     checkpointNote: body.checkpoint_note,
   };
+}
+
+export interface LiveTotalProof {
+  treeSize: number;
+  totalsNote: string;
+  proof: TotalProofJson;
+}
+
+/** A total proof, from the path an answer's citation gave for it. */
+export async function fetchTotalProof(
+  base: string,
+  path: string,
+  fetcher: typeof fetch = fetch,
+): Promise<LiveTotalProof> {
+  if (!path.startsWith("/api/v1/totals/proof?")) throw new Error("not a total proof path");
+  const body = (await getJson(base, path, fetcher)) as {
+    tree_size: number;
+    totals_note: string;
+    proof: TotalProofJson;
+  };
+  return { treeSize: body.tree_size, totalsNote: body.totals_note, proof: body.proof };
 }

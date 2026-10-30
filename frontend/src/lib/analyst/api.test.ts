@@ -72,10 +72,23 @@ describe("analyst API client", () => {
 
   it("labels a citation that lists only some of the records", () => {
     const events = [{ eventId: "evt_1", leafIndex: 1 }];
-    expect(sampleNote({ label: "c1", meaning: "m", events, sampleOf: 52000 }, 1003)).toBe(
+    const sampled = { label: "c1", meaning: "m", events, sampleOf: 52000, totalProofUrl: null };
+    expect(sampleNote(sampled, 1003)).toBe(
       "1 of 52,000 records listed here, each verifiable. The total covers all 52,000 as of checkpoint 1,003.",
     );
-    expect(sampleNote({ label: "c1", meaning: "m", events, sampleOf: null }, 9)).toBeNull();
+    expect(sampleNote({ ...sampled, sampleOf: null }, 9)).toBeNull();
+  });
+
+  it("says when the whole total is proven instead", () => {
+    const events = [{ eventId: "evt_1", leafIndex: 1 }];
+    const proven = {
+      label: "c1",
+      meaning: "m",
+      events,
+      sampleOf: 52000,
+      totalProofUrl: "/api/v1/totals/proof?entity=obligations&tree_size=1003",
+    };
+    expect(sampleNote(proven, 1003)).toMatch(/proven as a whole below, without listing them/);
   });
 });
 
