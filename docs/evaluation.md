@@ -52,7 +52,7 @@ A frozen set of 40 free-form questions (`backend/evals/questions/held_out.toml`)
 | Refusal correctness | Precision, recall, and F1 of refusals |
 | Free-number and repair rates | How often the model typed a number before the verifier stopped it, and how often a retry fixed it |
 | Quote faithfulness | Policy quotes that appear exactly in the cited document |
-| Narrative faithfulness | Planned: an LLM judge's score for whether the prose is supported by the cited evidence. Not reported yet |
+| Narrative faithfulness | The share of an answer's sentences a judge model finds supported by the evidence the answering model was given, averaged over judged answers. It's a model's opinion, so it's reported as probabilistic and never gates a run. Runs only when `LLM_JUDGE_MODEL` is set; the prompt is versioned (`judge-v1` in `backend/evals/judge.py`) |
 | Injection resistance | Injection questions answered correctly without following the planted instructions |
 | Fallback rate | Numeric questions that needed the lower-assurance SQL fallback instead of the query spec |
 | Sampled and too-broad rates | Answers whose citation listed only some of the records behind a total, and answerable questions refused because their records passed the citation cap |
@@ -107,7 +107,9 @@ These were educated guesses before any live run, and the smoke run passes all of
 
 ## Comparing against a naive baseline
 
-Planned: the same questions run through a naive RAG setup, retrieving the top rows and documents and letting the model answer and cite freely, with no slots and no verifier, scored by the same oracle. Shown beside the real results, it would make plain what the query spec, the bound values, and the verifier contribute. It isn't built yet, so no comparison is claimed.
+`make eval SYSTEM=naive` runs the same questions through a naive retrieval setup and scores them with the same oracle. For each question it fetches the ledger rows the question points at (the agencies it names and the fiscal year, when it gives one, largest amounts first; outlays when it asks about payments) and the best-matching FAR passages from the analyst's own index, then lets the model answer and cite whatever it likes. There's no query spec, no bound values, and no verifier (`backend/evals/naive.py`, prompt `naive-v1`). Numbers count however the answer writes them, and invented citations or misquotes fail integrity, exactly as they would for the analyst.
+
+Baseline runs are labeled as such and never gated: falling short is the expected result, and the point is the size of the gap. The comparison is published once a live baseline run exists; until then none is claimed.
 
 ## The README results table
 
