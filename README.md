@@ -2,7 +2,9 @@
 
 Tallyproof is a streaming ledger for public spending data with an AI analyst on top. Every number the analyst gives you is pulled from the ledger by a query, and every claim links to the exact source record, along with a cryptographic proof that the record hasn't changed since it arrived. You can check that proof in your own browser.
 
-**Try it:** [raunak-choudhary.github.io/tallyproof](https://raunak-choudhary.github.io/tallyproof/) is a static replay of 2,000 real FY2025 contract records. Open one, press Verify, then change its amount and watch the check fail. Nothing runs on a server: your browser recomputes every hash and checks the signature against a key built into the page.
+**Try it:** [raunak-choudhary.github.io/tallyproof](https://raunak-choudhary.github.io/tallyproof/) is a static replay of 2,000 real FY2025 contract records. Open one, press Verify, then change its amount and watch the check fail. Nothing runs on a server: your browser recomputes every hash, checks the signature against a key built into the page, and checks the log against a timestamped checkpoint it fetches from GitHub. The site also walks through how the proofs work, lets you run four attacks on a record, and shows every published evaluation run.
+
+<p align="center"><img alt="Verifying a record on the site: six checks pass and the audit path climbs to the signed root. Then the amount is changed by one cent, and the proof and the displayed-value checks fail." src="docs/images/verify-and-tamper.gif" width="560"></p>
 
 > **Status, October 2026.** The batch pipeline, the streaming ledger, the proof API, and the browser verifier work end to end on real data. Federal contract events, their payments, and the Treasury's daily cash statement stream through Kafka into an append-only Postgres ledger, get signed into checkpoints that are timestamped on OpenTimestamps, and can be verified in your browser or from a terminal. A double-entry journal and reconciliation breaks are derived from the ledger and pushed live over WebSockets. The AI analyst answers questions about it, binding every number to a query over the ledger and citing the records behind it. This note will always say exactly what works.
 
@@ -16,30 +18,16 @@ Tallyproof is my attempt to build it, and to make the AI's answers checkable rat
 
 ## How it works
 
-```
-USAspending.gov bulk files ──► Spark (clean, remove personal data, quality checks)
-                                   │
-                                   ▼
-                             Parquet / Iceberg lake  (everything, ~27 GB raw)
-                                   │  replay in event-time order
-                                   ▼
-                         Kafka ──► ingestion ──► append-only Postgres ledger
-                                                   │
-                                                   ▼
-                                       Merkle log ──► signed checkpoints ──► external timestamp
-                                                   │
-                                                   ▼
-                             AI analyst ──► answer with bound numbers and citations
-                                                   │
-                                                   ▼
-                                     your browser verifies every citation
-```
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/how-it-works-dark.svg">
+  <img alt="Public records from USAspending and the Treasury are cleaned and checked with Spark, streamed through Kafka into an append-only Postgres ledger, hashed into a Merkle log, signed into checkpoints, timestamped by an outside witness, and verified in your browser." src="docs/images/how-it-works-light.svg" width="880">
+</picture>
 
 A few design choices do most of the work:
 
 - The model never writes a number. It fills in a typed query spec, the server turns that into SQL, and the results are dropped into slots in the answer. Any digit the model types on its own gets rejected.
 - Each event is hashed into an [RFC 9162](https://www.rfc-editor.org/rfc/rfc9162.html) Merkle log, the same structure Certificate Transparency uses. Checkpoints are signed with Ed25519 and timestamped by a third party (OpenTimestamps), so even the operator can't quietly rewrite history.
-- Your browser trusts one thing: a public key compiled into the page. It recomputes the rest itself: the record's hash, the path to the signed root, and the signature. Change one cent in a cited record and verification fails, and the page tells you which check caught it. Checkpoints are also timestamped by a third party, which catches a rewrite even by someone holding the key; that check runs with `make verify-witness` today and moves into the browser with the site.
+- Your browser trusts two things: a public key compiled into the page, and a checkpoint someone outside timestamped, which it fetches from a second origin. It recomputes the rest itself: the record's hash, the path to the signed root, the signature, and a proof that the log still extends the witnessed checkpoint. Change one cent in a cited record and verification fails, and the page tells you which check caught it. Rewrite history with the real key and the witness check fails.
 - Answer quality is measured against exact ground truth, not an AI judge. Labeled anomalies are injected into the real data stream, so the right answers are known in advance.
 
 ## The data
