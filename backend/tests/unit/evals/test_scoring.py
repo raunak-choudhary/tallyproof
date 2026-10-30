@@ -132,3 +132,15 @@ def test_policy_citations_are_scored_by_section_within_the_subpart():
     assert (good.cited, good.cited_correct, good.cited_allowed) == (2, 1, 2)
     stray = score("P", "q", "policy", True, expected, observed(sections_cited=["43.201", "4.101"]))
     assert metrics([good, stray])["citation_precision"] == 0.75
+
+
+def test_faithfulness_is_averaged_over_judged_answers_only() -> None:
+    judged = [score("a", "q", "lookup", True, SUM, observed()) for _ in range(3)]
+    judged[0].faithfulness, judged[1].faithfulness = 1.0, 0.5
+    values = metrics(judged)
+    assert values["narrative_faithfulness"] == 0.75
+    assert values["judged_answers"] == 2
+    assert (
+        metrics([score("a", "q", "lookup", True, SUM, observed())])["narrative_faithfulness"]
+        is None
+    )

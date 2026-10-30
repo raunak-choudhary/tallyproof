@@ -75,6 +75,8 @@ class Result:
     sampled: bool = False
     answer: str = ""
     notes: list[str] = field(default_factory=list)
+    faithfulness: float | None = None
+    """The judge's share of the answer's sentences supported by its evidence, when judged."""
 
 
 def _same(value: str, expected: Any) -> bool:  # noqa: ANN401
@@ -215,6 +217,12 @@ def metrics(results: list[Result]) -> dict[str, Any]:
             sum(r.sampled for r in results), sum(r.status == "answered" for r in results)
         ),
         "too_broad_rate": _rate(sum(r.refusal == "too_broad" for r in answerable), len(answerable)),
+        "narrative_faithfulness": (
+            round(statistics.fmean(judged), 4)
+            if (judged := [r.faithfulness for r in results if r.faithfulness is not None])
+            else None
+        ),
+        "judged_answers": sum(r.faithfulness is not None for r in results),
         "tokens": sum(r.tokens for r in results),
         "latency_p50_ms": int(statistics.median(latencies)) if latencies else None,
         "latency_p95_ms": latencies[int(0.95 * (len(latencies) - 1))] if latencies else None,
