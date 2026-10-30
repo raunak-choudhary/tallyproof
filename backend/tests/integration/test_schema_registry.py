@@ -3,7 +3,7 @@ import json
 import pytest
 from testcontainers.community.kafka import RedpandaContainer
 
-from apps.ingestion.schemas import SCHEMA_FILE, is_compatible, register
+from apps.ingestion.schemas import PREVIOUS_SCHEMA_FILE, SCHEMA_FILE, is_compatible, register
 
 
 @pytest.fixture(scope="module")
@@ -24,3 +24,10 @@ def test_backward_compatible_changes_are_accepted_and_breaking_ones_refused(regi
     breaking = {**schema, "required": [*schema["required"], "trace_note"]}
     breaking["properties"] = optional["properties"]
     assert not is_compatible(registry, subject, json.dumps(breaking))
+
+
+def test_version_2_registers_as_a_backward_compatible_change_to_version_1(registry):
+    subject = "schema-evolution-value"
+    first = register(registry, subject, PREVIOUS_SCHEMA_FILE.read_text())
+    assert is_compatible(registry, subject, SCHEMA_FILE.read_text())
+    assert register(registry, subject, SCHEMA_FILE.read_text()) != first
