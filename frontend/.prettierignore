@@ -1,4 +1,5 @@
 .next
+.next-live
 out
 node_modules
 pnpm-lock.yaml
