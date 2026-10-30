@@ -14,7 +14,7 @@ from typing import Any
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
 from tallyproof_core.canonical import MAX_SAFE_INTEGER, canonicalize
-from tallyproof_core.checkpoint import Checkpoint, Signer
+from tallyproof_core.checkpoint import Checkpoint, Signer, TotalsNote
 from tallyproof_core.hashing import leaf_hash
 from tallyproof_core.merkle import root
 from tallyproof_core.sum_tree import (
@@ -242,7 +242,16 @@ def build_sum_tree() -> dict[str, Any]:
     for reason, proof in forged:
         assert verify_total(proof, root_hash) is None, reason
         must_fail.append({"reason": reason, "proof": proof_to_json(proof)})
+    signer = Signer(
+        TEST_KEY_NAME,
+        Ed25519PrivateKey.from_private_bytes(hashlib.sha256(TEST_KEY_SEED_PHRASE).digest()),
+    )
     return {
+        "verifier_key": signer.verifier_key(),
+        "totals_note": signer.sign_totals(TotalsNote(TEST_KEY_NAME, len(leaves), root_hash)),
+        "checkpoint_note_with_the_same_root": signer.sign_checkpoint(
+            Checkpoint(TEST_KEY_NAME, len(leaves), root_hash)
+        ),
         "leaves": [
             {
                 "key": list(leaf.key),
