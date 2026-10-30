@@ -226,7 +226,8 @@ def main() -> None:  # pragma: no cover - exercised by make batch-recon
     settings = get_settings()
     events = settings.gold_dir / "events.jsonl.gz"
     # Kept small so a laptop stays cool: two threads and 2 GB, spilling to disk past that.
-    con = duckdb.connect(config={"threads": 2, "memory_limit": "2GB"})
+    spill = settings.data_dir / "duckdb-spill"
+    con = duckdb.connect(config={"threads": 2, "memory_limit": "2GB", "temp_directory": str(spill)})
     started = time.monotonic()
     batch = batch_gold(con, events)
     batch_seconds = time.monotonic() - started
