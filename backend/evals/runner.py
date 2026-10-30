@@ -45,6 +45,7 @@ RECONCILED = {
     "late_arrival": "late_after_close",
     "orphan_outlay": "orphan_outlay",
     "outlay_exceeds_obligation": "outlay_exceeds_obligation",
+    "recipient_burst": "recipient_burst",
 }
 """Which reconciliation break each labeled anomaly should produce, restated here."""
 
