@@ -28,6 +28,7 @@ from apps.ingestion import dead_letter, offsets
 from apps.ingestion.dedupe import PartitionFilters
 from apps.ledger.append import Delivery, append
 from config.logging import bind_correlation_id
+from config.tracing import correlation_ids, tracer
 from tallyproof_core.events import EventEnvelope
 
 log = logging.getLogger(__name__)
@@ -127,7 +128,18 @@ class Ingestor:
         self.filters.drop(topic, partition)
 
     def process(self, messages: Sequence[Message]) -> BatchOutcome:
-        """Validate, dead-letter, deduplicate, append, and commit one batch."""
+        """Validate, dead-letter, deduplicate, append, and commit one batch, in one span."""
+        with tracer().start_as_current_span("ingest.batch") as span:
+            span.set_attribute("tallyproof.messages", len(messages))
+            outcome, ids = self._process(messages)
+            span.set_attribute("tallyproof.appended", outcome.appended)
+            span.set_attribute("tallyproof.duplicates", outcome.duplicates)
+            span.set_attribute("tallyproof.dead_lettered", outcome.dead_lettered)
+            span.set_attribute("tallyproof.tree_size", outcome.tree_size)
+            span.set_attribute("tallyproof.correlation_ids", correlation_ids(ids))
+            return outcome
+
+    def _process(self, messages: Sequence[Message]) -> tuple[BatchOutcome, list[str]]:
         deliveries: list[Delivery] = []
         positions: dict[tuple[str, int], tuple[int, int]] = {}
         dead = 0
@@ -175,7 +187,7 @@ class Ingestor:
             self.filters.record_outcome(delivery.bloom_said_seen, id(delivery) in duplicate_ids)
         outcome = BatchOutcome(len(result.appended), len(result.duplicates), dead, result.tree_size)
         self._count(outcome, deliveries)
-        return outcome
+        return outcome, [d.event.correlation_id for d in deliveries]
 
     def _count(self, outcome: BatchOutcome, deliveries: Sequence[Delivery]) -> None:
         totals = self.totals

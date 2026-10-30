@@ -16,6 +16,7 @@ from apps.analyst.retrieval import FastEmbedder, Hit, PolicyIndex, load_leaves
 from apps.analyst.router import PROMPT_VERSION
 from apps.ledger.models import LedgerBatch, LedgerTotals
 from config.env import app_settings, llm_settings
+from config.tracing import current_correlation_id, tracer
 from tallyproof_core.ids import new_id
 
 REFUSAL_MESSAGES = {
@@ -234,7 +235,33 @@ def answer_question(
 
     With ``address``, the answer counts against that address's daily token budget,
     and a question from an address past its budget is refused without a model call.
+    The whole answer is one span, tagged with the request's correlation ID.
     """
+    with tracer().start_as_current_span("analyst.answer") as span:
+        span.set_attribute("tallyproof.correlation_id", current_correlation_id() or "")
+        stored = _answer_question(
+            question,
+            executor=executor,
+            client=client,
+            search=search,
+            chosen=chosen,
+            address=address,
+        )
+        span.set_attribute("tallyproof.status", stored.status)
+        span.set_attribute("tallyproof.refusal", stored.refusal)
+        span.set_attribute("tallyproof.tree_size", stored.tree_size)
+        return stored
+
+
+def _answer_question(
+    question: str,
+    *,
+    executor: Executor | None,
+    client: LLMClient | None,
+    search: Any,  # noqa: ANN401
+    chosen: Models | None,
+    address: str | None,
+) -> AnalystAnswer:
     latest = pinned_size()
     chosen = chosen or models()
     if latest is None:

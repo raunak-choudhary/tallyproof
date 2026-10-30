@@ -27,6 +27,7 @@ from django.db import connection, transaction
 
 from apps.ledger import timestamps
 from apps.ledger.models import Outbox
+from config.tracing import tracer
 from tallyproof_core.checkpoint import Checkpoint, Signer, key_id
 from tallyproof_core.ids import new_id
 from tallyproof_core.log_tree import LogTree
@@ -157,11 +158,19 @@ class Checkpointer:
         return None
 
     def close(self) -> Signed:
-        """Sign a checkpoint over the whole log and record the batch.
+        """Sign a checkpoint over the whole log and record the batch, in one span.
 
         Raises:
             CheckpointerError: If no leaves are waiting, or the signed prefix changed.
         """
+        with tracer().start_as_current_span("checkpoint.close") as span:
+            signed = self._close()
+            span.set_attribute("tallyproof.tree_size", signed.tree_size)
+            span.set_attribute("tallyproof.start_index", signed.start_index)
+            span.set_attribute("tallyproof.batch_id", signed.public_id)
+            return signed
+
+    def _close(self) -> Signed:
         extend(self.tree)
         if self.pending == 0:
             raise CheckpointerError("no leaves are waiting to be checkpointed")

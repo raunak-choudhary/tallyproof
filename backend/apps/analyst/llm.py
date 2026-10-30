@@ -24,6 +24,8 @@ from typing import TYPE_CHECKING, Any, Literal, Protocol
 
 import requests
 
+from config.tracing import tracer
+
 if TYPE_CHECKING:
     from config.env import LLMSettings
 
@@ -207,7 +209,16 @@ class OpenAICompatibleClient:
         return body
 
     def complete(self, request: LLMRequest) -> LLMResponse:
-        """Send the request, retrying rate limits and server errors."""
+        """Send the request, retrying rate limits and server errors, in one span."""
+        with tracer().start_as_current_span("llm.complete") as span:
+            span.set_attribute("gen_ai.request.model", request.model)
+            span.set_attribute("tallyproof.prompt_version", request.prompt_version)
+            response = self._complete(request)
+            span.set_attribute("gen_ai.usage.input_tokens", response.input_tokens)
+            span.set_attribute("gen_ai.usage.output_tokens", response.output_tokens)
+            return response
+
+    def _complete(self, request: LLMRequest) -> LLMResponse:
         body = self._body(request)
         for attempt in range(self._retries + 1):
             self._pace()
