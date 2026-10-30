@@ -6,6 +6,7 @@ import type { Answer, Citation } from "@/lib/analyst/api";
 import { assuranceNote, sampleNote, segments } from "@/lib/analyst/api";
 
 import { CitationCheck } from "./CitationCheck";
+import { CitationSwarm } from "./CitationSwarm";
 
 const SHOWN = 10;
 
@@ -35,6 +36,7 @@ function CitationBlock({
       {sampleNote(citation, treeSize) && (
         <p className="mt-1 text-sm text-warn">{sampleNote(citation, treeSize)}</p>
       )}
+      {citation.events.length > 1 && <CitationSwarm base={base} events={citation.events} />}
       <ul className="mt-2 divide-y divide-border">
         {events.map((e) => (
           <CitationCheck
