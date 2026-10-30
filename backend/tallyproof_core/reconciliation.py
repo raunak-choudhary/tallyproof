@@ -15,6 +15,8 @@ Break types (docs/backend-design.md, anomaly catalog):
 - ``outlay_exceeds_obligation``: outlays above the award's obligations, adding up the latest
   cumulative figure for each Treasury account and fiscal year.
 - ``late_after_close``: an event reported long after it happened.
+- ``recipient_burst``: many new awards to one recipient within an hour, after 30
+  days with none (:mod:`tallyproof_core.bursts`).
 """
 
 from dataclasses import dataclass, field
@@ -22,6 +24,7 @@ from datetime import timedelta
 from decimal import Decimal
 from enum import StrEnum
 
+from tallyproof_core.bursts import Award, BurstDetector
 from tallyproof_core.events import EventEnvelope, EventType
 
 
@@ -33,6 +36,7 @@ class BreakType(StrEnum):
     ORPHAN_OUTLAY = "orphan_outlay"
     OUTLAY_EXCEEDS_OBLIGATION = "outlay_exceeds_obligation"
     LATE_AFTER_CLOSE = "late_after_close"
+    RECIPIENT_BURST = "recipient_burst"
 
 
 @dataclass(frozen=True)
@@ -84,6 +88,7 @@ class Reconciler:
     tolerance: Decimal = Decimal(0)
     _awards: dict[str, _Award] = field(default_factory=dict)
     _signatures: dict[tuple[str, str, str], tuple[str, str]] = field(default_factory=dict)
+    _bursts: BurstDetector = field(default_factory=BurstDetector)
 
     def apply(self, event: EventEnvelope) -> list[Break]:
         """Update the totals with one event and return the breaks it causes."""
@@ -93,6 +98,7 @@ class Reconciler:
         match event.event_type:
             case EventType.OBLIGATION_RECORDED:
                 breaks += self._recorded(event, award_key, Decimal(payload["amount"]), payload)
+                breaks += self._burst(event, award_key)
             case EventType.OBLIGATION_ADJUSTED:
                 breaks += self._adjusted(event, award_key, Decimal(payload["amount"]))
             case EventType.OUTLAY_REPORTED:
@@ -115,6 +121,24 @@ class Reconciler:
                 )
             )
         return breaks
+
+    def _burst(self, event: EventEnvelope, award_key: str) -> list[Break]:
+        burst = self._bursts.observe(
+            Award(event.emitted_at, event.account_id, event.event_id, award_key)
+        )
+        if burst is None:
+            return []
+        return [
+            Break(
+                BreakType.RECIPIENT_BURST,
+                event.event_id,
+                award_key,
+                None,
+                f"{len(burst.awards)} new awards to recipient {burst.recipient} within an hour"
+                f" from {burst.start:%Y-%m-%d %H:%M} UTC, after 30 days with none",
+                tuple((a.event_id, "burst_award") for a in burst.awards),
+            )
+        ]
 
     def _award(self, award_key: str, event_id: str) -> _Award:
         award = self._awards.get(award_key)
