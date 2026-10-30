@@ -19,7 +19,6 @@ from apps.analyst.models import AnalystAnswer
 from apps.analyst.service import REFUSAL_MESSAGES, answer_question
 from apps.ledger.api.problems import Problem, not_found
 from apps.ledger.api.throttling import ClientRateThrottle
-from apps.ledger.models import LedgerTotals
 
 MAX_QUESTION = 500
 
@@ -79,15 +78,14 @@ class AnswerSerializer(serializers.Serializer[AnalystAnswer]):
     def get_citations(self, answer: AnalystAnswer) -> list[dict[str, Any]]:
         """Each citation's events, with where to fetch their proofs.
 
-        A citation whose total can be proven as a whole also gets ``total_proof_url``,
-        when the answer's checkpoint has signed totals to prove it against.
+        A citation whose total can be proven as a whole also gets ``total_proof_url``.
+        The service records that only when the answer's checkpoint has signed totals.
         """
-        signed = LedgerTotals.objects.filter(tree_size=answer.tree_size).exists()
         return [
             {
                 **cite,
                 "total_proof_url": _total_proof_url(cite["total"], answer.tree_size)
-                if signed and cite.get("total")
+                if cite.get("total")
                 else None,
                 "events": [
                     {
