@@ -152,8 +152,9 @@ data-sample: require-venv ## Refresh the committed real-data sample from gold
 SET ?= smoke
 MODE ?= cached
 SCALE ?= eval
-eval: require-venv $(INTEGRATION_NEEDS) ## Run an evaluation in a throwaway database: SET=smoke|full|held_out|all MODE=fake|cached|live SCALE=eval|demo
-	cd $(BACKEND) && $(INTEGRATION_ENV) .venv/bin/python -m evals.runner --set $(SET) --mode $(MODE) --scale $(SCALE)
+SYSTEM ?= analyst
+eval: require-venv $(INTEGRATION_NEEDS) ## Run an evaluation in a throwaway database: SET=smoke|full|held_out|all MODE=fake|cached|live SCALE=eval|demo SYSTEM=analyst|naive
+	cd $(BACKEND) && $(INTEGRATION_ENV) .venv/bin/python -m evals.runner --set $(SET) --mode $(MODE) --scale $(SCALE) --system $(SYSTEM)
 
 eval-record: require-venv $(INTEGRATION_NEEDS) ## Record fresh model responses for the smoke set (needs the provider key in .env); commit testdata/llm_cache after
 	cd $(BACKEND) && $(INTEGRATION_ENV) LLM_REQUESTS_PER_MINUTE=4 LLM_MAX_RETRIES=6 .venv/bin/python -m evals.runner --set smoke --mode live

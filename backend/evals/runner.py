@@ -25,7 +25,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from evals import harness
+from evals import harness, judge, naive
 from evals.dataset import DEMO_DIR
 from evals.dataset import OUT_DIR as EVAL_DIR
 from evals.golden import FULL, SMOKE
@@ -105,6 +105,8 @@ def fake_script(request: Any) -> str:  # noqa: ANN401 - an LLMRequest; typed loo
         return json.dumps({"category": "refusal", "refusal_reason": "no_data"})
     if request.prompt_version.startswith("fallback"):
         return json.dumps({"sql": "SELECT 1"})
+    if request.prompt_version.startswith("judge"):
+        return json.dumps({"verdicts": []})
     return json.dumps({"answer": "The cited records answer this [[c1]]."})
 
 
@@ -133,6 +135,20 @@ class Meter:
         self.model_ms += int((time.monotonic() - started) * 1000)
         self.tokens += response.input_tokens + response.output_tokens
         return response
+
+
+def _judge_model(mode: str) -> str | None:
+    """The judge's model: recorded with the cache on replay, from settings when live."""
+    from config.env import llm_settings
+
+    settings = llm_settings()
+    if mode == "fake":
+        return "fake-judge"
+    if mode == "cached":
+        manifest = settings.llm_cache_dir / "manifest.json"
+        recorded = json.loads(manifest.read_text()) if manifest.exists() else {}
+        return recorded.get("judge_model") or None
+    return settings.llm_judge_model or None
 
 
 def _client(mode: str) -> tuple[Meter, "Models"]:
@@ -173,6 +189,7 @@ def _client(mode: str) -> tuple[Meter, "Models"]:
                 "answer_model": chosen.answer,
                 "max_output_tokens": chosen.max_output_tokens,
                 "reasoning_effort": chosen.reasoning_effort,
+                "judge_model": settings.llm_judge_model,
             },
             indent=2,
         )
@@ -279,6 +296,16 @@ def _reconciliation(oracle: Oracle) -> dict[str, Any]:
     }
 
 
+def judged(
+    meter: Meter, model: str | None, max_tokens: int, question: str, result: Result, evidence: str
+) -> float | None:
+    """The judge's faithfulness score for one answered question, or None when not judged."""
+    if model is None or result.status != "answered" or not judge.sentences(result.answer):
+        return None
+    reply = meter.complete(judge.request(question, result.answer, evidence, model, max_tokens))
+    return judge.score(reply.text, len(judge.sentences(result.answer)))
+
+
 def ask_all(
     questions: list[tuple[str, Question]],
     oracle: Oracle,
@@ -286,9 +313,11 @@ def ask_all(
     models: "Models",
     built: harness.Built,
     progress: Callable[[str], None],
+    system: str = "analyst",
+    judge_model: str | None = None,
 ) -> list[tuple[str, Result]]:
-    """Ask every question through the real pipeline and score it."""
-    from apps.analyst.pipeline import ask
+    """Ask every question through the analyst (or the naive baseline) and score it."""
+    from apps.analyst.pipeline import _evidence_block, ask
     from apps.analyst.service import AnalystConnection, agencies, search_policy
 
     executor = AnalystConnection("analyst")
@@ -297,16 +326,34 @@ def ask_all(
     results = []
     for n, (set_name, q) in enumerate(questions, start=1):
         before, started = meter.tokens, time.monotonic()
-        answer = ask(
-            q.text, client=meter, executor=executor, search=search_policy, models=models,
-            agencies=names, tree_size=built.tree_size,
-        )  # fmt: skip
-        elapsed = int((time.monotonic() - started) * 1000)
-        observed = _observe(answer, integrity, meter.tokens - before, elapsed)
+        if system == "naive":
+            context = naive.retrieve(q.text, executor, search_policy, names)
+            reply = meter.complete(
+                naive.request(
+                    q.text, context, models.answer, models.max_output_tokens,
+                    models.reasoning_effort,
+                )
+            )  # fmt: skip
+            elapsed = int((time.monotonic() - started) * 1000)
+            observed = naive.observe(
+                reply.text, context, integrity.events, meter.tokens - before, elapsed
+            )
+            evidence = context.render()
+        else:
+            answer = ask(
+                q.text, client=meter, executor=executor, search=search_policy, models=models,
+                agencies=names, tree_size=built.tree_size,
+            )  # fmt: skip
+            elapsed = int((time.monotonic() - started) * 1000)
+            observed = _observe(answer, integrity, meter.tokens - before, elapsed)
+            evidence = _evidence_block(answer.evidence) if answer.evidence else ""
         result = score(
             q.id, q.text, q.category, q.answerable, oracle.expected(q.expect), observed,
             q.must_not_say,
         )  # fmt: skip
+        result.faithfulness = judged(
+            meter, judge_model, models.max_output_tokens, q.text, result, evidence
+        )
         results.append((set_name, result))
         progress(f"[{n}/{len(questions)}] {q.id} {result.status} {result.refusal or ''}".rstrip())
     return results
@@ -335,15 +382,21 @@ def report(
     meter: Meter,
     models: "Models",
     extra: dict[str, Any],
+    system: str = "analyst",
+    judge_model: str | None = None,
 ) -> dict[str, Any]:
-    """Metrics per question set, the template versus held-out gap, and the gate."""
+    """Metrics per question set, the template versus held-out gap, and the gate.
+
+    The naive baseline is never gated: it is there to be compared, and falling short is
+    its expected result. Its runs are labeled baseline runs.
+    """
     harness_check = mode == "fake" or meter.misses > 0
     by_set: dict[str, list[Result]] = {}
     for set_name, result in results:
         by_set.setdefault(set_name, []).append(result)
     sets = {name: metrics(rows) for name, rows in by_set.items()}
     every = metrics([r for _, r in results]) | extra
-    failures = gate(every, quality=not harness_check)
+    failures = [] if system == "naive" else gate(every, quality=not harness_check)
     gap = None
     if "held_out" in sets and len(sets) > 1:
         template = next(v for k, v in sets.items() if k != "held_out")
@@ -353,9 +406,12 @@ def report(
         "run_at": datetime.now(UTC).isoformat(timespec="seconds"),
         "commit": _commit(),
         "mode": mode,
-        "label": "harness check" if harness_check else "quality run",
+        "system": system,
+        "label": "harness check"
+        if harness_check
+        else ("baseline run" if system == "naive" else "quality run"),
         "cache_misses": meter.misses,
-        "models": {"router": models.router, "answer": models.answer},
+        "models": {"router": models.router, "answer": models.answer, "judge": judge_model},
         "metrics": every,
         "by_set": sets,
         "template_vs_held_out_numeric_gap": gap,
@@ -369,8 +425,9 @@ def markdown(data: dict[str, Any]) -> str:
     lines = [
         f"# Evaluation, {data['run_at']}",
         "",
-        f"Mode `{data['mode']}`, labeled **{data['label']}**. Models: router "
-        f"`{data['models']['router']}`, answer `{data['models']['answer']}`. "
+        f"System `{data.get('system', 'analyst')}`, mode `{data['mode']}`, labeled "
+        f"**{data['label']}**. Models: router `{data['models']['router']}`, answer "
+        f"`{data['models']['answer']}`, judge `{data['models'].get('judge') or 'none'}`. "
         f"Cache misses: {data['cache_misses']}.",
         "",
         "| Metric | " + " | ".join(["all", *data["by_set"]]) + " |",
@@ -404,6 +461,12 @@ def main(argv: list[str] | None = None) -> int:  # pragma: no cover - exercised 
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--set", choices=sorted(SETS), default="smoke")
     parser.add_argument("--mode", choices=["fake", "cached", "live"], default="cached")
+    parser.add_argument(
+        "--system",
+        choices=["analyst", "naive"],
+        default="analyst",
+        help="analyst: the real pipeline; naive: the retrieval baseline it is compared with",
+    )
     parser.add_argument("--out", type=Path, default=OUT)
     parser.add_argument(
         "--scale",
@@ -426,8 +489,11 @@ def main(argv: list[str] | None = None) -> int:  # pragma: no cover - exercised 
         print(f"ledger built: {built.events} events, {built.policy_sections} FAR leaves, "
               f"checkpoint at {built.tree_size}")  # fmt: skip
         meter, models = _client(args.mode)
-        results = ask_all(questions, oracle, meter, models, built, print)
-        data = report(results, args.mode, meter, models, _reconciliation(oracle))
+        judge_model = _judge_model(args.mode)
+        results = ask_all(questions, oracle, meter, models, built, print, args.system, judge_model)
+        data = report(
+            results, args.mode, meter, models, _reconciliation(oracle), args.system, judge_model
+        )
     folder = args.out / datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
     folder.mkdir(parents=True, exist_ok=True)
     (folder / "report.json").write_text(json.dumps(data, indent=2, default=str) + "\n")
