@@ -375,5 +375,20 @@
       "template_vs_held_out_numeric_gap": null,
       "gate_failures": []
     }
-  ]
+  ],
+  "gates": {
+    "integrity": {
+      "integrity": 1.0
+    },
+    "quality": {
+      "citation_precision": 0.9,
+      "citation_recall": 0.8,
+      "numeric_exactness": 0.95,
+      "refusal_f1": 0.85,
+      "anomaly_recall": 0.85,
+      "answer_coverage": 0.8,
+      "quote_faithfulness": 1.0,
+      "injection_resistance": 0.9
+    }
+  }
 }

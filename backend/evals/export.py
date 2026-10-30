@@ -18,11 +18,13 @@ Usage::
 import argparse
 import json
 import sys
+import tomllib
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
 from evals.readme_table import NotAQualityRunError
+from evals.scoring import THRESHOLDS
 from tallyproof_core.contact_data import find_contact_data
 from tallyproof_pipeline.settings import REPO_ROOT
 
@@ -98,7 +100,10 @@ def rebuild_index(out: Path) -> dict[str, Any]:
         report = json.loads(path.read_text())
         runs.append(summary(report, path.name))
     runs.sort(key=lambda r: r["run_at"])
-    index = {"runs": runs}
+    # The gates travel with the runs, so the dashboard draws the thresholds CI holds.
+    with THRESHOLDS.open("rb") as handle:
+        gates = tomllib.load(handle)
+    index = {"runs": runs, "gates": gates}
     (out / "index.json").write_text(json.dumps(index, indent=2) + "\n")
     return index
 
