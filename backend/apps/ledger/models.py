@@ -90,6 +90,31 @@ class LedgerBatch(models.Model):
         return f"{self.public_id} [{self.start_index}, {self.tree_size})"
 
 
+class LedgerTotals(models.Model):
+    """A signed Merkle-sum tree root over the log at one checkpoint size (ADR-0024).
+
+    Append-only like the checkpoints: a later signing adds a row, never changes one.
+    """
+
+    tree_size = models.BigIntegerField(unique=True)
+    root_hash = models.BinaryField()
+    totals_note = models.TextField()
+    records = models.BigIntegerField()
+    """Leaves in the sum tree: the obligations and outlays in the checkpoint."""
+    signed_at = models.DateTimeField(db_default=Now())
+
+    class Meta:
+        db_table = "ledger_totals"
+        constraints = [
+            models.CheckConstraint(
+                condition=Q(tree_size__gt=0) & Q(records__gte=0), name="ledger_totals_sizes"
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f"totals at {self.tree_size}"
+
+
 class MerkleLogHead(models.Model):
     """The single row holding the next leaf index.
 
