@@ -42,10 +42,10 @@ const usd = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" 
 export default function HomePage() {
   const { total, items } = previews(8);
   return (
-    <>
+    <main>
       <Hero firstEventId={items[0]?.eventId ?? null} />
       <Story data={storyData()} />
-      <main id="records" className="mx-auto max-w-3xl scroll-mt-16 px-[var(--gutter)] py-16">
+      <div id="records" className="mx-auto max-w-3xl scroll-mt-16 px-[var(--gutter)] py-16">
         <section aria-labelledby="records-heading">
           <h2 id="records-heading" className="text-lg font-semibold">
             Records from the signed log
@@ -105,7 +105,7 @@ export default function HomePage() {
             signature. Nothing is taken on the server&apos;s word.
           </p>
         </section>
-      </main>
-    </>
+      </div>
+    </main>
   );
 }
