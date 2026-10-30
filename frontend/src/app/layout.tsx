@@ -39,8 +39,16 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <script dangerouslySetInnerHTML={{ __html: APPLY_SAVED_THEME }} />
       </head>
       <body className="flex min-h-dvh flex-col antialiased">
+        <a
+          href="#main"
+          className="sr-only z-50 rounded-[var(--radius)] bg-accent px-4 py-2 text-accent-fg focus:not-sr-only focus:fixed focus:top-3 focus:left-3"
+        >
+          Skip to content
+        </a>
         <SiteNav />
-        <div className="flex-1">{children}</div>
+        <div id="main" tabIndex={-1} className="flex-1 outline-none">
+          {children}
+        </div>
         <BuildFooter />
       </body>
     </html>
