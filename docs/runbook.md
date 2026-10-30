@@ -121,6 +121,22 @@ colima stop tallyproof       # free the VM's memory
 make reset                   # stop, delete volumes, recreate topics and schema (asks for confirmation)
 ```
 
+## The lake
+
+The lake turns the event stream into Iceberg tables under `data/lake`: `tallyproof.events` and `tallyproof.dead_letters`, with the catalog in `data/lake/catalog.db`. Like the Spark jobs, it runs only with Colima stopped.
+
+```bash
+colima stop tallyproof
+make lake          # sinks the gold stream; safe to stop and run again, it resumes
+make lake-check    # control totals: stream against lake, and every leaf hash recomputed
+```
+
+`make lake` reads the same stream the replay publishes, so every message ends one way: appended, refused as a duplicate, or dead-lettered. Each commit stores its position in the stream with the Iceberg snapshot, which is how a rerun knows where to start. `make lake-check` exits non-zero and lists each difference if anything is missing, repeated, or summed differently. Its report goes to `data/lake/_reports/control_totals.json`.
+
+On the full gold build (measured 2026-10-30, MacBook Air M3), `make lake` took 4.5 minutes for 1,704,800 messages in 18 commits: 1,704,750 events appended, 25 duplicates refused, and 25 invalid records dead-lettered, which matches the gold build's own counts. The Bloom filter flagged 49 keys as possibly seen and the table showed all 49 were new, a false-positive rate of 0.003 percent against a 0.1 percent target. The tables take 213 MB. `make lake-check` took under 2 minutes and found counts and sums equal for all three event types and every leaf hash intact. Running `make lake` again appended nothing.
+
+To start over, delete `data/lake`. Nothing else depends on it.
+
 ## Build the public demo bundle
 
 ```bash

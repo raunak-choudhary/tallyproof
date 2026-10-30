@@ -15,7 +15,7 @@ Each record explains the context, the decision, the reasons, the alternatives co
 | 0009 | Bound-claim answer format | Accepted |
 | 0010 | RFC 8785 canonical JSON for leaf bytes | Accepted |
 | 0011 | release-please on a minimal GitHub Action | Accepted |
-| 0012 | Parquet lake on SeaweedFS | Accepted |
+| 0012 | Parquet lake on SeaweedFS | Accepted, amended: Iceberg on local disk |
 | 0013 | Derive a double-entry journal from events | Accepted |
 | 0014 | Constrained query IR compiled to SQL | Accepted |
 | 0015 | Verification trust model | Accepted |

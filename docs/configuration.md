@@ -115,7 +115,9 @@ A checkpoint's key ID isn't configured: it's derived from the key's name and pub
 | `SPARK_DRIVER_MEMORY` | no | `2g` | Keeps Spark within the laptop's memory budget |
 | `SPARK_SHUFFLE_PARTITIONS` | no | `16` | Kept small for a single machine |
 | `SPARK_VERSION` | no | `4.1` | Tells PyDeequ which Deequ build to load |
-| `S3_ENDPOINT_URL`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_BUCKET_LAKE`, `S3_BUCKET_WITNESS` | planned, for the lake | | Local S3-compatible storage. The keys are secrets. Today the lake is Parquet under `data/` |
+| `LAKE_BATCH_ROWS` | no | `100000` | Stream messages per Iceberg commit in `make lake` |
+| `LAKE_BLOOM_EXPECTED_ITEMS` | no | `2000000` | Keys the lake's duplicate filter is sized for; the full stream has about 1.7 million. The target false-positive rate is `DEDUPE_TARGET_FPR` |
+| `S3_ENDPOINT_URL`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_BUCKET_LAKE`, `S3_BUCKET_WITNESS` | not used | | Kept for a future object store. The keys would be secrets. The lake lives under `data/lake` |
 
 ## Analyst and model provider
 
