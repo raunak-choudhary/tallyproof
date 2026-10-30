@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import type { EvalResult } from "@/lib/evals/reports";
-import { categoryRates, outcome, QUALITY_METRICS } from "@/lib/evals/reports";
+import type { EvalResult, RunSummary } from "@/lib/evals/reports";
+import { bySystem, categoryRates, outcome, QUALITY_METRICS } from "@/lib/evals/reports";
 
 import {
   brushed,
@@ -154,5 +154,14 @@ describe("question matrix", () => {
     expect(s1!.misses).toBe(2);
     expect(s2!.steady).toBe(false);
     expect(s2!.misses).toBe(1);
+  });
+});
+
+describe("runs by system", () => {
+  it("keeps the naive baseline out of the analyst's run history", () => {
+    const run = (file: string, system?: string) => ({ file, system }) as unknown as RunSummary;
+    const { analyst, naive } = bySystem([run("a"), run("b", "naive"), run("c", "analyst")]);
+    expect(analyst.map((r) => r.file)).toEqual(["a", "c"]);
+    expect(naive.map((r) => r.file)).toEqual(["b"]);
   });
 });
