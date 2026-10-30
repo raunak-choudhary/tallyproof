@@ -128,7 +128,12 @@ def models() -> Models:
     )
 
 
-def _body(answer: Answer, chosen: Models) -> dict[str, Any]:
+def _body(answer: Answer, chosen: Models, totals_signed: bool = False) -> dict[str, Any]:
+    """The stored answer's body.
+
+    ``totals_signed`` says the answer's checkpoint has signed totals, so a citation
+    that can be proven as a whole records which total; otherwise none does.
+    """
     evidence = answer.evidence or Evidence()
     sources = evidence.sources
     return {
@@ -149,7 +154,7 @@ def _body(answer: Answer, chosen: Models) -> dict[str, Any]:
                 "meaning": c.words,
                 "sample_of": c.sample_of,
                 "total": None
-                if c.total is None
+                if c.total is None or not totals_signed
                 else {
                     "entity": c.total.entity,
                     "agency": c.total.agency,
@@ -204,7 +209,11 @@ def store(answer: Answer, chosen: Models, tree_size: int) -> AnalystAnswer:
         tree_size=tree_size,
         assurance=evidence.assurance if evidence else "",
         filter_words=evidence.filter_words if evidence else "",
-        body=_body(answer, chosen),
+        body=_body(
+            answer,
+            chosen,
+            totals_signed=LedgerTotals.objects.filter(tree_size=tree_size).exists(),
+        ),
     )
 
 
