@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 330" width="880" height="330" role="img"
+  font-family="Inter, -apple-system, Segoe UI, Helvetica, Arial, sans-serif">
+  <title>Tallyproof: public records stream into an append-only ledger, are hashed into a Merkle log, signed, witnessed, and verified in your browser</title>
+  <defs><marker id="head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+    <path d="M0 0 L10 5 L0 10 z" fill="#5a6078"/></marker></defs>
+  <rect width="880" height="330" rx="18" fill="#f7f7fb"/>
+  <text x="859" y="40" font-size="12" letter-spacing="1.6" text-anchor="end" fill="#0e7490">THE DATA PATH</text>
+  <text x="859" y="204" font-size="12" letter-spacing="1.6" text-anchor="end" fill="#5b3df5">THE TRUST PATH</text>
+
+  <g transform="translate(21 64)">
+    <rect width="190" height="74" rx="12" fill="#ffffff" stroke="#dddee8"/>
+    <rect x="0" y="14" width="4" height="46" rx="2" fill="#5a6078"/>
+    <text x="18" y="32" font-size="15" font-weight="600" fill="#0e0f17">Public records</text>
+    <text x="18" y="54" font-size="12.5" fill="#5a6078">USAspending, Treasury</text>
+  </g>
+<line x1="214" y1="101" x2="234" y2="101" stroke="#5a6078" stroke-width="1.6" marker-end="url(#head)"/>
+
+  <g transform="translate(237 64)">
+    <rect width="190" height="74" rx="12" fill="#ffffff" stroke="#dddee8"/>
+    <rect x="0" y="14" width="4" height="46" rx="2" fill="#5a6078"/>
+    <text x="18" y="32" font-size="15" font-weight="600" fill="#0e0f17">Clean and check</text>
+    <text x="18" y="54" font-size="12.5" fill="#5a6078">Spark, Deequ</text>
+  </g>
+<line x1="430" y1="101" x2="450" y2="101" stroke="#5a6078" stroke-width="1.6" marker-end="url(#head)"/>
+
+  <g transform="translate(453 64)">
+    <rect width="190" height="74" rx="12" fill="#ffffff" stroke="#dddee8"/>
+    <rect x="0" y="14" width="4" height="46" rx="2" fill="#0e7490"/>
+    <text x="18" y="32" font-size="15" font-weight="600" fill="#0e0f17">Stream</text>
+    <text x="18" y="54" font-size="12.5" fill="#5a6078">Kafka, deduplicated</text>
+  </g>
+<line x1="646" y1="101" x2="666" y2="101" stroke="#5a6078" stroke-width="1.6" marker-end="url(#head)"/>
+
+  <g transform="translate(669 64)">
+    <rect width="190" height="74" rx="12" fill="#ffffff" stroke="#dddee8"/>
+    <rect x="0" y="14" width="4" height="46" rx="2" fill="#0e7490"/>
+    <text x="18" y="32" font-size="15" font-weight="600" fill="#0e0f17">Append-only ledger</text>
+    <text x="18" y="54" font-size="12.5" fill="#5a6078">Postgres</text>
+  </g>
+
+  <g transform="translate(21 214)">
+    <rect width="190" height="74" rx="12" fill="#ffffff" stroke="#dddee8"/>
+    <rect x="0" y="14" width="4" height="46" rx="2" fill="#5b3df5"/>
+    <text x="18" y="32" font-size="15" font-weight="600" fill="#0e0f17">Merkle log</text>
+    <text x="18" y="54" font-size="12.5" fill="#5a6078">RFC 9162</text>
+  </g>
+<line x1="214" y1="251" x2="234" y2="251" stroke="#5a6078" stroke-width="1.6" marker-end="url(#head)"/>
+
+  <g transform="translate(237 214)">
+    <rect width="190" height="74" rx="12" fill="#ffffff" stroke="#dddee8"/>
+    <rect x="0" y="14" width="4" height="46" rx="2" fill="#5b3df5"/>
+    <text x="18" y="32" font-size="15" font-weight="600" fill="#0e0f17">Signed checkpoint</text>
+    <text x="18" y="54" font-size="12.5" fill="#5a6078">Ed25519</text>
+  </g>
+<line x1="430" y1="251" x2="450" y2="251" stroke="#5a6078" stroke-width="1.6" marker-end="url(#head)"/>
+
+  <g transform="translate(453 214)">
+    <rect width="190" height="74" rx="12" fill="#ffffff" stroke="#dddee8"/>
+    <rect x="0" y="14" width="4" height="46" rx="2" fill="#8a5a0a"/>
+    <text x="18" y="32" font-size="15" font-weight="600" fill="#0e0f17">Outside witness</text>
+    <text x="18" y="54" font-size="12.5" fill="#5a6078">OpenTimestamps</text>
+  </g>
+<line x1="646" y1="251" x2="666" y2="251" stroke="#5a6078" stroke-width="1.6" marker-end="url(#head)"/>
+
+  <g transform="translate(669 214)">
+    <rect width="190" height="74" rx="12" fill="#ffffff" stroke="#dddee8"/>
+    <rect x="0" y="14" width="4" height="46" rx="2" fill="#15803d"/>
+    <text x="18" y="32" font-size="15" font-weight="600" fill="#0e0f17">Your browser</text>
+    <text x="18" y="54" font-size="12.5" fill="#5a6078">verifies every citation</text>
+  </g>
+<path d="M764 141 V168 H116 V210" fill="none" stroke="#5a6078" stroke-width="1.6" marker-end="url(#head)"/>
+<text x="440" y="162" font-size="12" text-anchor="middle" fill="#5a6078" paint-order="stroke" stroke="#f7f7fb" stroke-width="6">every record's bytes hashed into a leaf</text>
+<text x="440" y="312" font-size="13" text-anchor="middle" fill="#5a6078">The AI analyst answers from the ledger; every number it gives is cited to records your browser can check.</text>
+</svg>
