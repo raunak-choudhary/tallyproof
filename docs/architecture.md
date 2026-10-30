@@ -180,10 +180,10 @@ The browser trusts one thing today: a release public key compiled into the web b
 |---|---|---|---|
 | 1 | Edit a stored event | The recomputed leaf no longer reproduces the signed root | In the browser, and in the integration tests |
 | 2 | Edit the event and rebuild the tree, without the signing key | The checkpoint signature fails against the pinned key | In the browser, and in the integration tests |
-| 3 | Edit, rebuild, and re-sign with a stolen key | The consistency proof against the externally timestamped checkpoint fails | `make verify-witness` and the integration tests; the browser check is planned |
+| 3 | Edit, rebuild, and re-sign with a stolen key | The consistency proof against the externally timestamped checkpoint fails | `make verify-witness`, the integration tests, and the record pages in the browser |
 | 4 | All of the above, before the next external timestamp | Not detectable. The window is `WITNESS_INTERVAL_SECONDS`, and the README says so | |
 
-`make tamper LEVEL=1`, `2`, or `3` carries out each attack on a local ledger, and `make tamper RESTORE=1` puts it back; integration tests show each level is caught by the check in this table. The public demo lets you edit a record's amount, and rebuild the tree around the edit, in the browser, which demonstrates levels 1 and 2. Level 3 in the browser comes with the planned consistency check; level 4 is explained, not demonstrated.
+`make tamper LEVEL=1`, `2`, or `3` carries out each attack on a local ledger, and `make tamper RESTORE=1` puts it back; integration tests show each level is caught by the check in this table. The public demo lets you edit a record's amount, and rebuild the tree around the edit, in the browser, which demonstrates levels 1 and 2. Each record page also checks the log against a checkpoint witnessed on a different origin, which is what catches level 3, and the tamper page shows that attack; level 4 is explained, not demonstrated.
 
 ## Known limits
 

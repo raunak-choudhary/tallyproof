@@ -90,7 +90,7 @@ The Verify button checks more than the proof itself. The record must be the even
 
 ### Tampering and signing keys
 
-Tamper detection is layered. The browser recomputes the leaf from the record's bytes, walks the inclusion proof to the root, and checks the checkpoint's signature against a key pinned in the web build. The consistency proof against a checkpoint someone else timestamped is checked today by `make verify-witness` and the integration tests, not yet in the browser; that step is planned with the site. The full ladder is in [architecture.md](architecture.md#tamper-detection).
+Tamper detection is layered. The browser recomputes the leaf from the record's bytes, walks the inclusion proof to the root, and checks the checkpoint's signature against a key pinned in the web build. On the record pages the browser also fetches a checkpoint someone else timestamped, from a different origin than the site (`witness/replay/` on raw.githubusercontent.com), and checks a consistency proof from it to the signed root, so a history rewritten with a stolen key fails there; `make verify-witness` and the integration tests run the same check on the live log. The full ladder is in [architecture.md](architecture.md#tamper-detection).
 
 Keys come in three classes, so a leak of one doesn't compromise the others:
 
