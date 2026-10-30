@@ -3,7 +3,7 @@
 import { type FormEvent, useState } from "react";
 
 import type { Answer } from "@/lib/analyst/api";
-import { askQuestion } from "@/lib/analyst/api";
+import { answerPath, askQuestion } from "@/lib/analyst/api";
 import { apiBase } from "@/lib/live/api";
 
 import { AnswerView } from "./AnswerView";
@@ -90,6 +90,17 @@ export function AnalystPage() {
         </p>
       )}
       {/* Keyed by answer, so no check or expanded list carries over to the next answer. */}
+      {answer && (
+        <p className="text-sm text-fg-muted">
+          <a
+            href={answerPath(answer.answerId)}
+            className="text-accent underline-offset-4 hover:underline"
+          >
+            Link to this answer
+          </a>{" "}
+          to share it; whoever opens it can verify every citation themselves.
+        </p>
+      )}
       {answer && <AnswerView key={answer.answerId} base={base} answer={answer} />}
     </div>
   );
