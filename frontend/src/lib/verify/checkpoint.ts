@@ -111,3 +111,26 @@ export function parseCheckpoint(text: string): Checkpoint {
 export function verifyCheckpoint(note: string, key: VerifierKey): Checkpoint {
   return parseCheckpoint(verifyNote(note, key));
 }
+
+export const TOTALS_NOTE_MARKER = "tallyproof-totals/v1";
+
+/** A signed Merkle-sum tree root for one checkpoint size (ADR-0024). */
+export interface TotalsNote {
+  origin: string;
+  treeSize: number;
+  rootHash: Uint8Array;
+}
+
+/** Parse totals note text: a marker line, then origin, size, and base64 root. */
+export function parseTotalsNote(text: string): TotalsNote {
+  const lines = text.split("\n");
+  if (lines.length !== 5 || lines[4] !== "" || lines[0] !== TOTALS_NOTE_MARKER) {
+    throw new CheckpointError("a totals note has a marker, origin, size, and root line");
+  }
+  const { origin, treeSize, rootHash } = parseCheckpoint(`${lines.slice(1, 4).join("\n")}\n`);
+  return { origin, treeSize, rootHash };
+}
+
+export function verifyTotalsNote(note: string, key: VerifierKey): TotalsNote {
+  return parseTotalsNote(verifyNote(note, key));
+}
