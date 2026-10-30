@@ -130,6 +130,46 @@ class Checkpoint:
         return cls(origin, int(size), _b64decode(root))
 
 
+TOTALS_NOTE_MARKER = "tallyproof-totals/v1"
+"""First line of a totals note, so it can never be read as a checkpoint, and back."""
+
+
+@dataclass(frozen=True)
+class TotalsNote:
+    """A commitment to the Merkle-sum tree of the log at one size (ADR-0024).
+
+    Attributes:
+        origin: The log it was built from, as in that log's checkpoints.
+        tree_size: The checkpoint size the tree covers.
+        root_hash: The sum tree's 32-byte root.
+    """
+
+    origin: str
+    tree_size: int
+    root_hash: bytes
+
+    def __post_init__(self) -> None:
+        """Validate the fields so an invalid note can never be signed."""
+        Checkpoint(self.origin, self.tree_size, self.root_hash)  # the same rules apply
+
+    def note_text(self) -> str:
+        """Marker, origin, size, and base64 root, each on a line."""
+        return (
+            f"{TOTALS_NOTE_MARKER}\n{self.origin}\n{self.tree_size}\n{_b64encode(self.root_hash)}\n"
+        )
+
+    @classmethod
+    def from_note_text(cls, text: str) -> "TotalsNote":
+        """Parse verified note text back into a totals note."""
+        lines = text.split("\n")
+        if len(lines) != 5 or lines[4] != "" or lines[0] != TOTALS_NOTE_MARKER:
+            raise CheckpointError("a totals note has a marker, origin, size, and root line")
+        origin, size, root = lines[1:4]
+        if not _DECIMAL.match(size):
+            raise CheckpointError("tree size must be a decimal without leading zeros")
+        return cls(origin, int(size), _b64decode(root))
+
+
 class Signer:
     """Signs notes with one Ed25519 key under one key name."""
 
@@ -163,6 +203,10 @@ class Signer:
     def sign_checkpoint(self, checkpoint: Checkpoint) -> str:
         """Sign a checkpoint and return the signed note."""
         return self.sign_note(checkpoint.note_text())
+
+    def sign_totals(self, totals: "TotalsNote") -> str:
+        """Sign a totals note and return the signed note."""
+        return self.sign_note(totals.note_text())
 
 
 class Verifier:
@@ -235,6 +279,10 @@ class Verifier:
     def verify_checkpoint(self, note: str) -> Checkpoint:
         """Verify a signed checkpoint note and return the checkpoint it commits to."""
         return Checkpoint.from_note_text(self.verify_note(note))
+
+    def verify_totals(self, note: str) -> TotalsNote:
+        """Verify a signed totals note and return what it commits to."""
+        return TotalsNote.from_note_text(self.verify_note(note))
 
 
 def _check_note_characters(text: str) -> None:
