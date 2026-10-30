@@ -322,7 +322,7 @@ tamper: require-venv ## Tamper demo: DEMO_TAMPER_ENABLED=true make tamper LEVEL=
 	cd $(BACKEND) && DJANGO_SETTINGS_MODULE=config.settings.migrate .venv/bin/python manage.py tamper \
 		$(if $(RESTORE),--restore,--level $(LEVEL) --event $(EVENT))
 
-schemas: require-venv ## Regenerate backend/schemas/events.v1.json from the event models
+schemas: require-venv ## Regenerate backend/schemas/events.v2.json from the event models
 	cd $(BACKEND) && DJANGO_SETTINGS_MODULE=config.settings.test .venv/bin/python -c \
 		"import django; django.setup(); from apps.ingestion.schemas import SCHEMA_FILE, schema_text; SCHEMA_FILE.write_text(schema_text())"
 

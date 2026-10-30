@@ -2,9 +2,10 @@
 
 The JSON Schema for ``EventEnvelope`` is generated from the Pydantic models,
 rewritten to draft-07 with internal references only (so it works in Redpanda's
-registry and AWS Glue alike), and committed as ``schemas/events.v1.json``. A
+registry and AWS Glue alike), and committed as ``schemas/events.v2.json``. A
 test fails if the models change without regenerating that file, so every schema
-change is a reviewed diff. Registration sets the subject to ``BACKWARD``: the
+change is a reviewed diff. ``schemas/events.v1.json`` stays committed as the
+version it evolved from. Registration sets the subject to ``BACKWARD``: the
 registry then refuses a new version that consumers of the old one can't read.
 """
 
@@ -16,7 +17,9 @@ import requests
 
 from tallyproof_core.events import EventEnvelope
 
-SCHEMA_FILE = Path(__file__).resolve().parents[2] / "schemas" / "events.v1.json"
+SCHEMA_DIR = Path(__file__).resolve().parents[2] / "schemas"
+SCHEMA_FILE = SCHEMA_DIR / "events.v2.json"
+PREVIOUS_SCHEMA_FILE = SCHEMA_DIR / "events.v1.json"
 CONTENT_TYPE = "application/vnd.schemaregistry.v1+json"
 
 
