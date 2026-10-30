@@ -7,6 +7,8 @@ const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
 const config: NextConfig = {
   output: "export",
+  // The browser tests run a second dev server built with an API URL; it needs its own folder.
+  distDir: process.env.NEXT_DIST_DIR ?? ".next",
   basePath,
   reactStrictMode: true,
   trailingSlash: true,

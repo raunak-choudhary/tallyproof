@@ -37,6 +37,7 @@ node_modules/
 dist/
 build/
 .next/
+.next-live/
 out/
 
 # OS and editors

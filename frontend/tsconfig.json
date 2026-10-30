@@ -35,7 +35,9 @@
     ".next/types/**/*.ts",
     "*.ts",
     "*.mjs",
-    ".next/dev/types/**/*.ts"
+    ".next/dev/types/**/*.ts",
+    ".next-live/types/**/*.ts",
+    ".next-live/dev/types/**/*.ts"
   ],
   "exclude": ["node_modules", "out"]
 }
