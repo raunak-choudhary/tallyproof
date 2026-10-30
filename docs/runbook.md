@@ -178,6 +178,15 @@ make rebuild-derived VIEW=reconciliation
 
 Rebuilding needs the owner role, because the derived tables are append-only to the app role. Do it after changing a reconciliation rule.
 
+## Tracing
+
+```bash
+make tracing                                   # Jaeger, only when asked for
+echo 'OTEL_EXPORTER_OTLP_ENDPOINT=http://127.0.0.1:4318' >> .env
+```
+
+Restart the API and workers, and their spans appear at http://localhost:16686: `ingest.batch` for each batch the consumer commits, `checkpoint.close` for each signed checkpoint, `analyst.answer` for each question, and `llm.complete` for each model call inside it, with the model and token counts. Every span carries the correlation ID its log lines carry, so a slow answer in the trace view leads straight to its logs, and back. Remove the line from `.env` to turn tracing off.
+
 ## Evolving the event schema
 
 Events change by adding optional payload fields, never by changing or removing one, so every event already in the log stays valid and keeps its bytes.

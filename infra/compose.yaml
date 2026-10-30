@@ -100,6 +100,16 @@ services:
       - "127.0.0.1:8080:8080"
     mem_limit: 256m
 
+  jaeger:
+    # Traces from the API and workers (config/tracing.py). Started only with
+    # --profile tracing; set OTEL_EXPORTER_OTLP_ENDPOINT=http://127.0.0.1:4318 to send to it.
+    image: jaegertracing/jaeger:2.22.0
+    profiles: ["tracing"]
+    ports:
+      - "127.0.0.1:4318:4318"
+      - "127.0.0.1:16686:16686"
+    mem_limit: 256m
+
 volumes:
   redpanda-data:
   postgres-data:

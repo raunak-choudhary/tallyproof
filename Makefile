@@ -32,7 +32,7 @@ COMPOSE := docker --context colima-$(COLIMA_PROFILE) compose --env-file .env -f 
 SPARK_VERSION ?= 4.1
 export SPARK_VERSION
 
-.PHONY: help docs docs-build doctor venv deps deps-sync require-venv lint format typecheck test check audit vectors vectors-check web-install web-lint web-typecheck web-test web-build web-e2e web-check web-audit web-live data-fetch data-outlays data-build data-build-outlays data-quality data-profile require-no-containers data-gold keygen replay replay-witness replay-totals data-sample lake lake-check recon-report batch-recon eval eval-record eval-export eval-questions eval-dataset test-integration coverage coverage-report require-colima up down reset ps logs db-roles migrate ingest checkpointer project relay fanout stream check-derived rebuild-derived check-totals dead-letters verify-witness data-replay data-treasury policy-fetch policy-publish demo demo-stop load-test tamper schemas register-schemas verify-event console clean
+.PHONY: help docs docs-build doctor venv deps deps-sync require-venv lint format typecheck test check audit vectors vectors-check web-install web-lint web-typecheck web-test web-build web-e2e web-check web-audit web-live data-fetch data-outlays data-build data-build-outlays data-quality data-profile require-no-containers data-gold keygen replay replay-witness replay-totals data-sample lake lake-check recon-report batch-recon eval eval-record eval-export eval-questions eval-dataset test-integration coverage coverage-report require-colima up down reset ps logs db-roles migrate ingest checkpointer project relay fanout stream check-derived rebuild-derived check-totals dead-letters verify-witness data-replay data-treasury policy-fetch policy-publish demo demo-stop load-test tamper schemas register-schemas verify-event console tracing clean
 
 help: ## List available commands
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -337,6 +337,9 @@ data-treasury: require-venv require-colima ## Publish Treasury cash statements (
 
 db-roles: require-colima ## Re-run the database role script, for example after changing a password
 	$(COMPOSE) exec -T postgres bash /docker-entrypoint-initdb.d/10-roles.sh
+
+tracing: require-colima ## Start the Jaeger trace collector; its UI is at http://localhost:16686
+	$(COMPOSE) --profile tracing up -d jaeger
 
 console: require-colima ## Open the broker console at http://localhost:8080
 	$(COMPOSE) --profile tools up -d --wait console
