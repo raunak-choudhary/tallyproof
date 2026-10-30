@@ -50,7 +50,7 @@ export default async function EventPage({ params }: { params: Promise<{ eventId:
       <p className="text-sm text-fg-muted">Ledger event</p>
       <h1 className="mt-1 break-all font-mono text-xl md:text-2xl">{eventId}</h1>
       {displayed.length > 0 && (
-        <dl className="mt-6 grid grid-cols-2 gap-4 rounded-[var(--radius)] border border-border bg-bg-elevated p-4 sm:grid-cols-4">
+        <dl className="mt-6 flex flex-wrap gap-x-10 gap-y-4 rounded-[var(--radius)] border border-border bg-bg-elevated p-4">
           {displayed.map((d) => (
             <div key={d.label} className="min-w-0">
               <dt className="text-xs text-fg-muted">{d.label}</dt>
