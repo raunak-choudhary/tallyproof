@@ -1,6 +1,17 @@
 import { defineConfig, devices } from "@playwright/test";
 
 // Browser tests run against the dev server. CI installs Chromium only.
+
+/** The API origin the live-mode server is built with; flows answer it with page.route. */
+export const LIVE_API = "http://api.test";
+
+const SHARED_ENV = {
+  // The public demo key (frontend/.env.example): a real Ed25519 key, so record pages verify.
+  NEXT_PUBLIC_PINNED_VERIFIER_KEY:
+    process.env.NEXT_PUBLIC_PINNED_VERIFIER_KEY ??
+    "tallyproof.dev/log/v1+c04b910b+ARIXhwyOWRiBdf5kvkuHmZxGuibupdyNRDe40eDIu15y",
+  NEXT_TELEMETRY_DISABLED: "1",
+};
 export default defineConfig({
   testDir: "./e2e",
   fullyParallel: true,
@@ -17,17 +28,24 @@ export default defineConfig({
     screenshot: "only-on-failure",
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
-  webServer: {
-    command: "pnpm exec next dev --port 3100",
-    url: "http://localhost:3100",
-    reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
-    env: {
-      // The public demo key (frontend/.env.example): a real Ed25519 key, so record pages verify.
-      NEXT_PUBLIC_PINNED_VERIFIER_KEY:
-        process.env.NEXT_PUBLIC_PINNED_VERIFIER_KEY ??
-        "tallyproof.dev/log/v1+c04b910b+ARIXhwyOWRiBdf5kvkuHmZxGuibupdyNRDe40eDIu15y",
-      NEXT_TELEMETRY_DISABLED: "1",
+  webServer: [
+    {
+      // The site as GitHub Pages serves it: static data only, no API.
+      command: "pnpm exec next dev --port 3100",
+      url: "http://localhost:3100",
+      reuseExistingServer: !process.env.CI,
+      timeout: 120_000,
+      env: { ...SHARED_ENV },
     },
-  },
+    {
+      // The same site built with an API URL, for the analyst flows. The tests answer that
+      // API themselves (page.route), so no backend runs. Its own build folder keeps the two
+      // dev servers apart.
+      command: "pnpm exec next dev --port 3101",
+      url: "http://localhost:3101",
+      reuseExistingServer: !process.env.CI,
+      timeout: 120_000,
+      env: { ...SHARED_ENV, NEXT_DIST_DIR: ".next-live", NEXT_PUBLIC_API_URL: LIVE_API },
+    },
+  ],
 });
