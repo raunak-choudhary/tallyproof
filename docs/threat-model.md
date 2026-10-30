@@ -150,6 +150,9 @@ The append-only tables have no update or delete grants for the application role,
 - Public IDs carry 80 random bits (ULIDs), so they can't be enumerated.
 - CORS is limited to the configured web origin, and standard security headers are set: a Content-Security-Policy that allows nothing on JSON responses, HSTS wherever HTTPS is configured, `X-Content-Type-Options`, `Referrer-Policy`, and `X-Frame-Options`.
 
+
+A public live backend was considered and not built. It would expose the analyst to anyone, spending the free tier's shared daily quota for every visitor, and it would add a server, a database, and a signing key on the internet to defend. It would prove nothing the static site doesn't: every record, checkpoint, witness, and total on the public site is verified in the browser against the pinned key. The rate limits, the in-flight cap, and the per-address budget exist and are tested, so the decision can be revisited.
+
 ### The public demo
 
 The demo is a static site with no backend, so its attack surface is the files it serves. A manifest lists the SHA-256 of every bundled file and is signed with the release key, and the browser checks that signature against the fingerprint compiled into the page before it trusts anything else. Deploys are pinned to a git commit shown in the page. The tamper demo edits a copy of the record in the reader's browser; nothing is sent anywhere or changed on the server.
