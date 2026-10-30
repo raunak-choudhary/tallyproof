@@ -175,4 +175,4 @@ One CircleCI context exists:
 
 - `llm-eval`, used only by the weekly scheduled evaluation and restricted to this project and the `main` branch: `LLM_PROVIDER`, `LLM_BASE_URL`, `LLM_API_KEY` (a key used only by CI), `LLM_ANSWER_MODEL`, `LLM_REASONING_EFFORT`. `LLM_REQUESTS_PER_MINUTE` and `LLM_MAX_RETRIES` can be added to pace the run under the free tier's limits.
 
-Planned: a fine-grained GitHub token in the same context, scoped to this repository's contents and pull requests, so the weekly job can open a pull request with the refreshed results table. It can't push to `main`. The release signing key never enters CI.
+`GH_TOKEN` in the same context is a fine-grained GitHub token scoped to this repository, with read and write access to contents and pull requests only. The weekly job uses it to open a pull request with the refreshed results table, and the script refuses to push to `main`. Without it, the job skips that step and says so. The release signing key never enters CI.
