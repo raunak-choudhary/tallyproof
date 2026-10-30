@@ -16,10 +16,14 @@ from apps.ledger.api.serializers import (
     EventSerializer,
     InclusionProofSerializer,
     LogKeySerializer,
+    TotalProofSerializer,
+    TotalsSerializer,
 )
-from apps.ledger.models import LedgerBatch, LedgerEvent
+from apps.ledger.models import LedgerBatch, LedgerEvent, LedgerTotals
 from config.env import app_settings
 from tallyproof_core.events import EventType
+from tallyproof_core.sum_tree import proof_to_json, verify_total
+from tallyproof_core.totals import OBLIGATIONS, OUTLAYS, prefix
 
 
 class _Pages(CursorPagination):
@@ -242,5 +246,77 @@ class BatchConsistencyView(APIView):
                 "proof_hex": [node.hex() for node in proof],
                 "first_note": previous.checkpoint_note,
                 "second_note": batch.checkpoint_note,
+            }
+        )
+
+
+def _totals(tree_size: int | None) -> LedgerTotals:
+    rows = LedgerTotals.objects.order_by("-tree_size")
+    totals = rows.first() if tree_size is None else rows.filter(tree_size=tree_size).first()
+    if totals is None:
+        what = "Signed totals" if tree_size is None else f"Signed totals for checkpoint {tree_size}"
+        raise not_found(what)
+    return totals
+
+
+class LatestTotalsView(APIView):
+    """The newest signed Merkle-sum tree root."""
+
+    @extend_schema(responses=TotalsSerializer)
+    def get(self, request: Request) -> Response:
+        """Return the newest signed totals."""
+        totals = _totals(None)
+        return Response(
+            {
+                "tree_size": totals.tree_size,
+                "records": totals.records,
+                "root_hash_hex": bytes(totals.root_hash).hex(),
+                "totals_note": totals.totals_note,
+            }
+        )
+
+
+class TotalProofView(APIView):
+    """A proof of one total against a signed sum tree, without listing its records."""
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter("entity", str, required=True, enum=[OBLIGATIONS, OUTLAYS]),
+            OpenApiParameter("agency", str, description="Awarding agency, exactly as recorded."),
+            OpenApiParameter("fiscal_year", int, description="Needs an agency."),
+            OpenApiParameter("tree_size", int, description="Defaults to the newest signed totals."),
+        ],
+        responses=TotalProofSerializer,
+    )
+    def get(self, request: Request) -> Response:
+        """Return the proof, the signed note it checks against, and what it establishes."""
+        entity = request.query_params.get("entity")
+        if entity not in (OBLIGATIONS, OUTLAYS):
+            raise _bad_request(f"entity must be {OBLIGATIONS} or {OUTLAYS}.")
+        agency = request.query_params.get("agency")
+        year = _int_param(request, "fiscal_year")
+        if agency is not None and (len(agency) > 200 or "\x00" in agency):
+            raise _bad_request("agency is too long or not text.")
+        if year is not None and agency is None:
+            raise _bad_request("fiscal_year needs an agency.")
+        totals = _totals(_int_param(request, "tree_size"))
+        tree = proofs.sum_tree(totals.tree_size)
+        proof = tree.prove(prefix(entity, agency, year))
+        proven = verify_total(proof, bytes(totals.root_hash))
+        if proven is None:  # the stored root and the rebuilt tree disagree: say so loudly
+            raise Problem(
+                status.HTTP_500_INTERNAL_SERVER_ERROR,
+                "totals-mismatch",
+                "Totals don't match their signature",
+                f"The sum tree rebuilt for checkpoint {totals.tree_size} doesn't match"
+                " its signed root.",
+            )
+        return Response(
+            {
+                "tree_size": totals.tree_size,
+                "totals_note": totals.totals_note,
+                "total_cents": str(proven.total),
+                "count": proven.count,
+                "proof": proof_to_json(proof),
             }
         )
