@@ -33,7 +33,7 @@ Versions were checked against PyPI, npm, Docker Hub, and the official documentat
 | Java | OpenJDK 17 from Homebrew, keg-only | 17 | Spark 4 needs Java 17 or newer. It's scoped to project commands through `JAVA_HOME` and never added to the system path |
 | Columnar files | pyarrow | 26 | Parquet files and the Arrow tables written to Iceberg |
 | Lake tables | pyiceberg, with pyiceberg-core | 0.12 | Iceberg tables with a SQL catalog in a local SQLite file; the core package computes partition transforms ([ADR-0012](adr/0012-lake-sink-and-object-store.md)) |
-| Ad hoc queries | DuckDB | 1.5 | Optional, for exploring the lake. 2.0 is too new to rely on yet |
+| Batch SQL | DuckDB | 1.5 | Reconciliation rules as SQL over gold and silver ([batch reconciliation](batch-reconciliation.md)). 2.0 is too new to rely on yet |
 
 ## Testing and quality
 
