@@ -272,6 +272,10 @@ jobs:
       - run-eval:
           set: all
           mode: live
+      - run:
+          name: Open a pull request with the README results table
+          # Runs only if the evaluation passed its gates. Never pushes to main.
+          command: scripts/ci/open_results_pr.sh
 
   ci-gate:
     executor: python
