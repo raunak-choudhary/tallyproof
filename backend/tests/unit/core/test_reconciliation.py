@@ -35,6 +35,15 @@ def test_every_labeled_anomaly_is_caught_by_its_rule(overlaid):
             assert (EXPECTED[label.anomaly], label.event_id) in found, label
 
 
+def test_every_injected_burst_is_caught_with_all_its_awards(overlaid):
+    bursts = [b for b in run(overlaid.events) if b.break_type is BreakType.RECIPIENT_BURST]
+    labels = [x for x in overlaid.labels if x.anomaly == Anomaly.RECIPIENT_BURST]
+    assert labels
+    for label in labels:
+        burst_ids = {label.event_id, *label.related_event_ids}
+        assert any({e for e, _ in b.events} == burst_ids for b in bursts), label
+
+
 def test_untouched_real_events_raise_no_breaks():
     assert run(real_events()) == []
 
