@@ -49,4 +49,10 @@ The claim becomes: **"Your browser trusts only a pinned key and an externally ti
 
 The browser verifier (`frontend/src/lib/verify/verifyEvent.ts`) checks the checkpoint's signature against the pinned key, the record's canonical form, the leaf hash, and the inclusion proof to the signed root. That catches levels 1 and 2, and the event page demonstrates both: edit an amount, or rebuild the tree around the edit.
 
-The consistency proof against an externally timestamped checkpoint, which catches level 3, runs today in `make verify-witness` and the integration tests (`tests/integration/ledger/test_tamper.py`), not in the browser. Moving it into the browser, with the witness copy fetched from a second origin, and comparing displayed values with the verified bytes, are planned with the site. Until then the public pages say the browser trusts the pinned key and checks levels 1 and 2.
+The consistency proof against an externally timestamped checkpoint, which catches level 3, runs in `make verify-witness` and the integration tests (`tests/integration/ledger/test_tamper.py`).
+
+## Implementation notes (2026-10-30)
+
+Steps 3 and 4 now run in the browser too. `python -m tallyproof_pipeline.replay_witness --stamp` writes a checkpoint of the replay log below its full size into `witness/replay/` and submits it to the OpenTimestamps calendars; the `.ots` proofs sit beside it. The record page fetches that file from `NEXT_PUBLIC_WITNESS_URL`, which the GitHub Pages build points at the raw file on raw.githubusercontent.com at the commit being published, so the witness comes from a different origin than the site. The verifier checks the witnessed note against the pinned key and verifies a consistency proof from the witnessed root to the signed root; a history rewritten and re-signed with the key fails there even though every other check passes. The record page also prints the record's type, amount, and date into its HTML at build time, and the verifier compares each with the verified bytes.
+
+What remains outside the browser: it can't check the OpenTimestamps proof against Bitcoin by itself. Anyone can, with `ots verify` on the files in `witness/replay/`. On the live page the witness for the live log isn't published anywhere public, so that page still checks levels 1 and 2 only.
