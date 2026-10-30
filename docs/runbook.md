@@ -100,6 +100,10 @@ On its first start, Postgres creates three roles from `infra/postgres/create-rol
 
 The FAR text the analyst can quote lives in `backend/corpus/far/`, one JSON Lines file per part plus a manifest of text hashes. `make policy-fetch` refreshes it from the latest eCFR edition; review the diff and commit it like code. `make policy-publish` sends it to the raw topic, where each section becomes a ledger leaf. Sections whose text hasn't changed are refused as duplicates, so publishing again is safe.
 
+## Load test
+
+`make load-test` measures throughput, outbox lag, and end-to-end latency on a throwaway copy of the stack, then removes it. Stop the demo stack first with `make down`, since the copy uses the same ports; the demo's data is kept. It needs the gold build and takes about ten minutes. Results go to `var/load-test/<time>/`, and [the load test page](load-test.md) explains them.
+
 ## Health checks
 
 - `GET /healthz` answers as long as the process is up.

@@ -7,7 +7,7 @@ The diagrams are Mermaid and live in this file, so they change in the same commi
 ## Overview
 
 1. The **data pipeline** downloads official bulk files, cleans them with Spark in bronze, silver, and gold layers, removes personal data, checks quality with Deequ, and injects a seeded, labeled set of anomalies whose labels are stored separately ([ADR-0016](adr/0016-real-public-data-sources.md), [ADR-0017](adr/0017-spark-batch-processing-and-deequ.md)).
-2. **Redpanda**, a Kafka-compatible broker, carries the events, partitioned by recipient.
+2. **Redpanda**, a Kafka-compatible broker, carries the events, partitioned by award.
 3. **Ingestion workers** validate and deduplicate events, then append them to the ledger in the same Postgres transaction that records the consumer offset.
 4. The **ledger** is append-only. Each accepted event becomes a leaf in a Merkle log.
 5. The **checkpointer** closes a batch by size or time and signs a checkpoint (tree size and root hash) with Ed25519.
@@ -162,11 +162,11 @@ Money is always a decimal string, never a float, so Python and the browser hash 
 
 ### Ordering
 
-Kafka orders events within a partition only. Events are keyed by recipient, so everything for one vendor stays in order, which reconciliation depends on.
+Kafka orders events within a partition only. Events are keyed by award, so everything for one award stays in order, which reconciliation depends on. Cash movements have no award and are keyed by account.
 
 The Merkle log has one global order, assigned at commit. That's ingestion order, not event time: a late event gets a later leaf index but keeps its original timestamp. Reconciliation and analytics use event time; proofs use leaf index.
 
-Only one writer appends to the log at a time. With N partitions and N consumers, that's the throughput ceiling of the design. The load test measures it, and the way past it is to shard the log by partition under a top-level log of shard heads.
+Only one writer appends to the log at a time. With N partitions and N consumers, that's the throughput ceiling of the design. The [load test](load-test.md) measures it at about 3,000 events a second on a laptop, the same with one consumer as with three, and the way past it is to shard the log by partition under a top-level log of shard heads.
 
 ### Immutability
 
@@ -199,8 +199,8 @@ What was scaled down to run on one laptop and free tiers, and how to run each pa
 
 | Concern | Current design | How it's measured | Path beyond it |
 |---|---|---|---|
-| Ingest throughput | N consumers, one log writer | Load test | Shard the log per partition |
-| Proof generation | Computed from leaf hashes | p95 latency in the load test | Persist interior nodes; serve tiles from object storage |
+| Ingest throughput | N consumers, one log writer | [Load test](load-test.md): about 3,000 events a second, flat across consumers | Shard the log per partition |
+| Proof generation | Computed from an in-memory tree | [Load test](load-test.md): 5 ms at p95 over 105,000 leaves | Persist interior nodes; serve tiles from object storage |
 | Batch processing | Spark in local mode, one 2 GB file at a time | Job timings in the data profile | A Spark cluster such as EMR or Glue |
 | Postgres size | Single node | Row counts | Time partitioning; cold data stays in the lake |
 | Kafka | 6 partitions locally | Consumer lag | More partitions, Amazon MSK |

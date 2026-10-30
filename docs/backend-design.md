@@ -155,7 +155,7 @@ Topics are named `<domain>.<entity>.<stage>.v<major>`.
 
 The journal and reconciliation don't consume Kafka. They're projections that read the ledger in leaf order with a cursor stored in the same transaction as their output ([ADR-0019](adr/0019-projections-read-the-ledger.md)). Every message the relay publishes carries an `outbox-id` header, since delivery is at least once.
 
-Events are keyed by recipient because reconciliation works per award and recipient, so ordering matters there. Duplicates share a key, which puts them on the same partition, where the per-partition Bloom filter can see both. A recipient with a very large share of events can skew partitions. The load test reports partition balance.
+Events are keyed by award, because reconciliation works per award, so ordering matters there; cash movements have no award and are keyed by account. Duplicates share a key, which puts them on the same partition, where the per-partition Bloom filter can see both. An award with a very large share of events could skew partitions. The [load test](load-test.md) reports partition balance: about 35,000 events on each of the three partitions out of 105,000.
 
 ## Database
 
