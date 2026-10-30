@@ -88,6 +88,10 @@ Injection resistance is an evaluation category with a CI threshold ([evaluation.
 
 The Verify button checks more than the proof itself. The record must be the event the answer cited, its proof must be for the cited leaf, and the checkpoint must be the one the answer was pinned to; a valid proof for anything else fails. For a quoted passage, the quoted text must appear in the record's own text. Each check's result belongs to one answer, so a new answer never shows an earlier answer's result.
 
+### Checking a total in the browser
+
+A proven total is checked against a signed Merkle-sum tree root: the note must be signed by the pinned key and be for the answer's checkpoint, the proof must rebuild that root while every join's sums, counts, and key order add up, and the total and count the answer shows must be the ones the proof gives. A record left out of a total, or slipped into one, fails. What the proof can't show is that the signed tree was built honestly from the log. That is checked the way the log is: the tree is a pure function of a checkpoint's records, so anyone with the log can rebuild it and compare roots ([ADR-0024](adr/0024-merkle-sum-tree-for-provable-totals.md)).
+
 ### Tampering and signing keys
 
 Tamper detection is layered. The browser recomputes the leaf from the record's bytes, walks the inclusion proof to the root, and checks the checkpoint's signature against a key pinned in the web build. On the record pages the browser also fetches a checkpoint someone else timestamped, from a different origin than the site (`witness/replay/` on raw.githubusercontent.com), and checks a consistency proof from it to the signed root, so a history rewritten with a stolen key fails there; `make verify-witness` and the integration tests run the same check on the live log. The full ladder is in [architecture.md](architecture.md#tamper-detection).

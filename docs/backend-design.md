@@ -293,10 +293,12 @@ All endpoints except the health checks are under `/api/v1/` and return JSON. The
 | GET | `/api/v1/checkpoints/{tree_size}` | The checkpoint signed at one tree size |
 | GET | `/api/v1/consistency?first={size}&second={size}` | Proof that the second checkpoint extends the first |
 | GET | `/api/v1/batches/{batch_id}/consistency` | Proof that a batch's checkpoint extends the one before it; 409 for the first batch |
+| GET | `/api/v1/totals/latest` | The newest signed Merkle-sum tree root and the checkpoint it covers ([ADR-0024](adr/0024-merkle-sum-tree-for-provable-totals.md)) |
+| GET | `/api/v1/totals/proof?entity=&agency=&fiscal_year=&tree_size=` | Proof of one total against signed totals, without its records: `entity` is `obligations` or `outlays`; a fiscal year needs an agency |
 | GET | `/api/v1/reconciliation/breaks` | Breaks in the order found, filterable by `break_type` and `award_key` |
 | GET | `/api/v1/reconciliation/breaks/{break_id}` | One break and the events involved, with their roles |
-| POST | `/api/v1/queries` | Ask the analyst a question (`{"question": "..."}`). Answered as of the newest checkpoint, or refused with a code and a reason. Throttled per client by `API_THROTTLE_ANON_QUERIES`, with an IPv6 client counted as its /64. Answers 503 with `Retry-After` when every answering slot in the process is taken |
-| GET | `/api/v1/answers/{answer_id}` | A stored answer: text with values filled in, each value's meaning and citation, the filter in words, and every cited event with its proof URL pinned to the answer's checkpoint |
+| POST | `/api/v1/queries` | Ask the analyst a question (`{"question": "..."}`). Answered as of the newest checkpoint with signed totals (the newest checkpoint while the log is small), or refused with a code and a reason. Throttled per client by `API_THROTTLE_ANON_QUERIES`, with an IPv6 client counted as its /64. Answers 503 with `Retry-After` when every answering slot in the process is taken |
+| GET | `/api/v1/answers/{answer_id}` | A stored answer: text with values filled in, each value's meaning and citation, the filter in words, and every cited event with its proof URL pinned to the answer's checkpoint. A citation whose total can be proven as a whole also has `total_proof_url` |
 | GET | `/healthz` | Liveness, no dependencies |
 | GET | `/readyz` | Checks the database and the broker; 503 names whichever is down |
 

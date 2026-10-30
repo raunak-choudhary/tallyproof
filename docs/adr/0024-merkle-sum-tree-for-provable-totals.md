@@ -52,3 +52,12 @@ The tree's root is signed as its own C2SP signed note with the checkpoint key, n
 - Large totals become provable in the browser without listing their records, and the labelled-sample caveat goes away for the totals above.
 - The checkpointer does more work. On the demo's log it's negligible; on a million-record log it's about 9 seconds and 500 MB at each totals signing, which sets the cadence.
 - The tree's correctness rests on the same audit as the log. The documentation says so plainly.
+
+## Implementation notes (2026-10-30)
+
+- The tree and its verifier are `tallyproof_core/sum_tree.py`, keys are `tallyproof_core/totals.py`, and the browser verifier is `frontend/src/lib/verify/sumTree.ts`. Both languages are checked against `testdata/vectors/sum_tree.json`, which includes forged proofs that must fail.
+- A test proves every agency and agency-year total over the evaluation dataset and compares each with the evaluation oracle's independent sum. They agree to the cent.
+- Totals notes are signed notes whose first line is `tallyproof-totals/v1`, so neither a totals note nor a checkpoint can pass for the other.
+- The checkpointer signs them into `ledger_totals`, an append-only table: at every checkpoint up to `TOTALS_EVERY_CHECKPOINT_UP_TO` records, then at most every `TOTALS_INTERVAL_SECONDS`.
+- The API serves `/api/v1/totals/latest` and `/api/v1/totals/proof`. Answers are pinned to the newest checkpoint with signed totals, and a provable citation carries `total_proof_url`. The answer page's Verify the total control runs the four checks in the browser, and the end-to-end test follows the link and checks the proven total against the oracle.
+- The static site proves the replay bundle's totals too. `make replay-totals` signs them into `frontend/public/replay/totals.json` from the bundle's own records, and the ledger page verifies every agency's total in the browser.
