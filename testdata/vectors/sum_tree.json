@@ -1,4 +1,7 @@
 {
+  "verifier_key": "vectors.tallyproof.dev/test+db931638+AbTDJZ17TVI0N6We4giRBaZ5/Y9SHq682NdMLTNI3OTs",
+  "totals_note": "tallyproof-totals/v1\nvectors.tallyproof.dev/test\n13\nz3CZn2YFV6PXdkeVVDJAra8BZBsUm9lYVFHacAJe6BQ=\n\n— vectors.tallyproof.dev/test 25MWOOigY6lR6s5AYLnFeZdMCIMCPyItCaOYy2KQflrvr1A50Htg1zEibgBZJTmpedOArPDYrnjYZ9sjab9SENQ2dQ0=\n",
+  "checkpoint_note_with_the_same_root": "vectors.tallyproof.dev/test\n13\nz3CZn2YFV6PXdkeVVDJAra8BZBsUm9lYVFHacAJe6BQ=\n\n— vectors.tallyproof.dev/test 25MWOOFsHKPWBW82Ud7pcLn+bJE7zBAFM2PbyDYEN9bGgcE2GrahvrFu38exkYPVar4ZDdcYcqHggSiVMWrpurbhaQs=\n",
   "leaves": [
     {
       "key": [
