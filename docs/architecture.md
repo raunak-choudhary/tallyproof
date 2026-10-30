@@ -44,7 +44,7 @@ Rel(ci, tp, "Builds and gates")
 C4Container
 title Tallyproof: containers (local stack)
 Container(pipe, "Data pipeline", "PySpark 4.1, Deequ", "Bronze, silver, gold; personal data removal; anomaly overlay; Kafka replay")
-ContainerDb(lake, "Lake", "Parquet on local disk; Iceberg on S3-compatible storage later", "Full cleaned dataset")
+ContainerDb(lake, "Lake", "Parquet and Iceberg tables on local disk", "Full cleaned dataset and event stream")
 ContainerQueue(rp, "Redpanda", "Kafka API", "Raw events, dead letters, appended events, breaks, checkpoints")
 Container(ing, "Ingestion workers", "Python, confluent-kafka", "Validate, deduplicate, append, store offsets")
 ContainerDb(pg, "PostgreSQL 16 + pgvector", "SQL", "Ledger, Merkle log, checkpoints, journal, breaks, answers")
@@ -222,7 +222,7 @@ Only measured numbers get published, with hardware and configuration stated.
 | Outbox relay behind | Downstream views are stale | Unsent rows wait in the outbox; consumers deduplicate by outbox ID |
 | A projection fails on an event | That projection stops at the event; the others continue | Its cursor didn't move, so it retries from the same leaf after the fix, or is rebuilt |
 | Redis down or a browser too slow | Live updates stop or skip | The stream is best effort; the browser reconnects and reads state over REST |
-| Lake sink behind (planned) | Lake trails the ledger | Control totals flag the gap; the sink resumes from its offsets |
+| Lake sink stopped partway | Lake trails the stream | `make lake-check` flags the gap; `make lake` resumes from the position stored in the last snapshot, never writing a row twice |
 
 ## Deployment
 

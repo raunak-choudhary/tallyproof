@@ -9,7 +9,7 @@ Tallyproof runs on one laptop with open-source components, and nothing in this r
 | Spark in local mode | AWS Glue jobs or Amazon EMR | The same PySpark code, run on a cluster instead of three local cores |
 | Deequ checks | Deequ on Glue or EMR, or AWS Glue Data Quality, which is built on Deequ | The constraints carry over |
 | Downloaded archives (bronze layer) | S3, with Object Lock for the raw files | The source-file hashes in the ledger stay the same |
-| Parquet on SeaweedFS | Amazon S3 data lake | Same layout and partitioning |
+| Parquet and Iceberg data files on local disk | Amazon S3 data lake | Same layout and partitioning |
 | Iceberg with a local SQL catalog | Amazon S3 Tables, or Iceberg tables in the Glue Data Catalog | Only the catalog changes |
 | DuckDB for ad hoc queries | Amazon Athena | Minor SQL dialect differences |
 | Redpanda (Kafka API) | Amazon MSK | Same client code, IAM authentication, partitions sized from the load test |

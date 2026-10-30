@@ -31,7 +31,8 @@ Versions were checked against PyPI, npm, Docker Hub, and the official documentat
 | Batch processing | PySpark | 4.1 | The engine AWS Glue and EMR run. Held at 4.1 because PyDeequ supports Spark 3.5 and 4.1, not 4.2 ([ADR-0017](adr/0017-spark-batch-processing-and-deequ.md)) |
 | Data quality | PyDeequ (Amazon Deequ) | 1.7.0 | Constraint checks and metric history inside Spark |
 | Java | OpenJDK 17 from Homebrew, keg-only | 17 | Spark 4 needs Java 17 or newer. It's scoped to project commands through `JAVA_HOME` and never added to the system path |
-| Columnar files | pyarrow | 26 | Parquet, with Iceberg tables added later |
+| Columnar files | pyarrow | 26 | Parquet files and the Arrow tables written to Iceberg |
+| Lake tables | pyiceberg, with pyiceberg-core | 0.12 | Iceberg tables with a SQL catalog in a local SQLite file; the core package computes partition transforms ([ADR-0012](adr/0012-lake-sink-and-object-store.md)) |
 | Ad hoc queries | DuckDB | 1.5 | Optional, for exploring the lake. 2.0 is too new to rely on yet |
 
 ## Testing and quality
@@ -47,7 +48,7 @@ pytest 9, pytest-django 4.14, Hypothesis 6, testcontainers 4.15 (with the Redpan
 | Broker console | `docker.redpanda.com/redpandadata/console:v3.13.1` |
 | Postgres with pgvector | `pgvector/pgvector:0.8.7-pg16-trixie` |
 | Redis | `redis:7.4-alpine`, the WebSocket channel layer |
-| S3-compatible storage | SeaweedFS 4, since the MinIO community edition is no longer maintained ([ADR-0012](adr/0012-lake-sink-and-object-store.md)) |
+| S3-compatible storage | Not used. SeaweedFS was chosen first, then dropped for memory; the lake is Iceberg on local disk ([ADR-0012](adr/0012-lake-sink-and-object-store.md)) |
 
 PostgreSQL 16 is supported until November 2028, which covers Django 5.2's support window, and it's available on Aurora PostgreSQL.
 

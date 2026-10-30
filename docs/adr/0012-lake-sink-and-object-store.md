@@ -1,6 +1,6 @@
 # ADR-0012: Parquet lake on SeaweedFS (S3 API)
 
-- Status: Accepted
+- Status: Accepted, amended 2026-10-30 (see below)
 - Date: 2026-10-26
 
 ## Context
@@ -25,3 +25,15 @@ SeaweedFS Object Lock completeness is only documented in secondary sources. It w
 ## Library pins
 
 PyArrow 26.x, DuckDB 1.5.x (2.0 LTS was released five days before this ADR; revisit later).
+
+## Amendment, 2026-10-30: Iceberg on local disk, no object store
+
+The lake was built differently from the plan above, for memory. An object-store service beside the Colima VM and Spark doesn't fit in 8 GB, so:
+
+1. **Iceberg tables, not loose Parquet files.** The sink writes `tallyproof.events` and `tallyproof.dead_letters` with pyiceberg. The catalog is a SQLite file and the warehouse a folder under `data/lake`. Events are partitioned by event type and by month of `occurred_at`, using Iceberg's hidden partitioning, so queries filter on the timestamp and never on a derived column.
+2. **No SeaweedFS.** Nothing runs beside the VM. Checkpoints are still witnessed by OpenTimestamps; a locked copy of each one waits for a real S3 bucket with Object Lock ([ADR-0007](0007-signed-checkpoints-and-witnessing.md)).
+3. **The sink reads the replay stream, not Kafka.** It runs with Colima stopped, like the Spark jobs, so it reads the same stream the replay publishes: gold events with the invalid records mixed in at their arrival times. Every message ends one way, as in ingestion: appended, refused as a duplicate, or dead-lettered.
+4. **Snapshot properties replace offset-named files.** Each commit stores how far into the stream it got as a property of the Iceberg snapshot, written atomically with the rows. A rerun resumes from there. Duplicates are predicted by the same Bloom filter as ingestion, and a "maybe" is checked exactly against the table ([ADR-0008](0008-effectively-once-ingestion.md)).
+5. **Control totals compare the stream, the lake, and the gold build.** `make lake-check` recounts the stream on its own, reads the tables back in batches, and requires equal counts and exact decimal sums per event type. It also recomputes every row's leaf hash from its stored canonical bytes. The ledger is not part of the comparison, since it holds a replayed slice and the lake holds the whole stream.
+
+On AWS, the catalog becomes the Glue Data Catalog and the warehouse an S3 bucket, or both become S3 Tables. The table layout and the sink code stay the same; only the catalog configuration changes ([limitations](../limitations.md)).
