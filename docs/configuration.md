@@ -66,6 +66,8 @@ Every setting comes from environment variables, loaded through one typed setting
 | `CHECKPOINT_PUBLIC_KEY` | yes | | Public key served at `/api/v1/log-key` |
 | `WITNESS_EXPORT_PATH` | no | `var/witness/checkpoints.jsonl` | Local witness output, ignored by git |
 | `WITNESS_INTERVAL_SECONDS` | no | `3600` | Longest gap before a checkpoint is externally timestamped |
+| `TOTALS_EVERY_CHECKPOINT_UP_TO` | no | `50000` | The checkpointer signs the Merkle-sum tree of every checkpoint while the log is at most this size ([ADR-0024](adr/0024-merkle-sum-tree-for-provable-totals.md)) |
+| `TOTALS_INTERVAL_SECONDS` | no | `300` | Past that size, it signs the totals at most this often; building them for a million records takes about 9 seconds |
 | `WITNESS_OTS_ENABLED` | no | `true` | Timestamp checkpoint hashes with OpenTimestamps |
 | `WITNESS_OTS_CALENDARS` | no | the `a` and `b` OpenTimestamps pool calendars | Comma separated calendar URLs |
 | `DEMO_TAMPER_ENABLED` | no | `false` | Allows the local tamper demo tool to run |

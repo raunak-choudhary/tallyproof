@@ -168,6 +168,14 @@ class CheckpointerSettings(AppSettings):
     witness_interval_seconds: int = Field(
         default=3600, ge=1, validation_alias="WITNESS_INTERVAL_SECONDS"
     )
+    totals_every_checkpoint_up_to: int = Field(
+        default=50_000, ge=0, validation_alias="TOTALS_EVERY_CHECKPOINT_UP_TO"
+    )
+    """Sign the Merkle-sum tree at every checkpoint while the log is at most this size."""
+    totals_interval_seconds: int = Field(
+        default=300, ge=1, validation_alias="TOTALS_INTERVAL_SECONDS"
+    )
+    """Past that size, sign it at most this often: a million records take about 9 seconds."""
     witness_ots_enabled: bool = Field(default=True, validation_alias="WITNESS_OTS_ENABLED")
     witness_ots_calendars: str = Field(
         default="https://a.pool.opentimestamps.org,https://b.pool.opentimestamps.org",

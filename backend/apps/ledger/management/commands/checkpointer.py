@@ -10,6 +10,7 @@ from django.db import connection
 
 from apps.ledger.append import APPENDED_CHANNEL
 from apps.ledger.checkpointer import Checkpointer, WitnessPolicy, try_lock
+from apps.ledger.totals import TotalsSigner
 from config.env import checkpointer_settings
 from config.logging import configure
 from tallyproof_core.checkpoint import Signer, decode_private_key
@@ -55,6 +56,9 @@ class Command(BaseCommand):
             witness,
             announce_topic=env.kafka_topic_checkpoints,
         )
+        totals = TotalsSigner(
+            signer, env.totals_every_checkpoint_up_to, env.totals_interval_seconds
+        )
         log.info(
             "checkpointer started at %d leaves, %d signed",
             checkpointer.tree.size,
@@ -76,6 +80,7 @@ class Command(BaseCommand):
                 signed = checkpointer.tick()
                 if signed is not None:
                     log.info("signed checkpoint %d (%s)", signed.tree_size, signed.public_id)
+                    totals.maybe_sign(signed.tree_size)
                     continue
                 due = checkpointer.seconds_until_due()
                 wait = IDLE_WAIT_SECONDS if due is None else max(due, 0.01)

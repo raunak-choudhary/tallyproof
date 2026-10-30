@@ -98,9 +98,10 @@ def django_db_setup(database: Database, django_db_blocker: DjangoDbBlocker) -> N
 def migrated(django_db_setup: None, database: Database) -> Database:
     """The migrated test database. Tests use their own role connections."""
     with database.connect("superuser") as conn:
-        conn.execute("ALTER TABLE ledger_event DISABLE TRIGGER USER")
-        conn.execute("DELETE FROM ledger_event")
-        conn.execute("ALTER TABLE ledger_event ENABLE TRIGGER USER")
+        for table in ("ledger_totals", "ledger_event"):
+            conn.execute(f"ALTER TABLE {table} DISABLE TRIGGER USER")
+            conn.execute(f"DELETE FROM {table}")  # noqa: S608 - two fixed table names
+            conn.execute(f"ALTER TABLE {table} ENABLE TRIGGER USER")
         conn.execute("UPDATE merkle_log_head SET next_leaf_index = 0")
     return database
 
