@@ -105,6 +105,7 @@ nav:
       - "ADR-0021: One OpenAI-compatible model client, running on Groq's free tier": adr/0021-openai-compatible-client-on-groq.md
       - "ADR-0022: fastembed and an in-memory index for policy retrieval": adr/0022-fastembed-and-an-in-memory-policy-index.md
       - "ADR-0023: Evaluation runs are recorded as reports, in a throwaway ledger": adr/0023-evaluation-runs-recorded-as-reports.md
+      - "ADR-0024: A Merkle-sum tree for provable totals": adr/0024-merkle-sum-tree-for-provable-totals.md
   - API reference:
       - Core library: reference/core.md
       - Analyst: reference/analyst.md

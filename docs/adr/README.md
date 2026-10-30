@@ -27,3 +27,4 @@ Each record explains the context, the decision, the reasons, the alternatives co
 | 0021 | One OpenAI-compatible model client, running on Groq's free tier | Accepted |
 | 0022 | fastembed and an in-memory index for policy retrieval | Accepted |
 | 0023 | Evaluation runs are recorded as reports, in a throwaway ledger | Accepted |
+| 0024 | A Merkle-sum tree for provable totals | Accepted |
