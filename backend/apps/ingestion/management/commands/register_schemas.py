@@ -16,9 +16,7 @@ class Command(BaseCommand):
         """Check the file is current, then register it."""
         committed = SCHEMA_FILE.read_text(encoding="utf-8")
         if committed != schema_text():
-            raise CommandError(
-                "schemas/events.v1.json is out of date; run make schemas and review it"
-            )
+            raise CommandError(f"{SCHEMA_FILE.name} is out of date; run make schemas and review it")
         env = app_settings()
         subject = subject_for(env.kafka_topic_events_raw)
         registry = env.kafka_schema_registry_url

@@ -30,6 +30,9 @@ from tallyproof_core.ids import parse_id
 from tallyproof_core.money import Money, MoneyError
 
 SCHEMA_VERSION: Final = 1
+"""The envelope format that is hashed. Payloads evolve by adding optional fields,
+which the schema registry versions (``schemas/events.v2.json``); an event that
+leaves a new field empty keeps exactly the bytes it always had, so this stays 1."""
 
 
 def _money_text(value: str) -> str:
@@ -88,6 +91,8 @@ class ObligationRecorded(_Strict):
     naics_code: OptionalText = None
     psc_code: OptionalText = None
     description: Description = None
+    recipient_parent_uei: OptionalText = None
+    """Added in registry version 2: the recipient's parent company, when the source names one."""
 
 
 class ObligationAdjusted(_Strict):
