@@ -14,6 +14,7 @@ import { pinnedVerifierKey } from "@/lib/replay/pinnedKey";
 import { verifyCheckpoint } from "@/lib/verify/checkpoint";
 
 import { ArrivalRaster } from "./ArrivalRaster";
+import { ProvenTotals } from "./ProvenTotals";
 import { Streamgraph } from "./Streamgraph";
 
 type Status = "replay" | "connecting" | "open" | "closed";
@@ -245,6 +246,8 @@ export function LedgerPage() {
       <section className="min-w-0 rounded-[var(--radius-lg)] border border-border bg-bg-elevated p-4">
         <ArrivalRaster rows={rows} />
       </section>
+
+      {!live && <ProvenTotals base={replayBase()} treeSize={checkpoint?.treeSize ?? null} />}
 
       {checkpoint?.note && (
         <section className="min-w-0 rounded-[var(--radius-lg)] border border-border bg-bg-elevated p-4">
