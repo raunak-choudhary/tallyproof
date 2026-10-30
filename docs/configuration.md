@@ -128,7 +128,7 @@ The analyst calls its model through one client that speaks the OpenAI chat-compl
 | `LLM_API_KEY` | with the real provider | | Secret. Sent only in the Authorization header, never logged |
 | `LLM_ANSWER_MODEL` | with the real provider | | Model ID for composing answers; never hardcoded |
 | `LLM_ROUTER_MODEL` | no | the answer model | Model ID for query specs |
-| `LLM_JUDGE_MODEL` | no | the answer model | Model ID for the narrative-faithfulness judge |
+| `LLM_JUDGE_MODEL` | no | empty: no judging | Model ID for the narrative-faithfulness judge in evaluation runs. Judging costs one request per answer, so it's off unless set |
 | `LLM_REASONING_EFFORT` | no | the provider's default | `none`, `minimal`, `low`, `medium`, or `high`. Thinking counts against the output limit on Gemini and gpt-oss, so a provider's default can cut answers short; `low` is recommended |
 | `LLM_TIMEOUT_SECONDS` | no | `30` | Per request |
 | `LLM_MAX_RETRIES` | no | `3` | Retries for rate limits and server errors, with backoff |
