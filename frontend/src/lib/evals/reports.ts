@@ -16,6 +16,8 @@ export interface RunSummary {
   run_at: string;
   commit: string;
   mode: string;
+  /** "analyst" for the real pipeline, "naive" for the retrieval baseline. */
+  system?: string;
   label: string;
   models: { router: string; answer: string };
   sets: Record<string, number | null>;
@@ -85,6 +87,17 @@ export const INTEGRITY_METRICS: readonly Metric[] = [
   { key: "integrity", label: "Integrity", short: "Integrity" },
   { key: "reconciliation_recall", label: "Reconciliation recall", short: "Recon." },
 ];
+
+/** Runs of the real analyst, and of the naive baseline it is compared with. */
+export function bySystem(runs: readonly RunSummary[]): {
+  analyst: RunSummary[];
+  naive: RunSummary[];
+} {
+  return {
+    analyst: runs.filter((r) => (r.system ?? "analyst") === "analyst"),
+    naive: runs.filter((r) => r.system === "naive"),
+  };
+}
 
 export function evalsBase(): string {
   return `${replayBase()}/evals`;

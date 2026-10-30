@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { questionMatrix } from "@/lib/charts/evalCharts";
 import type { EvalIndex, RunReport } from "@/lib/evals/reports";
 import {
+  bySystem,
   categoryRates,
   INTEGRITY_METRICS,
   loadIndex,
@@ -17,6 +18,12 @@ import { HorizonMetrics } from "./HorizonMetrics";
 import { ParallelRuns } from "./ParallelRuns";
 import { QuestionMatrix } from "./QuestionMatrix";
 import { SlopeCategories } from "./SlopeCategories";
+
+const FAITHFULNESS = {
+  key: "narrative_faithfulness",
+  label: "Narrative faithfulness (judged)",
+  short: "Faithful",
+};
 
 const HEADLINE = ["numeric_exactness", "citation_precision", "citation_recall", "refusal_f1"];
 
@@ -34,12 +41,13 @@ export function EvalsPage() {
     loadIndex()
       .then(async (idx) => {
         setIndex(idx);
-        setReports(await Promise.all(idx.runs.map((r) => loadRun(r.file))));
+        setReports(await Promise.all(bySystem(idx.runs).analyst.map((r) => loadRun(r.file))));
       })
       .catch((e: unknown) => setError(e instanceof Error ? e.message : String(e)));
   }, []);
 
-  const runs = useMemo(() => index?.runs ?? [], [index]);
+  const runs = useMemo(() => bySystem(index?.runs ?? []).analyst, [index]);
+  const baseline = useMemo(() => bySystem(index?.runs ?? []).naive.at(-1) ?? null, [index]);
   const ids = useMemo(() => runs.map((r) => r.file), [runs]);
   const labels = useMemo(
     () => Object.fromEntries(runs.map((r) => [r.file, runLabel(r.run_at)])),
@@ -201,6 +209,52 @@ export function EvalsPage() {
           />
         </div>
       </section>
+
+      {baseline && (
+        <section aria-labelledby="baseline-heading" className="grid gap-3">
+          <h2 id="baseline-heading" className="text-base font-semibold">
+            Against a naive baseline
+          </h2>
+          <p className="max-w-[65ch] text-sm text-fg-muted">
+            The same questions, answered by retrieving rows and passages and letting the model
+            answer and cite freely: no query spec, no bound values, no verifier. Run{" "}
+            {runLabel(baseline.run_at)} with{" "}
+            <code className="font-mono">{baseline.models.answer}</code>.
+          </p>
+          <div
+            className="overflow-x-auto"
+            tabIndex={0}
+            aria-label="Baseline comparison, scrolls sideways"
+          >
+            <table className="w-full text-left text-sm">
+              <thead className="text-xs text-fg-muted">
+                <tr>
+                  <th scope="col" className="py-2 pr-4 font-medium">
+                    Metric
+                  </th>
+                  <th scope="col" className="py-2 pr-4 font-medium">
+                    Analyst, run {at + 1}
+                  </th>
+                  <th scope="col" className="py-2 font-medium">
+                    Naive baseline
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border font-mono tabular-nums">
+                {[...QUALITY_METRICS, ...INTEGRITY_METRICS.slice(0, 1), FAITHFULNESS].map((m) => (
+                  <tr key={m.key}>
+                    <th scope="row" className="py-1.5 pr-4 font-sans font-normal">
+                      {m.label}
+                    </th>
+                    <td className="py-1.5 pr-4">{run.metrics[m.key]?.toFixed(2) ?? "n/a"}</td>
+                    <td className="py-1.5">{baseline.metrics[m.key]?.toFixed(2) ?? "n/a"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
 
       <section aria-label="Questions">
         <QuestionMatrix rows={matrix} runIds={ids} labels={labels} selectedRun={current} />
