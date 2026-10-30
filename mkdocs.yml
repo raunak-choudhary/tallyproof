@@ -68,6 +68,7 @@ nav:
       - Backend design: backend-design.md
       - Evaluation: evaluation.md
       - Limitations and how to lift them: limitations.md
+      - Load test: load-test.md
       - Data profile: data-profile.md
       - Threat model: threat-model.md
       - AWS reference architecture: aws-reference-architecture.md
