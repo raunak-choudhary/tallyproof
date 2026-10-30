@@ -1,6 +1,7 @@
 "use client";
 
-import { useId, useMemo, useState } from "react";
+import type { KeyboardEvent } from "react";
+import { useId, useMemo, useRef, useState } from "react";
 
 import type { MatrixCell, MatrixRow } from "@/lib/charts/evalCharts";
 import { categoryLabel, OUTCOMES, outcomeInfo } from "@/lib/evals/reports";
@@ -23,6 +24,36 @@ export function QuestionMatrix({
   const [picked, setPicked] = useState<{ row: number; col: number } | null>(null);
   const flaky = useMemo(() => rows.filter((r) => !r.steady).length, [rows]);
   const cell: MatrixCell | null = picked ? (rows[picked.row]?.cells[picked.col] ?? null) : null;
+  // One tab stop for the whole grid; arrow keys move between cells (roving tabindex).
+  const [cursor, setCursor] = useState(() => {
+    const first = rows[0]?.cells ?? [];
+    const col = runIds.indexOf(selectedRun);
+    return {
+      row: 0,
+      col: first[col] ? col : first.length - 1 - [...first].reverse().findIndex((c) => c !== null),
+    };
+  });
+  const grid = useRef<HTMLTableElement>(null);
+  const move = (e: KeyboardEvent<HTMLTableElement>) => {
+    const step: Record<string, [number, number]> = {
+      ArrowUp: [-1, 0],
+      ArrowDown: [1, 0],
+      ArrowLeft: [0, -1],
+      ArrowRight: [0, 1],
+    };
+    const delta = step[e.key];
+    if (!delta) return;
+    e.preventDefault();
+    let { row, col } = cursor;
+    for (;;) {
+      row += delta[0];
+      col += delta[1];
+      if (row < 0 || row >= rows.length || col < 0 || col >= runIds.length) return;
+      if (rows[row]!.cells[col]) break;
+    }
+    setCursor({ row, col });
+    grid.current?.querySelector<HTMLButtonElement>(`[data-cell="${row}-${col}"]`)?.focus();
+  };
 
   return (
     <figure aria-labelledby={`${id}-t`} className="min-w-0">
@@ -37,7 +68,12 @@ export function QuestionMatrix({
         tabIndex={0}
         aria-label="Question matrix, scrolls sideways"
       >
-        <table className="border-separate border-spacing-[3px] text-xs">
+        <table
+          ref={grid}
+          onKeyDown={move}
+          aria-label="Outcome of every question in every run; arrow keys move between cells"
+          className="border-separate border-spacing-[3px] text-xs"
+        >
           <thead>
             <tr>
               <th scope="col" className="sr-only">
@@ -81,6 +117,9 @@ export function QuestionMatrix({
                           type="button"
                           aria-label={`${row.id}, run ${col + 1}: ${outcomeInfo(c.outcome).label}`}
                           aria-pressed={isPicked}
+                          data-cell={`${i}-${col}`}
+                          tabIndex={cursor.row === i && cursor.col === col ? 0 : -1}
+                          onFocus={() => setCursor({ row: i, col })}
                           onClick={() => setPicked(isPicked ? null : { row: i, col })}
                           className="block size-6 rounded-[4px] outline-offset-1 aria-pressed:outline-2 aria-pressed:outline-[var(--fg)]"
                           style={{
