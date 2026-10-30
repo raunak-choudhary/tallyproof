@@ -65,7 +65,7 @@ export function CitationCheck({
   };
 
   return (
-    <li className="py-2">
+    <li id={`rec-${eventId}`} className="scroll-mt-24 py-2">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
         <code className="break-all font-mono text-sm">{eventId}</code>
         <span className="text-sm text-fg-muted">leaf {leafIndex}</span>
