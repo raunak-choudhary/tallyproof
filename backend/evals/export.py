@@ -46,6 +46,7 @@ SUMMARY_KEYS = (
     "free_number_rate",
     "integrity",
     "reconciliation_recall",
+    "narrative_faithfulness",
     "tokens",
     "latency_p50_ms",
     "latency_p95_ms",
@@ -64,8 +65,8 @@ def run_name(report: dict[str, Any]) -> str:
 
 def check(report: dict[str, Any]) -> None:
     """Refuse a harness check or a report with contact details."""
-    if report.get("label") != "quality run":
-        raise NotAQualityRunError("only quality runs are exported")
+    if report.get("label") not in {"quality run", "baseline run"}:
+        raise NotAQualityRunError("only quality runs and baseline runs are exported")
     for result in report.get("results", []):
         for field in ("question", "answer", "refusal", "notes"):
             value = result.get(field)
@@ -82,6 +83,7 @@ def summary(report: dict[str, Any], file: str) -> dict[str, Any]:
         "run_at": report["run_at"],
         "commit": report.get("commit", "unknown"),
         "mode": report["mode"],
+        "system": report.get("system", "analyst"),
         "label": report["label"],
         "models": report["models"],
         "sets": {name: values.get("questions") for name, values in report["by_set"].items()},

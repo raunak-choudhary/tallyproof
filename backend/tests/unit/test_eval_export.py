@@ -95,3 +95,12 @@ def test_index_rebuilds_from_the_folder(tmp_path):
     export([_write(tmp_path, "b.json", _report("2026-10-29T16:46:49+00:00"))], out)
     index = rebuild_index(out)
     assert [r["file"] for r in index["runs"]] == ["20261029T164649Z.json"]
+
+
+def test_baseline_runs_export_with_their_system(tmp_path):
+    report = _report("2026-10-29T00:00:00+00:00", label="baseline run")
+    report["system"] = "naive"
+    export([_write(tmp_path, "r.json", report)], tmp_path / "evals")
+    index = json.loads((tmp_path / "evals" / "index.json").read_text())
+    assert index["runs"][0]["system"] == "naive"
+    assert index["runs"][0]["label"] == "baseline run"
