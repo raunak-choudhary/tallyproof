@@ -24,6 +24,7 @@ Every setting comes from environment variables, loaded through one typed setting
 | `API_THREADS` | no | `8` | Threads per API process. A question waiting on the model holds one thread, so the process keeps serving other requests |
 | `LOG_LEVEL` | no | `INFO` | `DEBUG`, `INFO`, `WARNING`, or `ERROR` |
 | `LOG_FORMAT` | no | `json` | `json` for one object per line, or `console` for reading while developing |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | no | unset | Where the API and workers send traces over OTLP HTTP, for example `http://127.0.0.1:4318` for `make tracing`. Unset, tracing is off and costs nothing |
 
 ## Database
 
