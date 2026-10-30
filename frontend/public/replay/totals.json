@@ -1,0 +1,2376 @@
+{
+ "tree_size": 2000,
+ "records": 2000,
+ "note": "tallyproof-totals/v1\ntallyproof.dev/log/v1\n2000\nxy6AIu20pZhJQPjXdvoInnAVDQOlDbYJKpJ6Ss+lFnI=\n\n\u2014 tallyproof.dev/log/v1 wEuRC4O4VcMIvl/6LXqzSFtC/NrKnpx64rjI2GcoMvcHbopitog7BKqocmylnajFZLiOS3HGiIJ8wa1mp+uiRbnF/w4=\n",
+ "totals": [
+  {
+   "entity": "obligations",
+   "agency": null,
+   "total_cents": "40204151047",
+   "count": 2000,
+   "proof": {
+    "size": 2000,
+    "prefix": [
+     "obligations"
+    ],
+    "start": 0,
+    "end": 2000,
+    "pieces": [
+     {
+      "node": {
+       "left": "13a9586e5d299b1be3e79cd3ce33439eb5823cc92521663384984f2914f74fa6",
+       "right": "f5e21b2aa550a40483f01ba1faa8a9a3dceab0c1140dccfb5b10182efdf9feb6",
+       "total": "40204151047",
+       "count": 2000,
+       "low": [
+        "obligations",
+        "",
+        "2025",
+        "00000000000000000000"
+       ],
+       "high": [
+        "obligations",
+        "Social Security Administration",
+        "2025",
+        "00000000000000001952"
+       ]
+      }
+     }
+    ]
+   }
+  },
+  {
+   "entity": "obligations",
+   "agency": "Commodity Futures Trading Commission",
+   "total_cents": "0",
+   "count": 2,
+   "proof": {
+    "size": 2000,
+    "prefix": [
+     "obligations",
+     "Commodity Futures Trading Commission"
+    ],
+    "start": 1169,
+    "end": 1171,
+    "pieces": [
+     {
+      "node": {
+       "left": "f6286235b36caf56f3e0a5600de6cc04494f798265a5f828ef2867f8f569c943",
+       "right": "09f561b3a1848e4c148ff6dde798134ed2d2c8bff742e48069cb1d698d9da656",
+       "total": "16231942613",
+       "count": 1024,
+       "low": [
+        "obligations",
+        "",
+        "2025",
+        "00000000000000000000"
+       ],
+       "high": [
+        "obligations",
+        "",
+        "2025",
+        "00000000000000001756"
+       ]
+      }
+     },
+     {
+      "node": {
+       "left": "a00449fbe96266e58e225a24e8a293d5394ee66b044bd5e28b789890fc937d15",
+       "right": "bd960513dc38117c984104f3801a286ad8e8cbdad8ea3991a299eb926f37758f",
+       "total": "1609858700",
+       "count": 128,
+       "low": [
+        "obligations",
+        "",
+        "2025",
+        "00000000000000001757"
+       ],
+       "high": [
+        "obligations",
+        "",
+        "2025",
+        "00000000000000001959"
+       ]
+      }
+     },
+     {
+      "node": {
+       "left": "a6d8f0b1bb806ac1a4ba5e01c0d7d7d14e15327eca3f67efcd9e5e7024f60adf",
+       "right": "babd9ae3353b7bff31ef6ce80309f90785a38a05eaa320abcc2f42b37f3d3b91",
+       "total": "-12262182",
+       "count": 16,
+       "low": [
+        "obligations",
+        "",
+        "2025",
+        "00000000000000001960"
+       ],
+       "high": [
+        "obligations",
+        "",
+        "2025",
+        "00000000000000001993"
+       ]
+      }
+     },
+     {
+      "leaf": {
+       "key": [
+        "obligations",
+        "",
+        "2025",
+        "00000000000000001997"
+       ],
+       "amount": "0",
+       "record_hash": "f880cda76d192360b3f882705626218946375d9e0a70960eb815e04fc46978dd"
+      }
+     },
+     {
+      "leaf": {
+       "key": [
+        "obligations",
+        "Commodity Futures Trading Commission",
+        "2025",
+        "00000000000000000787"
+       ],
+       "amount": "0",
+       "record_hash": "d7a944e303fb54d68088b06af17cd47ed6bd3b327ba549b5c87b8255dd005a27"
+      }
+     },
+     {
+      "leaf": {
+       "key": [
+        "obligations",
+        "Commodity Futures Trading Commission",
+        "2025",
+        "00000000000000001390"
+       ],
+       "amount": "0",
+       "record_hash": "42d349dea8993d7c223ed7c3dc6769ac5697c3a614b9d2e55864019658d4632c"
+      }
+     },
+     {
+      "leaf": {
+       "key": [
+        "obligations",
+        "Consumer Financial Protection Bureau",
+        "2025",
+        "00000000000000000661"
+       ],
+       "amount": "9845539",
+       "record_hash": "a57e4115f3e955a26188ef2a9f26cc85708d322514f2eac92e691823760964d2"
+      }
+     },
+     {
+      "node": {
+       "left": "d37cf52098148af6a65ad05d6d7987aa976258e5a318fe44c53e4b1a2b54736b",
+       "right": "6f11ed969eb42365292c725c0d62af6038854293e0000464b41741e12af7b227",
+       "total": "104583483",
+       "count": 4,
+       "low": [
+        "obligations",
+        "Department of Agriculture",
+        "2025",
+        "00000000000000001559"
+       ],
+       "high": [
+        "obligations",
+        "Department of Agriculture",
+        "2025",
+        "00000000000000001907"
+       ]
+      }
+     },
+     {
+      "node": {
+       "left": "237d5e16a4fb00c361b7103e252be74f4c7de2347fffa4060006418f5cd7ef4d",
+       "right": "b95b669f3ae4488b1481e653fbb7acf98cf30536f751e6278590cd8f4454bbb5",
+       "total": "108207615",
+       "count": 8,
+       "low": [
+        "obligations",
+        "Department of Agriculture",
+        "2025",
+        "00000000000000001910"
+       ],
+       "high": [
+        "obligations",
+        "Department of Defense",
+        "2025",
+        "00000000000000000043"
+       ]
+      }
+     },
+     {
+      "node": {
+       "left": "5c48846d73813d39038ad27c8aada6229e72f66ad7328bb7e8ca78d633604df4",
+       "right": "27c6f40944374398dd7eaad65ed21ff704f9f7aa486f092832ec8368e7ed6029",
+       "total": "122726908",
+       "count": 32,
+       "low": [
+        "obligations",
+        "Department of Defense",
+        "2025",
+        "00000000000000000047"
+       ],
+       "high": [
+        "obligations",
+        "Department of Defense",
+        "2025",
+        "00000000000000000327"
+       ]
+      }
+     },
+     {
+      "node": {
+       "left": "87529f3b4a791e6e6bc750d9e8855283a4983463684b75d0ef4096b69aec5404",
+       "right": "0e374bbea4d481a84b93dc2f08bc17f74e31793fb42bbc5a15ef04b88d8b2adf",
+       "total": "139688788",
+       "count": 64,
+       "low": [
+        "obligations",
+        "Department of Defense",
+        "2025",
+        "00000000000000000330"
+       ],
+       "high": [
+        "obligations",
+        "Department of Defense",
+        "2025",
+        "00000000000000000806"
+       ]
+      }
+     },
+     {
+      "node": {
+       "left": "eb6c334f755aae82b377f1e6963a6af712a30b9e34bfc2da7bd6c810e90cd6d8",
+       "right": "4cffcec6b81b5fcad525580ea497f645b45d9f93309e408e2aabc3ef391e70b7",
+       "total": "8448369172",
+       "count": 256,
+       "low": [
+        "obligations",
+        "Department of Defense",
+        "2025",
+        "00000000000000000891"
+       ],
+       "high": [
+        "obligations",
+        "Department of Veterans Affairs",
+        "2025",
+        "00000000000000000415"
+       ]
+      }
+     },
+     {
+      "node": {
+       "left": "d635bbc5ab010ba02b9288d06eba57fdd007e4d2f5c5dd26a76320f96931f8aa",
+       "right": "ad7b1df5e25e962a9514e91a1a69b31c72994e179e2cfa95f91dca3116baa947",
+       "total": "13441190411",
+       "count": 464,
+       "low": [
+        "obligations",
+        "Department of Veterans Affairs",
+        "2025",
+        "00000000000000000427"
+       ],
+       "high": [
+        "obligations",
+        "Social Security Administration",
+        "2025",
+        "00000000000000001952"
+       ]
+      }
+     }
+    ]
+   }
+  },
+  {
+   "entity": "obligations",
+   "agency": "Consumer Financial Protection Bureau",
+   "total_cents": "9845539",
+   "count": 1,
+   "proof": {
+    "size": 2000,
+    "prefix": [
+     "obligations",
+     "Consumer Financial Protection Bureau"
+    ],
+    "start": 1171,
+    "end": 1172,
+    "pieces": [
+     {
+      "node": {
+       "left": "f6286235b36caf56f3e0a5600de6cc04494f798265a5f828ef2867f8f569c943",
+       "right": "09f561b3a1848e4c148ff6dde798134ed2d2c8bff742e48069cb1d698d9da656",
+       "total": "16231942613",
+       "count": 1024,
+       "low": [
+        "obligations",
+        "",
+        "2025",
+        "00000000000000000000"
+       ],
+       "high": [
+        "obligations",
+        "",
+        "2025",
+        "00000000000000001756"
+       ]
+      }
+     },
+     {
+      "node": {
+       "left": "a00449fbe96266e58e225a24e8a293d5394ee66b044bd5e28b789890fc937d15",
+       "right": "bd960513dc38117c984104f3801a286ad8e8cbdad8ea3991a299eb926f37758f",
+       "total": "1609858700",
+       "count": 128,
+       "low": [
+        "obligations",
+        "",
+        "2025",
+        "00000000000000001757"
+       ],
+       "high": [
+        "obligations",
+        "",
+        "2025",
+        "00000000000000001959"
+       ]
+      }
+     },
+     {
+      "node": {
+       "left": "a6d8f0b1bb806ac1a4ba5e01c0d7d7d14e15327eca3f67efcd9e5e7024f60adf",
+       "right": "babd9ae3353b7bff31ef6ce80309f90785a38a05eaa320abcc2f42b37f3d3b91",
+       "total": "-12262182",
+       "count": 16,
+       "low": [
+        "obligations",
+        "",
+        "2025",
+        "00000000000000001960"
+       ],
+       "high": [
+        "obligations",
+        "",
+        "2025",
+        "00000000000000001993"
+       ]
+      }
+     },
+     {
+      "node": {
+       "left": "8cb7a9a3c4f21bebd39e0f07aae30e9809713ac469ec5644341f07702292621c",
+       "right": "dd2ab369970f6a0b9061ea3d6bf2b252c8d5228e4d4609307e63175cfd341a4e",
+       "total": "0",
+       "count": 2,
+       "low": [
+        "obligations",
+        "",
+        "2025",
+        "00000000000000001997"
+       ],
+       "high": [
+        "obligations",
+        "Commodity Futures Trading Commission",
+        "2025",
+        "00000000000000000787"
+       ]
+      }
+     },
+     {
+      "leaf": {
+       "key": [
+        "obligations",
+        "Commodity Futures Trading Commission",
+        "2025",
+        "00000000000000001390"
+       ],
+       "amount": "0",
+       "record_hash": "42d349dea8993d7c223ed7c3dc6769ac5697c3a614b9d2e55864019658d4632c"
+      }
+     },
+     {
+      "leaf": {
+       "key": [
+        "obligations",
+        "Consumer Financial Protection Bureau",
+        "2025",
+        "00000000000000000661"
+       ],
+       "amount": "9845539",
+       "record_hash": "a57e4115f3e955a26188ef2a9f26cc85708d322514f2eac92e691823760964d2"
+      }
+     },
+     {
+      "node": {
+       "left": "d37cf52098148af6a65ad05d6d7987aa976258e5a318fe44c53e4b1a2b54736b",
+       "right": "6f11ed969eb42365292c725c0d62af6038854293e0000464b41741e12af7b227",
+       "total": "104583483",
+       "count": 4,
+       "low": [
+        "obligations",
+        "Department of Agriculture",
+        "2025",
+        "00000000000000001559"
+       ],
+       "high": [
+        "obligations",
+        "Department of Agriculture",
+        "2025",
+        "00000000000000001907"
+       ]
+      }
+     },
+     {
+      "node": {
+       "left": "237d5e16a4fb00c361b7103e252be74f4c7de2347fffa4060006418f5cd7ef4d",
+       "right": "b95b669f3ae4488b1481e653fbb7acf98cf30536f751e6278590cd8f4454bbb5",
+       "total": "108207615",
+       "count": 8,
+       "low": [
+        "obligations",
+        "Department of Agriculture",
+        "2025",
+        "00000000000000001910"
+       ],
+       "high": [
+        "obligations",
+        "Department of Defense",
+        "2025",
+        "00000000000000000043"
+       ]
+      }
+     },
+     {
+      "node": {
+       "left": "5c48846d73813d39038ad27c8aada6229e72f66ad7328bb7e8ca78d633604df4",
+       "right": "27c6f40944374398dd7eaad65ed21ff704f9f7aa486f092832ec8368e7ed6029",
+       "total": "122726908",
+       "count": 32,
+       "low": [
+        "obligations",
+        "Department of Defense",
+        "2025",
+        "00000000000000000047"
+       ],
+       "high": [
+        "obligations",
+        "Department of Defense",
+        "2025",
+        "00000000000000000327"
+       ]
+      }
+     },
+     {
+      "node": {
+       "left": "87529f3b4a791e6e6bc750d9e8855283a4983463684b75d0ef4096b69aec5404",
+       "right": "0e374bbea4d481a84b93dc2f08bc17f74e31793fb42bbc5a15ef04b88d8b2adf",
+       "total": "139688788",
+       "count": 64,
+       "low": [
+        "obligations",
+        "Department of Defense",
+        "2025",
+        "00000000000000000330"
+       ],
+       "high": [
+        "obligations",
+        "Department of Defense",
+        "2025",
+        "00000000000000000806"
+       ]
+      }
+     },
+     {
+      "node": {
+       "left": "eb6c334f755aae82b377f1e6963a6af712a30b9e34bfc2da7bd6c810e90cd6d8",
+       "right": "4cffcec6b81b5fcad525580ea497f645b45d9f93309e408e2aabc3ef391e70b7",
+       "total": "8448369172",
+       "count": 256,
+       "low": [
+        "obligations",
+        "Department of Defense",
+        "2025",
+        "00000000000000000891"
+       ],
+       "high": [
+        "obligations",
+        "Department of Veterans Affairs",
+        "2025",
+        "00000000000000000415"
+       ]
+      }
+     },
+     {
+      "node": {
+       "left": "d635bbc5ab010ba02b9288d06eba57fdd007e4d2f5c5dd26a76320f96931f8aa",
+       "right": "ad7b1df5e25e962a9514e91a1a69b31c72994e179e2cfa95f91dca3116baa947",
+       "total": "13441190411",
+       "count": 464,
+       "low": [
+        "obligations",
+        "Department of Veterans Affairs",
+        "2025",
+        "00000000000000000427"
+       ],
+       "high": [
+        "obligations",
+        "Social Security Administration",
+        "2025",
+        "00000000000000001952"
+       ]
+      }
+     }
+    ]
+   }
+  },
+  {
+   "entity": "obligations",
+   "agency": "Department of Agriculture",
+   "total_cents": "104583483",
+   "count": 6,
+   "proof": {
+    "size": 2000,
+    "prefix": [
+     "obligations",
+     "Department of Agriculture"
+    ],
+    "start": 1172,
+    "end": 1178,
+    "pieces": [
+     {
+      "node": {
+       "left": "f6286235b36caf56f3e0a5600de6cc04494f798265a5f828ef2867f8f569c943",
+       "right": "09f561b3a1848e4c148ff6dde798134ed2d2c8bff742e48069cb1d698d9da656",
+       "total": "16231942613",
+       "count": 1024,
+       "low": [
+        "obligations",
+        "",
+        "2025",
+        "00000000000000000000"
+       ],
+       "high": [
+        "obligations",
+        "",
+        "2025",
+        "00000000000000001756"
+       ]
+      }
+     },
+     {
+      "node": {
+       "left": "a00449fbe96266e58e225a24e8a293d5394ee66b044bd5e28b789890fc937d15",
+       "right": "bd960513dc38117c984104f3801a286ad8e8cbdad8ea3991a299eb926f37758f",
+       "total": "1609858700",
+       "count": 128,
+       "low": [
+        "obligations",
+        "",
+        "2025",
+        "00000000000000001757"
+       ],
+       "high": [
+        "obligations",
+        "",
+        "2025",
+        "00000000000000001959"
+       ]
+      }
+     },
+     {
+      "node": {
+       "left": "a6d8f0b1bb806ac1a4ba5e01c0d7d7d14e15327eca3f67efcd9e5e7024f60adf",
+       "right": "babd9ae3353b7bff31ef6ce80309f90785a38a05eaa320abcc2f42b37f3d3b91",
+       "total": "-12262182",
+       "count": 16,
+       "low": [
+        "obligations",
+        "",
+        "2025",
+        "00000000000000001960"
+       ],
+       "high": [
+        "obligations",
+        "",
+        "2025",
+        "00000000000000001993"
+       ]
+      }
+     },
+     {
+      "node": {
+       "left": "56b2d830bf9cbafcf75675c6c9ccfaa4ed2d442f3520d3af9bd623371ee1caf1",
+       "right": "011a5b09d9915e31900fcbdee5660f0dd131347af9c8e4ebe9e00f62fc4e8d49",
+       "total": "9845539",
+       "count": 4,
+       "low": [
+        "obligations",
+        "",
+        "2025",
+        "00000000000000001997"
+       ],
+       "high": [
+        "obligations",
+        "Consumer Financial Protection Bureau",
+        "2025",
+        "00000000000000000661"
+       ]
+      }
+     },
+     {
+      "node": {
+       "left": "d37cf52098148af6a65ad05d6d7987aa976258e5a318fe44c53e4b1a2b54736b",
+       "right": "6f11ed969eb42365292c725c0d62af6038854293e0000464b41741e12af7b227",
+       "total": "104583483",
+       "count": 4,
+       "low": [
+        "obligations",
+        "Department of Agriculture",
+        "2025",
+        "00000000000000001559"
+       ],
+       "high": [
+        "obligations",
+        "Department of Agriculture",
+        "2025",
+        "00000000000000001907"
+       ]
+      }
+     },
+     {
+      "node": {
+       "left": "45d303dc764292c0c8264535b6a8189d1b1f4536c2b03172a2ce0d8b76202c84",
+       "right": "f0b9603c1c3d9765644ae47ee8888b1f13fe8b5dea1ed638d8c75387661fc9d5",
+       "total": "0",
+       "count": 2,
+       "low": [
+        "obligations",
+        "Department of Agriculture",
+        "2025",
+        "00000000000000001910"
+       ],
+       "high": [
+        "obligations",
+        "Department of Agriculture",
+        "2025",
+        "00000000000000001917"
+       ]
+      }
+     },
+     {
+      "node": {
+       "left": "33b4d24dbbc48e37f899e986f7e974870565009f904b6a1c4d63af11128cc420",
+       "right": "73a3ab384a5e0bdc73eceaf557d6f47e3a8a5c90062f8bc050c4ff675e9f124b",
+       "total": "28456595",
+       "count": 2,
+       "low": [
+        "obligations",
+        "Department of Defense",
+        "2025",
+        "00000000000000000003"
+       ],
+       "high": [
+        "obligations",
+        "Department of Defense",
+        "2025",
+        "00000000000000000006"
+       ]
+      }
+     },
+     {
+      "node": {
+       "left": "751d7bf2d920e9042226167cef9d40cae83e976efdb751d339944d6fe2bb258f",
+       "right": "4cb71df9ceeaa14cc0454110c93e415648a9e05d9de75b07ca95e447bf593377",
+       "total": "79751020",
+       "count": 4,
+       "low": [
+        "obligations",
+        "Department of Defense",
+        "2025",
+        "00000000000000000007"
+       ],
+       "high": [
+        "obligations",
+        "Department of Defense",
+        "2025",
+        "00000000000000000043"
+       ]
+      }
+     },
+     {
+      "node": {
+       "left": "5c48846d73813d39038ad27c8aada6229e72f66ad7328bb7e8ca78d633604df4",
+       "right": "27c6f40944374398dd7eaad65ed21ff704f9f7aa486f092832ec8368e7ed6029",
+       "total": "122726908",
+       "count": 32,
+       "low": [
+        "obligations",
+        "Department of Defense",
+        "2025",
+        "00000000000000000047"
+       ],
+       "high": [
+        "obligations",
+        "Department of Defense",
+        "2025",
+        "00000000000000000327"
+       ]
+      }
+     },
+     {
+      "node": {
+       "left": "87529f3b4a791e6e6bc750d9e8855283a4983463684b75d0ef4096b69aec5404",
+       "right": "0e374bbea4d481a84b93dc2f08bc17f74e31793fb42bbc5a15ef04b88d8b2adf",
+       "total": "139688788",
+       "count": 64,
+       "low": [
+        "obligations",
+        "Department of Defense",
+        "2025",
+        "00000000000000000330"
+       ],
+       "high": [
+        "obligations",
+        "Department of Defense",
+        "2025",
+        "00000000000000000806"
+       ]
+      }
+     },
+     {
+      "node": {
+       "left": "eb6c334f755aae82b377f1e6963a6af712a30b9e34bfc2da7bd6c810e90cd6d8",
+       "right": "4cffcec6b81b5fcad525580ea497f645b45d9f93309e408e2aabc3ef391e70b7",
+       "total": "8448369172",
+       "count": 256,
+       "low": [
+        "obligations",
+        "Department of Defense",
+        "2025",
+        "00000000000000000891"
+       ],
+       "high": [
+        "obligations",
+        "Department of Veterans Affairs",
+        "2025",
+        "00000000000000000415"
+       ]
+      }
+     },
+     {
+      "node": {
+       "left": "d635bbc5ab010ba02b9288d06eba57fdd007e4d2f5c5dd26a76320f96931f8aa",
+       "right": "ad7b1df5e25e962a9514e91a1a69b31c72994e179e2cfa95f91dca3116baa947",
+       "total": "13441190411",
+       "count": 464,
+       "low": [
+        "obligations",
+        "Department of Veterans Affairs",
+        "2025",
+        "00000000000000000427"
+       ],
+       "high": [
+        "obligations",
+        "Social Security Administration",
+        "2025",
+        "00000000000000001952"
+       ]
+      }
+     }
+    ]
+   }
+  },
+  {
+   "entity": "obligations",
+   "agency": "Department of Defense",
+   "total_cents": "5199750843",
+   "count": 265,
+   "proof": {
+    "size": 2000,
+    "prefix": [
+     "obligations",
+     "Department of Defense"
+    ],
+    "start": 1178,
+    "end": 1443,
+    "pieces": [
+     {
+      "node": {
+       "left": "f6286235b36caf56f3e0a5600de6cc04494f798265a5f828ef2867f8f569c943",
+       "right": "09f561b3a1848e4c148ff6dde798134ed2d2c8bff742e48069cb1d698d9da656",
+       "total": "16231942613",
+       "count": 1024,
+       "low": [
+        "obligations",
+        "",
+        "2025",
+        "00000000000000000000"
+       ],
+       "high": [
+        "obligations",
+        "",
+        "2025",
+        "00000000000000001756"
+       ]
+      }
+     },
+     {
+      "node": {
+       "left": "a00449fbe96266e58e225a24e8a293d5394ee66b044bd5e28b789890fc937d15",
+       "right": "bd960513dc38117c984104f3801a286ad8e8cbdad8ea3991a299eb926f37758f",
+       "total": "1609858700",
+       "count": 128,
+       "low": [
+        "obligations",
+        "",
+        "2025",
+        "00000000000000001757"
+       ],
+       "high": [
+        "obligations",
+        "",
+        "2025",
+        "00000000000000001959"
+       ]
+      }
+     },
+     {
+      "node": {
+       "left": "a6d8f0b1bb806ac1a4ba5e01c0d7d7d14e15327eca3f67efcd9e5e7024f60adf",
+       "right": "babd9ae3353b7bff31ef6ce80309f90785a38a05eaa320abcc2f42b37f3d3b91",
+       "total": "-12262182",
+       "count": 16,
+       "low": [
+        "obligations",
+        "",
+        "2025",
+        "00000000000000001960"
+       ],
+       "high": [
+        "obligations",
+        "",
+        "2025",
+        "00000000000000001993"
+       ]
+      }
+     },
+     {
+      "node": {
+       "left": "d6cda0ff58e74decf376fe2bfd0c42f829b17a7bd019efc2351928720c82e5ba",
+       "right": "dce0ee58cf1a588cfb5870fd687f4bbcc50393bb0d8ca397532bd18b38356e1b",
+       "total": "114429022",
+       "count": 8,
+       "low": [
+        "obligations",
+        "",
+        "2025",
+        "00000000000000001997"
+       ],
+       "high": [
+        "obligations",
+        "Department of Agriculture",
+        "2025",
+        "00000000000000001907"
+       ]
+      }
+     },
+     {
+      "node": {
+       "left": "45d303dc764292c0c8264535b6a8189d1b1f4536c2b03172a2ce0d8b76202c84",
+       "right": "f0b9603c1c3d9765644ae47ee8888b1f13fe8b5dea1ed638d8c75387661fc9d5",
+       "total": "0",
+       "count": 2,
+       "low": [
+        "obligations",
+        "Department of Agriculture",
+        "2025",
+        "00000000000000001910"
+       ],
+       "high": [
+        "obligations",
+        "Department of Agriculture",
+        "2025",
+        "00000000000000001917"
+       ]
+      }
+     },
+     {
+      "node": {
+       "left": "33b4d24dbbc48e37f899e986f7e974870565009f904b6a1c4d63af11128cc420",
+       "right": "73a3ab384a5e0bdc73eceaf557d6f47e3a8a5c90062f8bc050c4ff675e9f124b",
+       "total": "28456595",
+       "count": 2,
+       "low": [
+        "obligations",
+        "Department of Defense",
+        "2025",
+        "00000000000000000003"
+       ],
+       "high": [
+        "obligations",
+        "Department of Defense",
+        "2025",
+        "00000000000000000006"
+       ]
+      }
+     },
+     {
+      "node": {
+       "left": "751d7bf2d920e9042226167cef9d40cae83e976efdb751d339944d6fe2bb258f",
+       "right": "4cb71df9ceeaa14cc0454110c93e415648a9e05d9de75b07ca95e447bf593377",
+       "total": "79751020",
+       "count": 4,
+       "low": [
+        "obligations",
+        "Department of Defense",
+        "2025",
+        "00000000000000000007"
+       ],
+       "high": [
+        "obligations",
+        "Department of Defense",
+        "2025",
+        "00000000000000000043"
+       ]
+      }
+     },
+     {
+      "node": {
+       "left": "5c48846d73813d39038ad27c8aada6229e72f66ad7328bb7e8ca78d633604df4",
+       "right": "27c6f40944374398dd7eaad65ed21ff704f9f7aa486f092832ec8368e7ed6029",
+       "total": "122726908",
+       "count": 32,
+       "low": [
+        "obligations",
+        "Department of Defense",
+        "2025",
+        "00000000000000000047"
+       ],
+       "high": [
+        "obligations",
+        "Department of Defense",
+        "2025",
+        "00000000000000000327"
+       ]
+      }
+     },
+     {
+      "node": {
+       "left": "87529f3b4a791e6e6bc750d9e8855283a4983463684b75d0ef4096b69aec5404",
+       "right": "0e374bbea4d481a84b93dc2f08bc17f74e31793fb42bbc5a15ef04b88d8b2adf",
+       "total": "139688788",
+       "count": 64,
+       "low": [
+        "obligations",
+        "Department of Defense",
+        "2025",
+        "00000000000000000330"
+       ],
+       "high": [
+        "obligations",
+        "Department of Defense",
+        "2025",
+        "00000000000000000806"
+       ]
+      }
+     },
+     {
+      "node": {
+       "left": "884267b029507b035293a9c51279dcc32c9eecf4c143d8fc637db561bcfe5634",
+       "right": "97cc492f763c34a161644f693f3f964175aeb7641f31a28912ff84ec131600cf",
+       "total": "4042002241",
+       "count": 128,
+       "low": [
+        "obligations",
+        "Department of Defense",
+        "2025",
+        "00000000000000000891"
+       ],
+       "high": [
+        "obligations",
+        "Department of Defense",
+        "2025",
+        "00000000000000001571"
+       ]
+      }
+     },
+     {
+      "node": {
+       "left": "b90384eaaeca1eb7209a1ecc3fbd57f302a62556c8acb622e8da15fd108851b6",
+       "right": "567700ef5fb25fc152c15bfbc51fa7e9d8b703fb0125942b119fcccd49335f61",
+       "total": "785511098",
+       "count": 32,
+       "low": [
+        "obligations",
+        "Department of Defense",
+        "2025",
+        "00000000000000001628"
+       ],
+       "high": [
+        "obligations",
+        "Department of Defense",
+        "2025",
+        "00000000000000001995"
+       ]
+      }
+     },
+     {
+      "node": {
+       "left": "7c597ac84711e8f648bb97da2cf680b7402a262a468cb691365139d51c75367e",
+       "right": "c6b896ea1110daea4a8e6f765c932705e659af85dedf1b46d3bd49e345cd6a6e",
+       "total": "1296656",
+       "count": 2,
+       "low": [
+        "obligations",
+        "Department of Defense",
+        "2025",
+        "00000000000000001996"
+       ],
+       "high": [
+        "obligations",
+        "Department of Defense",
+        "2025",
+        "00000000000000001998"
+       ]
+      }
+     },
+     {
+      "leaf": {
+       "key": [
+        "obligations",
+        "Department of Defense",
+        "2025",
+        "00000000000000001999"
+       ],
+       "amount": "317537",
+       "record_hash": "014ff314eeb8b477bab7a873eb432d1315179d63f1fff05d19cf6f8979c9490c"
+      }
+     },
+     {
+      "leaf": {
+       "key": [
+        "obligations",
+        "Department of Veterans Affairs",
+        "2025",
+        "00000000000000000013"
+       ],
+       "amount": "6459500",
+       "record_hash": "ce82960f8ea3ebb707542161a9b489c939547604d8c5924aa34268def64e73e0"
+      }
+     },
+     {
+      "node": {
+       "left": "33bae741d4bd6d36d4da9bad9558f910f36ba20696cab82dc199009c55cd64b0",
+       "right": "71f65786e25fb0f6c9f4f927c8068be43d15f3ae0963d4cb34028a46f7842352",
+       "total": "415698450",
+       "count": 4,
+       "low": [
+        "obligations",
+        "Department of Veterans Affairs",
+        "2025",
+        "00000000000000000014"
+       ],
+       "high": [
+        "obligations",
+        "Department of Veterans Affairs",
+        "2025",
+        "00000000000000000025"
+       ]
+      }
+     },
+     {
+      "node": {
+       "left": "2b88d6c44095c6055a20a6e0e75f5e53c5c29c8d91788761b65be440d5626979",
+       "right": "76c7eeaff15f728b418b3ba2b77ec5d67412d3d09be86f11f6c88c7411ced514",
+       "total": "47720282",
+       "count": 8,
+       "low": [
+        "obligations",
+        "Department of Veterans Affairs",
+        "2025",
+        "00000000000000000029"
+       ],
+       "high": [
+        "obligations",
+        "Department of Veterans Affairs",
+        "2025",
+        "00000000000000000065"
+       ]
+      }
+     },
+     {
+      "node": {
+       "left": "6fa6267486d8548d7c90636c6e5f055e98ae874d56c7a616f09e6308a10045b3",
+       "right": "8929ae1b273df147bf43db4ace512353f8e6a0f5c26c8aaf1bddc21e34b55422",
+       "total": "264616769",
+       "count": 16,
+       "low": [
+        "obligations",
+        "Department of Veterans Affairs",
+        "2025",
+        "00000000000000000067"
+       ],
+       "high": [
+        "obligations",
+        "Department of Veterans Affairs",
+        "2025",
+        "00000000000000000115"
+       ]
+      }
+     },
+     {
+      "node": {
+       "left": "7d157f440d703ac2797eadc37d231a3eb1a421df12e128d4717ecac05f0a5576",
+       "right": "33577c3d0c4ae1981a6c92d98dc15f079e3073440946df3ac70c128990b6190a",
+       "total": "2884746639",
+       "count": 64,
+       "low": [
+        "obligations",
+        "Department of Veterans Affairs",
+        "2025",
+        "00000000000000000125"
+       ],
+       "high": [
+        "obligations",
+        "Department of Veterans Affairs",
+        "2025",
+        "00000000000000000415"
+       ]
+      }
+     },
+     {
+      "node": {
+       "left": "d635bbc5ab010ba02b9288d06eba57fdd007e4d2f5c5dd26a76320f96931f8aa",
+       "right": "ad7b1df5e25e962a9514e91a1a69b31c72994e179e2cfa95f91dca3116baa947",
+       "total": "13441190411",
+       "count": 464,
+       "low": [
+        "obligations",
+        "Department of Veterans Affairs",
+        "2025",
+        "00000000000000000427"
+       ],
+       "high": [
+        "obligations",
+        "Social Security Administration",
+        "2025",
+        "00000000000000001952"
+       ]
+      }
+     }
+    ]
+   }
+  },
+  {
+   "entity": "obligations",
+   "agency": "Department of Veterans Affairs",
+   "total_cents": "16592526884",
+   "count": 546,
+   "proof": {
+    "size": 2000,
+    "prefix": [
+     "obligations",
+     "Department of Veterans Affairs"
+    ],
+    "start": 1443,
+    "end": 1989,
+    "pieces": [
+     {
+      "node": {
+       "left": "f6286235b36caf56f3e0a5600de6cc04494f798265a5f828ef2867f8f569c943",
+       "right": "09f561b3a1848e4c148ff6dde798134ed2d2c8bff742e48069cb1d698d9da656",
+       "total": "16231942613",
+       "count": 1024,
+       "low": [
+        "obligations",
+        "",
+        "2025",
+        "00000000000000000000"
+       ],
+       "high": [
+        "obligations",
+        "",
+        "2025",
+        "00000000000000001756"
+       ]
+      }
+     },
+     {
+      "node": {
+       "left": "135c92813708a461463ee2e5363827094e796990ac010ce8f1b464b51cf954fc",
+       "right": "9677f4443955394fe858ba0993febf01f98e523037179c67672df90f07f52300",
+       "total": "2082648851",
+       "count": 256,
+       "low": [
+        "obligations",
+        "",
+        "2025",
+        "00000000000000001757"
+       ],
+       "high": [
+        "obligations",
+        "Department of Defense",
+        "2025",
+        "00000000000000000806"
+       ]
+      }
+     },
+     {
+      "node": {
+       "left": "884267b029507b035293a9c51279dcc32c9eecf4c143d8fc637db561bcfe5634",
+       "right": "97cc492f763c34a161644f693f3f964175aeb7641f31a28912ff84ec131600cf",
+       "total": "4042002241",
+       "count": 128,
+       "low": [
+        "obligations",
+        "Department of Defense",
+        "2025",
+        "00000000000000000891"
+       ],
+       "high": [
+        "obligations",
+        "Department of Defense",
+        "2025",
+        "00000000000000001571"
+       ]
+      }
+     },
+     {
+      "node": {
+       "left": "b90384eaaeca1eb7209a1ecc3fbd57f302a62556c8acb622e8da15fd108851b6",
+       "right": "567700ef5fb25fc152c15bfbc51fa7e9d8b703fb0125942b119fcccd49335f61",
+       "total": "785511098",
+       "count": 32,
+       "low": [
+        "obligations",
+        "Department of Defense",
+        "2025",
+        "00000000000000001628"
+       ],
+       "high": [
+        "obligations",
+        "Department of Defense",
+        "2025",
+        "00000000000000001995"
+       ]
+      }
+     },
+     {
+      "node": {
+       "left": "7c597ac84711e8f648bb97da2cf680b7402a262a468cb691365139d51c75367e",
+       "right": "c6b896ea1110daea4a8e6f765c932705e659af85dedf1b46d3bd49e345cd6a6e",
+       "total": "1296656",
+       "count": 2,
+       "low": [
+        "obligations",
+        "Department of Defense",
+        "2025",
+        "00000000000000001996"
+       ],
+       "high": [
+        "obligations",
+        "Department of Defense",
+        "2025",
+        "00000000000000001998"
+       ]
+      }
+     },
+     {
+      "leaf": {
+       "key": [
+        "obligations",
+        "Department of Defense",
+        "2025",
+        "00000000000000001999"
+       ],
+       "amount": "317537",
+       "record_hash": "014ff314eeb8b477bab7a873eb432d1315179d63f1fff05d19cf6f8979c9490c"
+      }
+     },
+     {
+      "leaf": {
+       "key": [
+        "obligations",
+        "Department of Veterans Affairs",
+        "2025",
+        "00000000000000000013"
+       ],
+       "amount": "6459500",
+       "record_hash": "ce82960f8ea3ebb707542161a9b489c939547604d8c5924aa34268def64e73e0"
+      }
+     },
+     {
+      "node": {
+       "left": "33bae741d4bd6d36d4da9bad9558f910f36ba20696cab82dc199009c55cd64b0",
+       "right": "71f65786e25fb0f6c9f4f927c8068be43d15f3ae0963d4cb34028a46f7842352",
+       "total": "415698450",
+       "count": 4,
+       "low": [
+        "obligations",
+        "Department of Veterans Affairs",
+        "2025",
+        "00000000000000000014"
+       ],
+       "high": [
+        "obligations",
+        "Department of Veterans Affairs",
+        "2025",
+        "00000000000000000025"
+       ]
+      }
+     },
+     {
+      "node": {
+       "left": "2b88d6c44095c6055a20a6e0e75f5e53c5c29c8d91788761b65be440d5626979",
+       "right": "76c7eeaff15f728b418b3ba2b77ec5d67412d3d09be86f11f6c88c7411ced514",
+       "total": "47720282",
+       "count": 8,
+       "low": [
+        "obligations",
+        "Department of Veterans Affairs",
+        "2025",
+        "00000000000000000029"
+       ],
+       "high": [
+        "obligations",
+        "Department of Veterans Affairs",
+        "2025",
+        "00000000000000000065"
+       ]
+      }
+     },
+     {
+      "node": {
+       "left": "6fa6267486d8548d7c90636c6e5f055e98ae874d56c7a616f09e6308a10045b3",
+       "right": "8929ae1b273df147bf43db4ace512353f8e6a0f5c26c8aaf1bddc21e34b55422",
+       "total": "264616769",
+       "count": 16,
+       "low": [
+        "obligations",
+        "Department of Veterans Affairs",
+        "2025",
+        "00000000000000000067"
+       ],
+       "high": [
+        "obligations",
+        "Department of Veterans Affairs",
+        "2025",
+        "00000000000000000115"
+       ]
+      }
+     },
+     {
+      "node": {
+       "left": "7d157f440d703ac2797eadc37d231a3eb1a421df12e128d4717ecac05f0a5576",
+       "right": "33577c3d0c4ae1981a6c92d98dc15f079e3073440946df3ac70c128990b6190a",
+       "total": "2884746639",
+       "count": 64,
+       "low": [
+        "obligations",
+        "Department of Veterans Affairs",
+        "2025",
+        "00000000000000000125"
+       ],
+       "high": [
+        "obligations",
+        "Department of Veterans Affairs",
+        "2025",
+        "00000000000000000415"
+       ]
+      }
+     },
+     {
+      "node": {
+       "left": "a4c1d7b8efd8f8b38e52cfb03dbe0030a61f4f6b54134ff4470505845fa2165f",
+       "right": "d9e3470f061fc9287a6595004b9a5aed6f15941d5e38d6b6c5a50cca64641927",
+       "total": "6186705786",
+       "count": 256,
+       "low": [
+        "obligations",
+        "Department of Veterans Affairs",
+        "2025",
+        "00000000000000000427"
+       ],
+       "high": [
+        "obligations",
+        "Department of Veterans Affairs",
+        "2025",
+        "00000000000000001248"
+       ]
+      }
+     },
+     {
+      "node": {
+       "left": "b90ddfb70e6f197d3660731ee88914af6bc38ca0441db51f1b6e2b2f1ab451db",
+       "right": "d9e88fed83e775c0621e465628e7961b39b7baac908bcee5b1d82f683daf2244",
+       "total": "3647964657",
+       "count": 128,
+       "low": [
+        "obligations",
+        "Department of Veterans Affairs",
+        "2025",
+        "00000000000000001249"
+       ],
+       "high": [
+        "obligations",
+        "Department of Veterans Affairs",
+        "2025",
+        "00000000000000001753"
+       ]
+      }
+     },
+     {
+      "node": {
+       "left": "8435772c7a89ff2299092d2da639bf86664442a9cd0244dde4f029da612fccf9",
+       "right": "0598ce380e12735b8a091b8c8f58dd562b19a31a14adb08954a967c5fc4185a2",
+       "total": "2964571740",
+       "count": 64,
+       "low": [
+        "obligations",
+        "Department of Veterans Affairs",
+        "2025",
+        "00000000000000001759"
+       ],
+       "high": [
+        "obligations",
+        "Department of Veterans Affairs",
+        "2025",
+        "00000000000000001969"
+       ]
+      }
+     },
+     {
+      "node": {
+       "left": "841a052436f833f9b504da764f91edfa15b86c487e300bb2cfdf9aea2569c0a9",
+       "right": "8c351de144253c1397ca217936278e1d1c9324adfde300591383da0abe5428d8",
+       "total": "162643061",
+       "count": 4,
+       "low": [
+        "obligations",
+        "Department of Veterans Affairs",
+        "2025",
+        "00000000000000001971"
+       ],
+       "high": [
+        "obligations",
+        "Department of Veterans Affairs",
+        "2025",
+        "00000000000000001977"
+       ]
+      }
+     },
+     {
+      "leaf": {
+       "key": [
+        "obligations",
+        "Department of Veterans Affairs",
+        "2025",
+        "00000000000000001991"
+       ],
+       "amount": "11400000",
+       "record_hash": "47e7a4ce342ea64981489176930f8305291e036663612d7ea768ec70d3cb7ffc"
+      }
+     },
+     {
+      "leaf": {
+       "key": [
+        "obligations",
+        "Department of the Treasury",
+        "2025",
+        "00000000000000000323"
+       ],
+       "amount": "2482800",
+       "record_hash": "859751c3a1214db45435fefdf171203bb6bbb987e0358078fec51bbb43935c57"
+      }
+     },
+     {
+      "node": {
+       "left": "fd49e4298af5d3acd96b2b1e6dffed1c76342bae7f2a8f5ea372cde7dd484884",
+       "right": "90b0eb0bbd7157d0d46dc106cc62f8331dcb7f208dd89161e15d59912c4929bd",
+       "total": "137952685",
+       "count": 2,
+       "low": [
+        "obligations",
+        "Department of the Treasury",
+        "2025",
+        "00000000000000001251"
+       ],
+       "high": [
+        "obligations",
+        "Department of the Treasury",
+        "2025",
+        "00000000000000001970"
+       ]
+      }
+     },
+     {
+      "node": {
+       "left": "bcb16865d7b8278528c5f135e061c26498811d97db2b4c434eb00a9fdc27d5f6",
+       "right": "3233ec70739da716e1ffe40fad5c713c36f099e0c3e26b090fb75f87a98b2d9f",
+       "total": "327469682",
+       "count": 8,
+       "low": [
+        "obligations",
+        "General Services Administration",
+        "2025",
+        "00000000000000001283"
+       ],
+       "high": [
+        "obligations",
+        "Social Security Administration",
+        "2025",
+        "00000000000000001952"
+       ]
+      }
+     }
+    ]
+   }
+  },
+  {
+   "entity": "obligations",
+   "agency": "Department of the Treasury",
+   "total_cents": "140435485",
+   "count": 3,
+   "proof": {
+    "size": 2000,
+    "prefix": [
+     "obligations",
+     "Department of the Treasury"
+    ],
+    "start": 1989,
+    "end": 1992,
+    "pieces": [
+     {
+      "node": {
+       "left": "f6286235b36caf56f3e0a5600de6cc04494f798265a5f828ef2867f8f569c943",
+       "right": "09f561b3a1848e4c148ff6dde798134ed2d2c8bff742e48069cb1d698d9da656",
+       "total": "16231942613",
+       "count": 1024,
+       "low": [
+        "obligations",
+        "",
+        "2025",
+        "00000000000000000000"
+       ],
+       "high": [
+        "obligations",
+        "",
+        "2025",
+        "00000000000000001756"
+       ]
+      }
+     },
+     {
+      "node": {
+       "left": "f1d96835de06b793ca14c8fd8e9c9aa579a120cf14f27e137924b1a9e0ad6d46",
+       "right": "15a57d84c8fce6b6321940987d9037afbe85d0e556ca83691621d165c9ba0d09",
+       "total": "10531018023",
+       "count": 512,
+       "low": [
+        "obligations",
+        "",
+        "2025",
+        "00000000000000001757"
+       ],
+       "high": [
+        "obligations",
+        "Department of Veterans Affairs",
+        "2025",
+        "00000000000000000415"
+       ]
+      }
+     },
+     {
+      "node": {
+       "left": "a4c1d7b8efd8f8b38e52cfb03dbe0030a61f4f6b54134ff4470505845fa2165f",
+       "right": "d9e3470f061fc9287a6595004b9a5aed6f15941d5e38d6b6c5a50cca64641927",
+       "total": "6186705786",
+       "count": 256,
+       "low": [
+        "obligations",
+        "Department of Veterans Affairs",
+        "2025",
+        "00000000000000000427"
+       ],
+       "high": [
+        "obligations",
+        "Department of Veterans Affairs",
+        "2025",
+        "00000000000000001248"
+       ]
+      }
+     },
+     {
+      "node": {
+       "left": "b90ddfb70e6f197d3660731ee88914af6bc38ca0441db51f1b6e2b2f1ab451db",
+       "right": "d9e88fed83e775c0621e465628e7961b39b7baac908bcee5b1d82f683daf2244",
+       "total": "3647964657",
+       "count": 128,
+       "low": [
+        "obligations",
+        "Department of Veterans Affairs",
+        "2025",
+        "00000000000000001249"
+       ],
+       "high": [
+        "obligations",
+        "Department of Veterans Affairs",
+        "2025",
+        "00000000000000001753"
+       ]
+      }
+     },
+     {
+      "node": {
+       "left": "8435772c7a89ff2299092d2da639bf86664442a9cd0244dde4f029da612fccf9",
+       "right": "0598ce380e12735b8a091b8c8f58dd562b19a31a14adb08954a967c5fc4185a2",
+       "total": "2964571740",
+       "count": 64,
+       "low": [
+        "obligations",
+        "Department of Veterans Affairs",
+        "2025",
+        "00000000000000001759"
+       ],
+       "high": [
+        "obligations",
+        "Department of Veterans Affairs",
+        "2025",
+        "00000000000000001969"
+       ]
+      }
+     },
+     {
+      "node": {
+       "left": "841a052436f833f9b504da764f91edfa15b86c487e300bb2cfdf9aea2569c0a9",
+       "right": "8c351de144253c1397ca217936278e1d1c9324adfde300591383da0abe5428d8",
+       "total": "162643061",
+       "count": 4,
+       "low": [
+        "obligations",
+        "Department of Veterans Affairs",
+        "2025",
+        "00000000000000001971"
+       ],
+       "high": [
+        "obligations",
+        "Department of Veterans Affairs",
+        "2025",
+        "00000000000000001977"
+       ]
+      }
+     },
+     {
+      "leaf": {
+       "key": [
+        "obligations",
+        "Department of Veterans Affairs",
+        "2025",
+        "00000000000000001991"
+       ],
+       "amount": "11400000",
+       "record_hash": "47e7a4ce342ea64981489176930f8305291e036663612d7ea768ec70d3cb7ffc"
+      }
+     },
+     {
+      "leaf": {
+       "key": [
+        "obligations",
+        "Department of the Treasury",
+        "2025",
+        "00000000000000000323"
+       ],
+       "amount": "2482800",
+       "record_hash": "859751c3a1214db45435fefdf171203bb6bbb987e0358078fec51bbb43935c57"
+      }
+     },
+     {
+      "node": {
+       "left": "fd49e4298af5d3acd96b2b1e6dffed1c76342bae7f2a8f5ea372cde7dd484884",
+       "right": "90b0eb0bbd7157d0d46dc106cc62f8331dcb7f208dd89161e15d59912c4929bd",
+       "total": "137952685",
+       "count": 2,
+       "low": [
+        "obligations",
+        "Department of the Treasury",
+        "2025",
+        "00000000000000001251"
+       ],
+       "high": [
+        "obligations",
+        "Department of the Treasury",
+        "2025",
+        "00000000000000001970"
+       ]
+      }
+     },
+     {
+      "node": {
+       "left": "bcb16865d7b8278528c5f135e061c26498811d97db2b4c434eb00a9fdc27d5f6",
+       "right": "3233ec70739da716e1ffe40fad5c713c36f099e0c3e26b090fb75f87a98b2d9f",
+       "total": "327469682",
+       "count": 8,
+       "low": [
+        "obligations",
+        "General Services Administration",
+        "2025",
+        "00000000000000001283"
+       ],
+       "high": [
+        "obligations",
+        "Social Security Administration",
+        "2025",
+        "00000000000000001952"
+       ]
+      }
+     }
+    ]
+   }
+  },
+  {
+   "entity": "obligations",
+   "agency": "General Services Administration",
+   "total_cents": "0",
+   "count": 1,
+   "proof": {
+    "size": 2000,
+    "prefix": [
+     "obligations",
+     "General Services Administration"
+    ],
+    "start": 1992,
+    "end": 1993,
+    "pieces": [
+     {
+      "node": {
+       "left": "f6286235b36caf56f3e0a5600de6cc04494f798265a5f828ef2867f8f569c943",
+       "right": "09f561b3a1848e4c148ff6dde798134ed2d2c8bff742e48069cb1d698d9da656",
+       "total": "16231942613",
+       "count": 1024,
+       "low": [
+        "obligations",
+        "",
+        "2025",
+        "00000000000000000000"
+       ],
+       "high": [
+        "obligations",
+        "",
+        "2025",
+        "00000000000000001756"
+       ]
+      }
+     },
+     {
+      "node": {
+       "left": "f1d96835de06b793ca14c8fd8e9c9aa579a120cf14f27e137924b1a9e0ad6d46",
+       "right": "15a57d84c8fce6b6321940987d9037afbe85d0e556ca83691621d165c9ba0d09",
+       "total": "10531018023",
+       "count": 512,
+       "low": [
+        "obligations",
+        "",
+        "2025",
+        "00000000000000001757"
+       ],
+       "high": [
+        "obligations",
+        "Department of Veterans Affairs",
+        "2025",
+        "00000000000000000415"
+       ]
+      }
+     },
+     {
+      "node": {
+       "left": "a4c1d7b8efd8f8b38e52cfb03dbe0030a61f4f6b54134ff4470505845fa2165f",
+       "right": "d9e3470f061fc9287a6595004b9a5aed6f15941d5e38d6b6c5a50cca64641927",
+       "total": "6186705786",
+       "count": 256,
+       "low": [
+        "obligations",
+        "Department of Veterans Affairs",
+        "2025",
+        "00000000000000000427"
+       ],
+       "high": [
+        "obligations",
+        "Department of Veterans Affairs",
+        "2025",
+        "00000000000000001248"
+       ]
+      }
+     },
+     {
+      "node": {
+       "left": "b90ddfb70e6f197d3660731ee88914af6bc38ca0441db51f1b6e2b2f1ab451db",
+       "right": "d9e88fed83e775c0621e465628e7961b39b7baac908bcee5b1d82f683daf2244",
+       "total": "3647964657",
+       "count": 128,
+       "low": [
+        "obligations",
+        "Department of Veterans Affairs",
+        "2025",
+        "00000000000000001249"
+       ],
+       "high": [
+        "obligations",
+        "Department of Veterans Affairs",
+        "2025",
+        "00000000000000001753"
+       ]
+      }
+     },
+     {
+      "node": {
+       "left": "8435772c7a89ff2299092d2da639bf86664442a9cd0244dde4f029da612fccf9",
+       "right": "0598ce380e12735b8a091b8c8f58dd562b19a31a14adb08954a967c5fc4185a2",
+       "total": "2964571740",
+       "count": 64,
+       "low": [
+        "obligations",
+        "Department of Veterans Affairs",
+        "2025",
+        "00000000000000001759"
+       ],
+       "high": [
+        "obligations",
+        "Department of Veterans Affairs",
+        "2025",
+        "00000000000000001969"
+       ]
+      }
+     },
+     {
+      "node": {
+       "left": "afa76185d8dc286ae8ce3e7a8da844da530439c5b66fd33790a7f0f76b4e7d63",
+       "right": "ff1e24712a4eae7812789e23c4d904474c89ca897afa496cc91157d2a5aba2f3",
+       "total": "314478546",
+       "count": 8,
+       "low": [
+        "obligations",
+        "Department of Veterans Affairs",
+        "2025",
+        "00000000000000001971"
+       ],
+       "high": [
+        "obligations",
+        "Department of the Treasury",
+        "2025",
+        "00000000000000001970"
+       ]
+      }
+     },
+     {
+      "leaf": {
+       "key": [
+        "obligations",
+        "General Services Administration",
+        "2025",
+        "00000000000000001283"
+       ],
+       "amount": "0",
+       "record_hash": "e37157470c34b08dc617fddca228f56f0babe80a08f472cb66ba1d18648d7c6f"
+      }
+     },
+     {
+      "leaf": {
+       "key": [
+        "obligations",
+        "National Archives and Records Administration",
+        "2025",
+        "00000000000000001038"
+       ],
+       "amount": "0",
+       "record_hash": "dd0a005475e910bc18be12015cb5cb657c08dab11dcebe39fceb1eea172daaf2"
+      }
+     },
+     {
+      "node": {
+       "left": "13008f5ad31d04d51f9e140625ba5cb12ca9b572457f368bd06b3d67abf1368b",
+       "right": "97826e64abeb84af32a82c2c7163542fa393b5fe5ea2bcb941114313ba29dcd4",
+       "total": "1125397",
+       "count": 2,
+       "low": [
+        "obligations",
+        "National Archives and Records Administration",
+        "2025",
+        "00000000000000001329"
+       ],
+       "high": [
+        "obligations",
+        "Social Security Administration",
+        "2025",
+        "00000000000000000394"
+       ]
+      }
+     },
+     {
+      "node": {
+       "left": "3559b1ca57a16eed3af2ec7731f2ebd97cebbb2959c781842a19991aac7fe4dd",
+       "right": "461a62442cbaa217e213c21f0f314d3df982be9eea778a07ec362629680d73c1",
+       "total": "326344285",
+       "count": 4,
+       "low": [
+        "obligations",
+        "Social Security Administration",
+        "2025",
+        "00000000000000001552"
+       ],
+       "high": [
+        "obligations",
+        "Social Security Administration",
+        "2025",
+        "00000000000000001952"
+       ]
+      }
+     }
+    ]
+   }
+  },
+  {
+   "entity": "obligations",
+   "agency": "National Archives and Records Administration",
+   "total_cents": "0",
+   "count": 2,
+   "proof": {
+    "size": 2000,
+    "prefix": [
+     "obligations",
+     "National Archives and Records Administration"
+    ],
+    "start": 1993,
+    "end": 1995,
+    "pieces": [
+     {
+      "node": {
+       "left": "f6286235b36caf56f3e0a5600de6cc04494f798265a5f828ef2867f8f569c943",
+       "right": "09f561b3a1848e4c148ff6dde798134ed2d2c8bff742e48069cb1d698d9da656",
+       "total": "16231942613",
+       "count": 1024,
+       "low": [
+        "obligations",
+        "",
+        "2025",
+        "00000000000000000000"
+       ],
+       "high": [
+        "obligations",
+        "",
+        "2025",
+        "00000000000000001756"
+       ]
+      }
+     },
+     {
+      "node": {
+       "left": "f1d96835de06b793ca14c8fd8e9c9aa579a120cf14f27e137924b1a9e0ad6d46",
+       "right": "15a57d84c8fce6b6321940987d9037afbe85d0e556ca83691621d165c9ba0d09",
+       "total": "10531018023",
+       "count": 512,
+       "low": [
+        "obligations",
+        "",
+        "2025",
+        "00000000000000001757"
+       ],
+       "high": [
+        "obligations",
+        "Department of Veterans Affairs",
+        "2025",
+        "00000000000000000415"
+       ]
+      }
+     },
+     {
+      "node": {
+       "left": "a4c1d7b8efd8f8b38e52cfb03dbe0030a61f4f6b54134ff4470505845fa2165f",
+       "right": "d9e3470f061fc9287a6595004b9a5aed6f15941d5e38d6b6c5a50cca64641927",
+       "total": "6186705786",
+       "count": 256,
+       "low": [
+        "obligations",
+        "Department of Veterans Affairs",
+        "2025",
+        "00000000000000000427"
+       ],
+       "high": [
+        "obligations",
+        "Department of Veterans Affairs",
+        "2025",
+        "00000000000000001248"
+       ]
+      }
+     },
+     {
+      "node": {
+       "left": "b90ddfb70e6f197d3660731ee88914af6bc38ca0441db51f1b6e2b2f1ab451db",
+       "right": "d9e88fed83e775c0621e465628e7961b39b7baac908bcee5b1d82f683daf2244",
+       "total": "3647964657",
+       "count": 128,
+       "low": [
+        "obligations",
+        "Department of Veterans Affairs",
+        "2025",
+        "00000000000000001249"
+       ],
+       "high": [
+        "obligations",
+        "Department of Veterans Affairs",
+        "2025",
+        "00000000000000001753"
+       ]
+      }
+     },
+     {
+      "node": {
+       "left": "8435772c7a89ff2299092d2da639bf86664442a9cd0244dde4f029da612fccf9",
+       "right": "0598ce380e12735b8a091b8c8f58dd562b19a31a14adb08954a967c5fc4185a2",
+       "total": "2964571740",
+       "count": 64,
+       "low": [
+        "obligations",
+        "Department of Veterans Affairs",
+        "2025",
+        "00000000000000001759"
+       ],
+       "high": [
+        "obligations",
+        "Department of Veterans Affairs",
+        "2025",
+        "00000000000000001969"
+       ]
+      }
+     },
+     {
+      "node": {
+       "left": "afa76185d8dc286ae8ce3e7a8da844da530439c5b66fd33790a7f0f76b4e7d63",
+       "right": "ff1e24712a4eae7812789e23c4d904474c89ca897afa496cc91157d2a5aba2f3",
+       "total": "314478546",
+       "count": 8,
+       "low": [
+        "obligations",
+        "Department of Veterans Affairs",
+        "2025",
+        "00000000000000001971"
+       ],
+       "high": [
+        "obligations",
+        "Department of the Treasury",
+        "2025",
+        "00000000000000001970"
+       ]
+      }
+     },
+     {
+      "leaf": {
+       "key": [
+        "obligations",
+        "General Services Administration",
+        "2025",
+        "00000000000000001283"
+       ],
+       "amount": "0",
+       "record_hash": "e37157470c34b08dc617fddca228f56f0babe80a08f472cb66ba1d18648d7c6f"
+      }
+     },
+     {
+      "leaf": {
+       "key": [
+        "obligations",
+        "National Archives and Records Administration",
+        "2025",
+        "00000000000000001038"
+       ],
+       "amount": "0",
+       "record_hash": "dd0a005475e910bc18be12015cb5cb657c08dab11dcebe39fceb1eea172daaf2"
+      }
+     },
+     {
+      "leaf": {
+       "key": [
+        "obligations",
+        "National Archives and Records Administration",
+        "2025",
+        "00000000000000001329"
+       ],
+       "amount": "0",
+       "record_hash": "555d131fae9e423222ab1175fe253c352400d76b3e1ba00f99d4fd5566947c5b"
+      }
+     },
+     {
+      "leaf": {
+       "key": [
+        "obligations",
+        "Social Security Administration",
+        "2025",
+        "00000000000000000394"
+       ],
+       "amount": "1125397",
+       "record_hash": "22de94ad62a2ac5c021d512c963d220167fd345030b30c9aae46dce90a7754ee"
+      }
+     },
+     {
+      "node": {
+       "left": "3559b1ca57a16eed3af2ec7731f2ebd97cebbb2959c781842a19991aac7fe4dd",
+       "right": "461a62442cbaa217e213c21f0f314d3df982be9eea778a07ec362629680d73c1",
+       "total": "326344285",
+       "count": 4,
+       "low": [
+        "obligations",
+        "Social Security Administration",
+        "2025",
+        "00000000000000001552"
+       ],
+       "high": [
+        "obligations",
+        "Social Security Administration",
+        "2025",
+        "00000000000000001952"
+       ]
+      }
+     }
+    ]
+   }
+  },
+  {
+   "entity": "obligations",
+   "agency": "Social Security Administration",
+   "total_cents": "327469682",
+   "count": 5,
+   "proof": {
+    "size": 2000,
+    "prefix": [
+     "obligations",
+     "Social Security Administration"
+    ],
+    "start": 1995,
+    "end": 2000,
+    "pieces": [
+     {
+      "node": {
+       "left": "f6286235b36caf56f3e0a5600de6cc04494f798265a5f828ef2867f8f569c943",
+       "right": "09f561b3a1848e4c148ff6dde798134ed2d2c8bff742e48069cb1d698d9da656",
+       "total": "16231942613",
+       "count": 1024,
+       "low": [
+        "obligations",
+        "",
+        "2025",
+        "00000000000000000000"
+       ],
+       "high": [
+        "obligations",
+        "",
+        "2025",
+        "00000000000000001756"
+       ]
+      }
+     },
+     {
+      "node": {
+       "left": "f1d96835de06b793ca14c8fd8e9c9aa579a120cf14f27e137924b1a9e0ad6d46",
+       "right": "15a57d84c8fce6b6321940987d9037afbe85d0e556ca83691621d165c9ba0d09",
+       "total": "10531018023",
+       "count": 512,
+       "low": [
+        "obligations",
+        "",
+        "2025",
+        "00000000000000001757"
+       ],
+       "high": [
+        "obligations",
+        "Department of Veterans Affairs",
+        "2025",
+        "00000000000000000415"
+       ]
+      }
+     },
+     {
+      "node": {
+       "left": "a4c1d7b8efd8f8b38e52cfb03dbe0030a61f4f6b54134ff4470505845fa2165f",
+       "right": "d9e3470f061fc9287a6595004b9a5aed6f15941d5e38d6b6c5a50cca64641927",
+       "total": "6186705786",
+       "count": 256,
+       "low": [
+        "obligations",
+        "Department of Veterans Affairs",
+        "2025",
+        "00000000000000000427"
+       ],
+       "high": [
+        "obligations",
+        "Department of Veterans Affairs",
+        "2025",
+        "00000000000000001248"
+       ]
+      }
+     },
+     {
+      "node": {
+       "left": "b90ddfb70e6f197d3660731ee88914af6bc38ca0441db51f1b6e2b2f1ab451db",
+       "right": "d9e88fed83e775c0621e465628e7961b39b7baac908bcee5b1d82f683daf2244",
+       "total": "3647964657",
+       "count": 128,
+       "low": [
+        "obligations",
+        "Department of Veterans Affairs",
+        "2025",
+        "00000000000000001249"
+       ],
+       "high": [
+        "obligations",
+        "Department of Veterans Affairs",
+        "2025",
+        "00000000000000001753"
+       ]
+      }
+     },
+     {
+      "node": {
+       "left": "8435772c7a89ff2299092d2da639bf86664442a9cd0244dde4f029da612fccf9",
+       "right": "0598ce380e12735b8a091b8c8f58dd562b19a31a14adb08954a967c5fc4185a2",
+       "total": "2964571740",
+       "count": 64,
+       "low": [
+        "obligations",
+        "Department of Veterans Affairs",
+        "2025",
+        "00000000000000001759"
+       ],
+       "high": [
+        "obligations",
+        "Department of Veterans Affairs",
+        "2025",
+        "00000000000000001969"
+       ]
+      }
+     },
+     {
+      "node": {
+       "left": "afa76185d8dc286ae8ce3e7a8da844da530439c5b66fd33790a7f0f76b4e7d63",
+       "right": "ff1e24712a4eae7812789e23c4d904474c89ca897afa496cc91157d2a5aba2f3",
+       "total": "314478546",
+       "count": 8,
+       "low": [
+        "obligations",
+        "Department of Veterans Affairs",
+        "2025",
+        "00000000000000001971"
+       ],
+       "high": [
+        "obligations",
+        "Department of the Treasury",
+        "2025",
+        "00000000000000001970"
+       ]
+      }
+     },
+     {
+      "node": {
+       "left": "7061b8d35d12b9a67ba42a5125bec61951dd3186cfd74e75ea69c1988c49ce2a",
+       "right": "5390667bac60301d96b145617b69bedf74260ed93901b29a21be2fef1abd1a8a",
+       "total": "0",
+       "count": 2,
+       "low": [
+        "obligations",
+        "General Services Administration",
+        "2025",
+        "00000000000000001283"
+       ],
+       "high": [
+        "obligations",
+        "National Archives and Records Administration",
+        "2025",
+        "00000000000000001038"
+       ]
+      }
+     },
+     {
+      "leaf": {
+       "key": [
+        "obligations",
+        "National Archives and Records Administration",
+        "2025",
+        "00000000000000001329"
+       ],
+       "amount": "0",
+       "record_hash": "555d131fae9e423222ab1175fe253c352400d76b3e1ba00f99d4fd5566947c5b"
+      }
+     },
+     {
+      "leaf": {
+       "key": [
+        "obligations",
+        "Social Security Administration",
+        "2025",
+        "00000000000000000394"
+       ],
+       "amount": "1125397",
+       "record_hash": "22de94ad62a2ac5c021d512c963d220167fd345030b30c9aae46dce90a7754ee"
+      }
+     },
+     {
+      "node": {
+       "left": "3559b1ca57a16eed3af2ec7731f2ebd97cebbb2959c781842a19991aac7fe4dd",
+       "right": "461a62442cbaa217e213c21f0f314d3df982be9eea778a07ec362629680d73c1",
+       "total": "326344285",
+       "count": 4,
+       "low": [
+        "obligations",
+        "Social Security Administration",
+        "2025",
+        "00000000000000001552"
+       ],
+       "high": [
+        "obligations",
+        "Social Security Administration",
+        "2025",
+        "00000000000000001952"
+       ]
+      }
+     }
+    ]
+   }
+  },
+  {
+   "entity": "outlays",
+   "agency": null,
+   "total_cents": "0",
+   "count": 0,
+   "proof": {
+    "size": 2000,
+    "prefix": [
+     "outlays"
+    ],
+    "start": 2000,
+    "end": 2000,
+    "pieces": [
+     {
+      "node": {
+       "left": "13a9586e5d299b1be3e79cd3ce33439eb5823cc92521663384984f2914f74fa6",
+       "right": "f5e21b2aa550a40483f01ba1faa8a9a3dceab0c1140dccfb5b10182efdf9feb6",
+       "total": "40204151047",
+       "count": 2000,
+       "low": [
+        "obligations",
+        "",
+        "2025",
+        "00000000000000000000"
+       ],
+       "high": [
+        "obligations",
+        "Social Security Administration",
+        "2025",
+        "00000000000000001952"
+       ]
+      }
+     }
+    ]
+   }
+  }
+ ]
+}

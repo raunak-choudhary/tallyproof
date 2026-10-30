@@ -8,3 +8,5 @@ playwright-report/
 test-results/
 # Evaluation reports, written by make eval-export
 public/replay/evals/
+# Signed replay totals, written by make replay-totals
+public/replay/totals.json
