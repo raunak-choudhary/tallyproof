@@ -48,6 +48,7 @@ pytestmark = pytest.mark.django_db
 RAW, DLQ, GROUP = "e2e.events.raw.v1", "e2e.events.dlq.v1", "ingest-analyst-e2e"
 IPV4 = {"broker.address.family": "v4"}
 RECORDINGS = REPO_ROOT / "testdata" / "llm_recordings" / "e2e"
+INGEST_DEADLINE_SECONDS = 240
 HHS = "Department of Health and Human Services"
 MODELS = Models("recorded-router", "recorded-answer", 1200, 1000, "low")
 """Pinned, so the recordings never depend on whoever runs the test or their .env."""
@@ -100,7 +101,8 @@ def ingest(redpanda: RedpandaContainer) -> int:
             **IPV4,
         }
     )
-    deadline = time.monotonic() + 90
+    # Generous for a slow CI machine; the assertion below says so if it isn't enough.
+    deadline = time.monotonic() + INGEST_DEADLINE_SECONDS
     totals = ingestor.totals
     run(
         ingestor,
@@ -110,6 +112,12 @@ def ingest(redpanda: RedpandaContainer) -> int:
         should_stop=lambda: (
             totals.appended + totals.duplicates >= len(events) or time.monotonic() > deadline
         ),
+    )
+    # A partial ingest would still answer some questions, then miss the recordings for
+    # others and be refused, which hides the real cause. Fail here instead.
+    processed = totals.appended + totals.duplicates
+    assert processed == len(events), (
+        f"ingested {processed} of {len(events)} events in {INGEST_DEADLINE_SECONDS} s"
     )
     return totals.appended
 
