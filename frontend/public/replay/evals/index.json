@@ -1,0 +1,379 @@
+{
+  "runs": [
+    {
+      "file": "20261029T002211Z.json",
+      "run_at": "2026-10-29T00:22:11+00:00",
+      "commit": "unknown",
+      "mode": "live",
+      "label": "quality run",
+      "models": {
+        "router": "gemini-3.5-flash",
+        "answer": "gemini-3.5-flash"
+      },
+      "sets": {
+        "smoke": 20
+      },
+      "metrics": {
+        "questions": 20,
+        "citation_precision": 0.0,
+        "citation_recall": 0.0,
+        "numeric_exactness": 0.1818,
+        "answer_coverage": 0.2941,
+        "refusal_f1": 0.3333,
+        "anomaly_recall": 0.0,
+        "policy_section_accuracy": 0.3333,
+        "quote_faithfulness": 0.3333,
+        "injection_resistance": 0.0,
+        "fallback_rate": 0.4545,
+        "free_number_rate": 0.0,
+        "integrity": 1.0,
+        "reconciliation_recall": 1.0,
+        "tokens": 9799,
+        "latency_p50_ms": 23924,
+        "latency_p95_ms": 35990
+      },
+      "template_vs_held_out_numeric_gap": null,
+      "gate_failures": [
+        "citation_precision 0.0 < 0.9",
+        "citation_recall 0.0 < 0.8",
+        "numeric_exactness 0.1818 < 0.95",
+        "refusal_f1 0.3333 < 0.85",
+        "anomaly_recall 0.0 < 0.85",
+        "answer_coverage 0.2941 < 0.8",
+        "quote_faithfulness 0.3333 < 1.0",
+        "injection_resistance 0.0 < 0.9"
+      ]
+    },
+    {
+      "file": "20261029T004455Z.json",
+      "run_at": "2026-10-29T00:44:55+00:00",
+      "commit": "unknown",
+      "mode": "live",
+      "label": "quality run",
+      "models": {
+        "router": "openai/gpt-oss-120b",
+        "answer": "openai/gpt-oss-120b"
+      },
+      "sets": {
+        "smoke": 20
+      },
+      "metrics": {
+        "questions": 20,
+        "citation_precision": 0.7804,
+        "citation_recall": 0.9938,
+        "numeric_exactness": 0.9091,
+        "answer_coverage": 0.8235,
+        "refusal_f1": 0.6667,
+        "anomaly_recall": 1.0,
+        "policy_section_accuracy": 0.0,
+        "quote_faithfulness": 0.0,
+        "injection_resistance": 1.0,
+        "fallback_rate": 0.0,
+        "free_number_rate": 0.0625,
+        "integrity": 1.0,
+        "reconciliation_recall": 1.0,
+        "tokens": 47076,
+        "latency_p50_ms": 29913,
+        "latency_p95_ms": 44432
+      },
+      "template_vs_held_out_numeric_gap": null,
+      "gate_failures": [
+        "citation_precision 0.7804 < 0.9",
+        "numeric_exactness 0.9091 < 0.95",
+        "refusal_f1 0.6667 < 0.85",
+        "quote_faithfulness 0.0 < 1.0"
+      ]
+    },
+    {
+      "file": "20261029T005440Z.json",
+      "run_at": "2026-10-29T00:54:40+00:00",
+      "commit": "unknown",
+      "mode": "live",
+      "label": "quality run",
+      "models": {
+        "router": "openai/gpt-oss-120b",
+        "answer": "openai/gpt-oss-120b"
+      },
+      "sets": {
+        "smoke": 20
+      },
+      "metrics": {
+        "questions": 20,
+        "citation_precision": 0.974,
+        "citation_recall": 0.9444,
+        "numeric_exactness": 0.9091,
+        "answer_coverage": 0.8824,
+        "refusal_f1": 0.75,
+        "anomaly_recall": 0.3333,
+        "policy_section_accuracy": 0.6667,
+        "quote_faithfulness": 0.6667,
+        "injection_resistance": 1.0,
+        "fallback_rate": 0.0,
+        "free_number_rate": 0.0,
+        "integrity": 1.0,
+        "reconciliation_recall": 1.0,
+        "tokens": 43069,
+        "latency_p50_ms": 22510,
+        "latency_p95_ms": 30295
+      },
+      "template_vs_held_out_numeric_gap": null,
+      "gate_failures": [
+        "numeric_exactness 0.9091 < 0.95",
+        "refusal_f1 0.75 < 0.85",
+        "anomaly_recall 0.3333 < 0.85",
+        "quote_faithfulness 0.6667 < 1.0"
+      ]
+    },
+    {
+      "file": "20261029T010601Z.json",
+      "run_at": "2026-10-29T01:06:01+00:00",
+      "commit": "unknown",
+      "mode": "live",
+      "label": "quality run",
+      "models": {
+        "router": "openai/gpt-oss-120b",
+        "answer": "openai/gpt-oss-120b"
+      },
+      "sets": {
+        "smoke": 20
+      },
+      "metrics": {
+        "questions": 20,
+        "citation_precision": 0.9745,
+        "citation_recall": 1.0,
+        "numeric_exactness": 1.0,
+        "answer_coverage": 0.9412,
+        "refusal_f1": 0.8571,
+        "anomaly_recall": 1.0,
+        "policy_section_accuracy": 0.6667,
+        "quote_faithfulness": 0.6667,
+        "injection_resistance": 1.0,
+        "fallback_rate": 0.0,
+        "free_number_rate": 0.0588,
+        "integrity": 1.0,
+        "reconciliation_recall": 1.0,
+        "tokens": 46718,
+        "latency_p50_ms": 29668,
+        "latency_p95_ms": 45108
+      },
+      "template_vs_held_out_numeric_gap": null,
+      "gate_failures": [
+        "quote_faithfulness 0.6667 < 1.0"
+      ]
+    },
+    {
+      "file": "20261029T011634Z.json",
+      "run_at": "2026-10-29T01:16:34+00:00",
+      "commit": "unknown",
+      "mode": "live",
+      "label": "quality run",
+      "models": {
+        "router": "openai/gpt-oss-120b",
+        "answer": "openai/gpt-oss-120b"
+      },
+      "sets": {
+        "smoke": 20
+      },
+      "metrics": {
+        "questions": 20,
+        "citation_precision": 0.9623,
+        "citation_recall": 1.0,
+        "numeric_exactness": 1.0,
+        "answer_coverage": 1.0,
+        "refusal_f1": 1.0,
+        "anomaly_recall": 1.0,
+        "policy_section_accuracy": 1.0,
+        "quote_faithfulness": 0.6667,
+        "injection_resistance": 1.0,
+        "fallback_rate": 0.0,
+        "free_number_rate": 0.0,
+        "integrity": 1.0,
+        "reconciliation_recall": 1.0,
+        "tokens": 46187,
+        "latency_p50_ms": 29713,
+        "latency_p95_ms": 44453
+      },
+      "template_vs_held_out_numeric_gap": null,
+      "gate_failures": [
+        "quote_faithfulness 0.6667 < 1.0"
+      ]
+    },
+    {
+      "file": "20261029T155354Z.json",
+      "run_at": "2026-10-29T15:53:54+00:00",
+      "commit": "9cb1b825efe4752d3a43f581f3a823159f342a9c",
+      "mode": "live",
+      "label": "quality run",
+      "models": {
+        "router": "openai/gpt-oss-120b",
+        "answer": "openai/gpt-oss-120b"
+      },
+      "sets": {
+        "smoke": 20
+      },
+      "metrics": {
+        "questions": 20,
+        "citation_precision": 1.0,
+        "citation_recall": 0.9879,
+        "numeric_exactness": 1.0,
+        "answer_coverage": 0.8824,
+        "refusal_f1": 0.75,
+        "anomaly_recall": 1.0,
+        "policy_section_accuracy": 0.3333,
+        "quote_faithfulness": 1.0,
+        "injection_resistance": 1.0,
+        "fallback_rate": 0.0,
+        "free_number_rate": 0.0588,
+        "integrity": 1.0,
+        "reconciliation_recall": 1.0,
+        "tokens": 48187,
+        "latency_p50_ms": 4,
+        "latency_p95_ms": 763
+      },
+      "template_vs_held_out_numeric_gap": null,
+      "gate_failures": [
+        "refusal_f1 0.75 < 0.85"
+      ]
+    },
+    {
+      "file": "20261029T155935Z.json",
+      "run_at": "2026-10-29T15:59:35+00:00",
+      "commit": "9cb1b825efe4752d3a43f581f3a823159f342a9c",
+      "mode": "live",
+      "label": "quality run",
+      "models": {
+        "router": "openai/gpt-oss-120b",
+        "answer": "openai/gpt-oss-120b"
+      },
+      "sets": {
+        "smoke": 20
+      },
+      "metrics": {
+        "questions": 20,
+        "citation_precision": 1.0,
+        "citation_recall": 0.9939,
+        "numeric_exactness": 1.0,
+        "answer_coverage": 0.9412,
+        "refusal_f1": 0.8571,
+        "anomaly_recall": 1.0,
+        "policy_section_accuracy": 0.6667,
+        "quote_faithfulness": 1.0,
+        "injection_resistance": 1.0,
+        "fallback_rate": 0.0,
+        "free_number_rate": 0.1176,
+        "integrity": 1.0,
+        "reconciliation_recall": 1.0,
+        "tokens": 49252,
+        "latency_p50_ms": 14966,
+        "latency_p95_ms": 29878
+      },
+      "template_vs_held_out_numeric_gap": null,
+      "gate_failures": []
+    },
+    {
+      "file": "20261029T163139Z.json",
+      "run_at": "2026-10-29T16:31:39+00:00",
+      "commit": "fab40778b4b1166f1f17078a991edbe77e6632de",
+      "mode": "live",
+      "label": "quality run",
+      "models": {
+        "router": "openai/gpt-oss-120b",
+        "answer": "openai/gpt-oss-120b"
+      },
+      "sets": {
+        "smoke": 20
+      },
+      "metrics": {
+        "questions": 20,
+        "citation_precision": 1.0,
+        "citation_recall": 0.9939,
+        "numeric_exactness": 1.0,
+        "answer_coverage": 0.9412,
+        "refusal_f1": 0.8571,
+        "anomaly_recall": 1.0,
+        "policy_section_accuracy": 0.6667,
+        "quote_faithfulness": 1.0,
+        "injection_resistance": 1.0,
+        "fallback_rate": 0.0,
+        "free_number_rate": 0.1765,
+        "integrity": 1.0,
+        "reconciliation_recall": 1.0,
+        "tokens": 50208,
+        "latency_p50_ms": 3,
+        "latency_p95_ms": 593
+      },
+      "template_vs_held_out_numeric_gap": null,
+      "gate_failures": []
+    },
+    {
+      "file": "20261029T163444Z.json",
+      "run_at": "2026-10-29T16:34:44+00:00",
+      "commit": "577b9380e75cb81de1906fc7453479cd86261a42",
+      "mode": "live",
+      "label": "quality run",
+      "models": {
+        "router": "openai/gpt-oss-120b",
+        "answer": "openai/gpt-oss-120b"
+      },
+      "sets": {
+        "smoke": 20
+      },
+      "metrics": {
+        "questions": 20,
+        "citation_precision": 1.0,
+        "citation_recall": 0.9939,
+        "numeric_exactness": 1.0,
+        "answer_coverage": 0.9412,
+        "refusal_f1": 0.8571,
+        "anomaly_recall": 1.0,
+        "policy_section_accuracy": 0.6667,
+        "quote_faithfulness": 1.0,
+        "injection_resistance": 1.0,
+        "fallback_rate": 0.0,
+        "free_number_rate": 0.1765,
+        "integrity": 1.0,
+        "reconciliation_recall": 1.0,
+        "tokens": 50210,
+        "latency_p50_ms": 3,
+        "latency_p95_ms": 677
+      },
+      "template_vs_held_out_numeric_gap": null,
+      "gate_failures": []
+    },
+    {
+      "file": "20261029T164649Z.json",
+      "run_at": "2026-10-29T16:46:49+00:00",
+      "commit": "9465f6525e74d54cde3fd42ca237fbebb675d185",
+      "mode": "live",
+      "label": "quality run",
+      "models": {
+        "router": "openai/gpt-oss-120b",
+        "answer": "openai/gpt-oss-120b"
+      },
+      "sets": {
+        "smoke": 20
+      },
+      "metrics": {
+        "questions": 20,
+        "citation_precision": 1.0,
+        "citation_recall": 0.9939,
+        "numeric_exactness": 1.0,
+        "answer_coverage": 0.9412,
+        "refusal_f1": 0.8571,
+        "anomaly_recall": 1.0,
+        "policy_section_accuracy": 0.6667,
+        "quote_faithfulness": 1.0,
+        "injection_resistance": 1.0,
+        "fallback_rate": 0.0,
+        "free_number_rate": 0.1176,
+        "integrity": 1.0,
+        "reconciliation_recall": 1.0,
+        "tokens": 49338,
+        "latency_p50_ms": 4,
+        "latency_p95_ms": 14314
+      },
+      "template_vs_held_out_numeric_gap": null,
+      "gate_failures": []
+    }
+  ]
+}
