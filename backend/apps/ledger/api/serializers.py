@@ -87,3 +87,22 @@ class LogKeySerializer(serializers.Serializer[dict[str, object]]):
 
     origin = serializers.CharField()
     verifier_key = serializers.CharField()
+
+
+class TotalsSerializer(serializers.Serializer[dict[str, object]]):
+    """A signed Merkle-sum tree root for one checkpoint (ADR-0024)."""
+
+    tree_size = serializers.IntegerField()
+    records = serializers.IntegerField(help_text="Obligations and outlays in the tree.")
+    root_hash_hex = serializers.CharField()
+    totals_note = serializers.CharField(help_text="Signed with the checkpoint key.")
+
+
+class TotalProofSerializer(serializers.Serializer[dict[str, object]]):
+    """Everything needed to check a total against a signed sum tree, without its records."""
+
+    tree_size = serializers.IntegerField()
+    totals_note = serializers.CharField()
+    total_cents = serializers.CharField(help_text="What the proof establishes. Check it yourself.")
+    count = serializers.IntegerField()
+    proof = serializers.JSONField(help_text="Pieces of the tree; see ADR-0024.")
