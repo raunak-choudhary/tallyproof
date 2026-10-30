@@ -6,6 +6,7 @@ client verifies each citation itself.
 """
 
 from typing import Any
+from urllib.parse import urlencode
 
 from drf_spectacular.utils import OpenApiResponse, extend_schema
 from rest_framework import serializers, status
@@ -18,12 +19,22 @@ from apps.analyst.models import AnalystAnswer
 from apps.analyst.service import REFUSAL_MESSAGES, answer_question
 from apps.ledger.api.problems import Problem, not_found
 from apps.ledger.api.throttling import ClientRateThrottle
+from apps.ledger.models import LedgerTotals
 
 MAX_QUESTION = 500
 
 
 def _proof_url(event_id: str, tree_size: int) -> str:
     return f"/api/v1/events/{event_id}/proof?tree_size={tree_size}"
+
+
+def _total_proof_url(total: dict[str, Any], tree_size: int) -> str:
+    query = {"entity": total["entity"], "tree_size": tree_size}
+    if total.get("agency") is not None:
+        query["agency"] = total["agency"]
+    if total.get("fiscal_year") is not None:
+        query["fiscal_year"] = total["fiscal_year"]
+    return f"/api/v1/totals/proof?{urlencode(query)}"
 
 
 class QueryRateThrottle(ClientRateThrottle):
@@ -66,10 +77,18 @@ class AnswerSerializer(serializers.Serializer[AnalystAnswer]):
         return list(answer.body.get("slots", []))
 
     def get_citations(self, answer: AnalystAnswer) -> list[dict[str, Any]]:
-        """Each citation's events, with where to fetch their proofs."""
+        """Each citation's events, with where to fetch their proofs.
+
+        A citation whose total can be proven as a whole also gets ``total_proof_url``,
+        when the answer's checkpoint has signed totals to prove it against.
+        """
+        signed = LedgerTotals.objects.filter(tree_size=answer.tree_size).exists()
         return [
             {
                 **cite,
+                "total_proof_url": _total_proof_url(cite["total"], answer.tree_size)
+                if signed and cite.get("total")
+                else None,
                 "events": [
                     {
                         **e,

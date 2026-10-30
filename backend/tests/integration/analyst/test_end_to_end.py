@@ -32,12 +32,14 @@ from apps.ingestion.dedupe import PartitionFilters
 from apps.ledger.api import proofs
 from apps.ledger.checkpointer import Checkpointer
 from apps.ledger.projections import catch_up
+from apps.ledger.totals import TotalsSigner
 from apps.reconciliation.projection import ReconciliationProjection
 from evals.dataset import OUT_DIR
 from evals.oracle import Oracle
 from tallyproof_core.checkpoint import Verifier
 from tallyproof_core.hashing import leaf_hash
 from tallyproof_core.merkle import verify_inclusion
+from tallyproof_core.sum_tree import proof_from_json, verify_total
 from tallyproof_pipeline.gold import read_events
 from tallyproof_pipeline.settings import REPO_ROOT
 from tallyproof_pipeline.stream import interleave, publish
@@ -146,6 +148,7 @@ def test_questions_get_answers_whose_every_citation_verifies(
     appended = ingest(redpanda)
     catch_up(ReconciliationProjection())
     Checkpointer(SIGNER, 10_000, 2000).close()
+    TotalsSigner(SIGNER, 50_000, 300).sign(appended)
     proofs.reset()
     cache.clear()
     monkeypatch.setattr(
@@ -170,6 +173,17 @@ def test_questions_get_answers_whose_every_citation_verifies(
     assert body["slots"][0]["value"] == str(expected.amount)
     assert {e["event_id"] for c in body["citations"] for e in c["events"]} == expected.must_cite
     assert verify_citations(client, body) == len(expected.must_cite)
+    # The same total, proven as a whole against the signed sum tree, without its records.
+    (cited,) = body["citations"]
+    proof_body = client.get(cited["total_proof_url"]).json()
+    note = Verifier.from_verifier_key(SIGNER.verifier_key()).verify_totals(
+        proof_body["totals_note"]
+    )
+    assert note.tree_size == body["checkpoint_tree_size"]
+    proven = verify_total(proof_from_json(proof_body["proof"]), note.root_hash)
+    assert proven is not None
+    assert Decimal(proven.total) / 100 == expected.amount
+    assert proven.count == len(expected.must_cite)
 
     body = client.post(
         "/api/v1/queries",
