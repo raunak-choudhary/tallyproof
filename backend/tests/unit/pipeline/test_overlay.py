@@ -15,6 +15,7 @@ from tallyproof_pipeline.overlay import (
     INJECTION_TEXT,
     LATE_BY,
     Anomaly,
+    OverlayResult,
     fiscal_period,
     inject,
     write_labels,
@@ -203,15 +204,17 @@ def test_injected_outlays_borrow_a_real_treasury_account_when_one_exists():
     assert accounts == {"089-0222"}
 
 
-def test_a_recipient_burst_is_many_distinct_small_awards_to_one_recipient(result):
+def test_a_recipient_burst_is_many_distinct_small_awards_to_one_new_recipient(result):
     by_id = {e.event_id: e for e in result.events}
+    real_recipients = {e.account_id for e in result.events if e.event_id not in injected(result)}
     for label in result.labels:
         if label.anomaly != Anomaly.RECIPIENT_BURST:
             continue
-        source, *rest = label.related_event_ids
-        burst = [by_id[label.event_id], *(by_id[i] for i in rest)]
+        burst = [by_id[label.event_id], *(by_id[i] for i in label.related_event_ids)]
         assert len(burst) == BURST_SIZE
-        assert {e.account_id for e in burst} == {by_id[source].account_id}
+        (recipient,) = {e.account_id for e in burst}
+        assert recipient not in real_recipients
+        assert len(recipient) == 12
         assert len({e.payload.award_key for e in burst}) == BURST_SIZE
         assert len({e.payload.amount for e in burst}) == BURST_SIZE
         gaps = {b.emitted_at - a.emitted_at for a, b in pairwise(burst)}
@@ -228,3 +231,13 @@ def test_a_recipient_burst_is_many_distinct_small_awards_to_one_recipient(result
 )
 def test_fiscal_periods_start_in_october(day, expected):
     assert fiscal_period(day) == expected
+
+
+def injected(result: OverlayResult) -> set[str]:
+    ids: set[str] = set()
+    for label in result.labels:
+        if label.event_id:
+            ids.add(label.event_id)
+        if label.anomaly == Anomaly.RECIPIENT_BURST:
+            ids.update(label.related_event_ids)
+    return ids

@@ -55,7 +55,15 @@ OUTLAY_AFTER = timedelta(days=45)
 """How long after the award an injected outlay is reported."""
 BURST_SIZE = 8
 BURST_SPACING = timedelta(minutes=5)
-"""A burst is BURST_SIZE small new awards to one recipient, this far apart."""
+"""A burst is BURST_SIZE small new awards to one brand-new recipient, this far apart.
+
+The recipient is new because that is what makes a burst stand out in real data:
+large contractors routinely get many awards an hour, so a burst to a busy vendor is
+indistinguishable from its normal traffic. A run of awards to a vendor with no
+history is the pattern of a contract split to stay under a review threshold.
+"""
+UEI_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ0123456789"
+"""Unique Entity IDs are 12 characters, without the letters I and O."""
 FALLBACK_TREASURY_ACCOUNT = "000-0000"
 """Used for injected outlays only when the stream has no real outlay to borrow from."""
 
@@ -281,6 +289,8 @@ def plan(
 
     for n, source in enumerate(pick(Anomaly.RECIPIENT_BURST)):
         assert isinstance(source.payload, ObligationRecorded)  # noqa: S101
+        naming = _rng(seed, f"burst-recipient:{n}")
+        recipient = "".join(naming.choice(UEI_ALPHABET) for _ in range(12))
         burst: list[EventEnvelope] = []
         for k in range(BURST_SIZE):
             # Distinct amounts, so the burst is not also a set of semantic duplicates.
@@ -298,6 +308,7 @@ def plan(
                     rng,
                     idempotency_key=f"{source.idempotency_key}_B{n}{k:02d}",
                     emitted_at=source.emitted_at + timedelta(hours=2) + k * BURST_SPACING,
+                    account_id=recipient,
                     payload=payload.model_dump(mode="python"),
                 )
             )
@@ -307,7 +318,7 @@ def plan(
                 Anomaly.RECIPIENT_BURST,
                 burst[0].event_id,
                 burst[0].idempotency_key,
-                [source.event_id, *(e.event_id for e in burst[1:])],
+                [e.event_id for e in burst[1:]],
             )
         )
 
