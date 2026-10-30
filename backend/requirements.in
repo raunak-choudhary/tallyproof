@@ -27,3 +27,5 @@ websockets>=17.3,<18            # WebSocket protocol for uvicorn
 sqlglot==30.23.0             # parses fallback SQL into a tree the guard can inspect; pinned exactly, it releases often
 fastembed==0.9.1            # local ONNX embeddings for policy retrieval; far lighter than a PyTorch stack on an 8 GB laptop
 pillow>=13.0.0,<14             # pulled in by fastembed; 13.0 fixes the CVEs in 12.x that pip-audit reports
+pyiceberg[pyarrow,sql-sqlite,pyiceberg-core]==0.12.0  # Iceberg tables for the lake with a local SQLite catalog; core does the partition transforms
+pyarrow>=26,<27                # Arrow tables and Parquet files under the Iceberg lake

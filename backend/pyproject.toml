@@ -68,6 +68,11 @@ module = ["pydeequ", "pydeequ.*"]
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
+# PyArrow ships no type information.
+module = ["pyarrow", "pyarrow.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
 module = ["tests.*"]
 disallow_untyped_defs = false
 
