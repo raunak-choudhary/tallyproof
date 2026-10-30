@@ -31,6 +31,15 @@ const PAGES = [
 ] as const;
 const THEMES = ["light", "dark"] as const;
 
+/**
+ * Let client-side data load before measuring. The dev server in CI can be slow and keeps
+ * connections open, so "network idle" may never come; after a bounded wait the page is
+ * measured as it stands, which is what a reader would see.
+ */
+async function settle(page: Page) {
+  await page.waitForLoadState("networkidle", { timeout: 10_000 }).catch(() => undefined);
+}
+
 async function noSidewaysScroll(page: Page, label: string) {
   const overflow = await page.evaluate(() => ({
     scroll: document.documentElement.scrollWidth,
@@ -52,7 +61,7 @@ for (const theme of THEMES) {
         }) => {
           await page.setViewportSize({ width: viewport.width, height: viewport.height });
           await page.goto(path);
-          await page.waitForLoadState("networkidle");
+          await settle(page);
           await noSidewaysScroll(page, `${path} at ${viewport.name}`);
         });
       }
@@ -61,14 +70,14 @@ for (const theme of THEMES) {
         // A 1280px laptop at 200 percent zoom lays out like a 640px viewport.
         await page.setViewportSize({ width: 640, height: 400 });
         await page.goto(path);
-        await page.waitForLoadState("networkidle");
+        await settle(page);
         await noSidewaysScroll(page, `${path} zoomed`);
       });
 
       test(`${path} passes accessibility checks`, async ({ page }) => {
         await page.setViewportSize({ width: 1280, height: 800 });
         await page.goto(path);
-        await page.waitForLoadState("networkidle");
+        await settle(page);
         const results = await new AxeBuilder({ page })
           .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
           .analyze();

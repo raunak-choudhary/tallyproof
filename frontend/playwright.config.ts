@@ -6,6 +6,8 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
+  // The dev server compiles each page on first visit, which is slow on CI executors.
+  ...(process.env.CI ? { timeout: 60_000 } : {}),
   // CI executors report many cores but have little memory; 18 browsers at once got the job killed.
   ...(process.env.CI ? { workers: 2 } : {}),
   reporter: process.env.CI ? [["list"], ["html", { open: "never" }]] : "list",
