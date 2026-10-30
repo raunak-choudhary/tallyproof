@@ -80,6 +80,15 @@ class Slot:
 
 
 @dataclass(frozen=True)
+class ProvableTotal:
+    """A total the signed Merkle-sum tree can prove without its records (ADR-0024)."""
+
+    entity: str
+    agency: str | None = None
+    fiscal_year: int | None = None
+
+
+@dataclass(frozen=True)
 class Citation:
     """Events an answer may cite under one label."""
 
@@ -89,6 +98,34 @@ class Citation:
     words: str
     sample_of: int | None = None
     """How many records contributed, when the citation lists only the first of them."""
+    total: ProvableTotal | None = None
+    """Set when the sum and count behind this citation can be proven as a whole."""
+
+
+def provable_total(spec: QuerySpec) -> ProvableTotal | None:
+    """The provable total a spec asks for, or None if the sum tree's keys can't express it.
+
+    Provable: a sum or count over obligations or outlays, filtered by nothing, by an
+    awarding agency, or by an agency and a fiscal year, each with plain equality.
+    """
+    if spec.shape != "aggregate" or spec.group_by is not None:
+        return None
+    if spec.metric not in ("sum_amount", "count") or spec.entity not in ("obligations", "outlays"):
+        return None
+    agency: str | None = None
+    year: int | None = None
+    for f in spec.filters:
+        if f.op != "eq":
+            return None
+        if f.field == "awarding_agency" and agency is None and isinstance(f.value, str):
+            agency = f.value
+        elif f.field == "fiscal_year" and year is None and str(f.value).isdigit():
+            year = int(str(f.value))
+        else:
+            return None
+    if year is not None and agency is None:
+        return None
+    return ProvableTotal(spec.entity, agency, year)
 
 
 @dataclass(frozen=True)
@@ -124,17 +161,27 @@ class Evidence:
         return label
 
     def add_citation(
-        self, rows: Sequence[tuple[Any, ...]], words: str, total: int | None = None
+        self,
+        rows: Sequence[tuple[Any, ...]],
+        words: str,
+        total: int | None = None,
+        proven: ProvableTotal | None = None,
     ) -> str:
         """Add a citation for rows whose first two columns are event ID and leaf index.
 
         ``total`` is how many records contributed; when it's more than the rows given,
-        the citation is a labelled sample of them.
+        the citation is a labelled sample of them. ``proven`` marks a total the sum
+        tree can prove as a whole.
         """
         label = f"c{len(self.citations) + 1}"
         sample_of = total if total is not None and total > len(rows) else None
         self.citations[label] = Citation(
-            label, tuple(r[0] for r in rows), tuple(int(r[1]) for r in rows), words, sample_of
+            label,
+            tuple(r[0] for r in rows),
+            tuple(int(r[1]) for r in rows),
+            words,
+            sample_of,
+            proven,
         )
         return label
 
@@ -190,7 +237,10 @@ def from_query(
         if spec.group_by is None:
             value, row_count = value_rows[0]
             cite = evidence.add_citation(
-                evidence_rows, _counted(len(evidence_rows), int(row_count)), int(row_count)
+                evidence_rows,
+                _counted(len(evidence_rows), int(row_count)),
+                int(row_count),
+                provable_total(spec),
             )
             if value is not None:
                 evidence.add_slot(

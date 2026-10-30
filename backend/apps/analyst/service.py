@@ -14,7 +14,7 @@ from apps.analyst.models import AnalystAnswer
 from apps.analyst.pipeline import COMPOSER_VERSION, FALLBACK_VERSION, Answer, Executor, Models, ask
 from apps.analyst.retrieval import FastEmbedder, Hit, PolicyIndex, load_leaves
 from apps.analyst.router import PROMPT_VERSION
-from apps.ledger.models import LedgerBatch
+from apps.ledger.models import LedgerBatch, LedgerTotals
 from config.env import app_settings, llm_settings
 from tallyproof_core.ids import new_id
 
@@ -148,6 +148,13 @@ def _body(answer: Answer, chosen: Models) -> dict[str, Any]:
                 "label": c.label,
                 "meaning": c.words,
                 "sample_of": c.sample_of,
+                "total": None
+                if c.total is None
+                else {
+                    "entity": c.total.entity,
+                    "agency": c.total.agency,
+                    "fiscal_year": c.total.fiscal_year,
+                },
                 "events": [
                     {"event_id": e, "leaf_index": i}
                     for e, i in zip(c.event_ids, c.leaf_indexes, strict=True)
@@ -172,6 +179,16 @@ def _body(answer: Answer, chosen: Models) -> dict[str, Any]:
             "prompts": [PROMPT_VERSION, COMPOSER_VERSION, FALLBACK_VERSION],
         },
     }
+
+
+def pinned_size() -> int | None:
+    """The checkpoint new answers are pinned to: the newest with signed totals, if any."""
+    totals = LedgerTotals.objects.order_by("-tree_size").values_list("tree_size", flat=True)
+    newest_totals = totals.first()
+    if newest_totals is not None:
+        return int(newest_totals)
+    latest = LedgerBatch.objects.order_by("-tree_size").values_list("tree_size", flat=True).first()
+    return None if latest is None else int(latest)
 
 
 def store(answer: Answer, chosen: Models, tree_size: int) -> AnalystAnswer:
@@ -200,12 +217,16 @@ def answer_question(
     chosen: Models | None = None,
     address: str | None = None,
 ) -> AnalystAnswer:
-    """Answer as of the newest signed checkpoint and store the result.
+    """Answer as of the newest checkpoint whose totals are signed, and store the result.
+
+    Pinning to signed totals lets a total in the answer be proven as a whole
+    (ADR-0024). They are signed at every checkpoint while the log is small, so on a
+    small log this is simply the newest checkpoint; with no totals yet, it is too.
 
     With ``address``, the answer counts against that address's daily token budget,
     and a question from an address past its budget is refused without a model call.
     """
-    latest = LedgerBatch.objects.order_by("-tree_size").values_list("tree_size", flat=True).first()
+    latest = pinned_size()
     chosen = chosen or models()
     if latest is None:
         refused = Answer(question, "refused", None, refusal="no_checkpoint")
