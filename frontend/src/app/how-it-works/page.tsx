@@ -42,9 +42,9 @@ const SCALED = [
   ],
   ["A free-tier model, paced to its limits", "A paid tier", "One setting"],
   [
-    "Large totals cite a labelled sample of records",
-    "A Merkle-sum tree that proves the total itself",
-    "Planned",
+    "Agency totals are proven whole by a Merkle-sum tree; other filters cite a labelled sample",
+    "A sum tree for every filter shape",
+    "One key order per shape",
   ],
 ] as const;
 

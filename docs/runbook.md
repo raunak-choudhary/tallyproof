@@ -145,6 +145,8 @@ make replay
 
 This writes a signed bundle to `frontend/public/replay/`, with a manifest listing the SHA-256 of every file.
 
+`make replay-totals` then signs the bundle's totals: it reads the bundle's own records, builds the Merkle-sum tree, signs its root with the release key, and writes `totals.json` with a proof for every entity and agency. The ledger page checks each one in the browser. It never changes the bundle's log, so the witnessed checkpoint stays valid.
+
 ## Verify the witness data
 
 ```bash
