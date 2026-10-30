@@ -26,6 +26,7 @@ const PAGES = [
   "/live/",
   "/ledger/",
   "/tamper/",
+  "/evals/",
   "/ledger/events/evt_01J92P0V00ZQSM7FGKNG6F5228/",
 ] as const;
 const THEMES = ["light", "dark"] as const;
