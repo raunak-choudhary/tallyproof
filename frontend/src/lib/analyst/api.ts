@@ -120,6 +120,29 @@ export async function askQuestion(
   return toAnswer(body as RawAnswer);
 }
 
+/** A saved answer, for the shareable answer page. */
+export async function fetchAnswer(
+  base: string,
+  answerId: string,
+  fetcher: typeof fetch = fetch,
+): Promise<Answer> {
+  const id = encodeURIComponent(answerId);
+  const response = await fetcher(`${base}/api/v1/answers/${id}`, {
+    headers: { Accept: "application/json" },
+  });
+  const body: unknown = await response.json().catch(() => null);
+  if (!response.ok) {
+    const detail = body && typeof body === "object" && "detail" in body ? String(body.detail) : "";
+    throw new ApiError(detail || `the API answered ${response.status}`, response.status);
+  }
+  return toAnswer(body as RawAnswer);
+}
+
+/** The site path that opens a saved answer, for sharing. */
+export function answerPath(answerId: string): string {
+  return `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/answers/?id=${encodeURIComponent(answerId)}`;
+}
+
 export type Segment = { kind: "text"; text: string } | { kind: "cite"; label: string };
 
 /** Split answer text into prose and citation markers such as [[c1]] or [[q2]]. */

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { ApiError } from "@/lib/live/api";
 
-import { askQuestion, assuranceNote, sampleNote, segments } from "./api";
+import { answerPath, askQuestion, assuranceNote, fetchAnswer, sampleNote, segments } from "./api";
 
 const RAW = {
   answer_id: "ans_1",
@@ -76,5 +76,32 @@ describe("analyst API client", () => {
       "1 of 52,000 records listed here, each verifiable. The total covers all 52,000 as of checkpoint 1,003.",
     );
     expect(sampleNote({ label: "c1", meaning: "m", events, sampleOf: null }, 9)).toBeNull();
+  });
+});
+
+describe("saved answers", () => {
+  it("fetches an answer by id and reads it like a fresh one", async () => {
+    let asked = "";
+    const fetcher = (async (url: string) => {
+      asked = url;
+      return new Response(JSON.stringify(RAW));
+    }) as unknown as typeof fetch;
+    const answer = await fetchAnswer("https://api.example", "ans 1", fetcher);
+    expect(asked).toBe("https://api.example/api/v1/answers/ans%201");
+    expect(answer.answerId).toBe("ans_1");
+  });
+
+  it("reports the API's reason when the answer is missing", async () => {
+    const fetcher = (async () =>
+      new Response(JSON.stringify({ detail: "No such answer." }), {
+        status: 404,
+      })) as unknown as typeof fetch;
+    await expect(fetchAnswer("https://api.example", "x", fetcher)).rejects.toThrow(
+      "No such answer.",
+    );
+  });
+
+  it("links to the answer page with the id in the query", () => {
+    expect(answerPath("ans_1")).toBe("/answers/?id=ans_1");
   });
 });
