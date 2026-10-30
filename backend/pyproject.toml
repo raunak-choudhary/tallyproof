@@ -1,6 +1,6 @@
 [project]
 name = "tallyproof"
-version = "0.1.1"
+version = "0.2.0"
 description = "A streaming, verifiable ledger for public spending data with an AI analyst whose claims carry Merkle proofs"
 readme = "../README.md"
 license = "MIT"

@@ -4,6 +4,79 @@ This file is maintained by [release-please](https://github.com/googleapis/releas
 
 Version 0.1.0 is the minimum viable product. It covers a streaming ledger of real federal spending events in an append-only Postgres log, RFC 9162 Merkle proofs against Ed25519-signed checkpoints that are timestamped externally, verification of any record in the browser, double-entry journal and reconciliation projections that find planted anomalies, and an analyst whose every number is bound to records the reader can prove, measured against an exact oracle.
 
+## [0.2.0](https://github.com/raunak-choudhary/tallyproof/compare/v0.1.1...v0.2.0) (2026-10-30)
+
+
+### Features
+
+* **evals:** add a judge for narrative faithfulness ([688aefd](https://github.com/raunak-choudhary/tallyproof/commit/688aefdbdbb8b61415dba0198638473f69c5ee69))
+* **evals:** add a naive retrieval baseline ([0bd8958](https://github.com/raunak-choudhary/tallyproof/commit/0bd8958406cfe04bc27021aeb162c9ed8f959e43))
+* **evals:** carry the gate thresholds in the exported index ([470936d](https://github.com/raunak-choudhary/tallyproof/commit/470936d88ef9bdfb2cce1c4ad2d64c356bb097ef))
+* **evals:** export reports into the replay bundle ([43993d5](https://github.com/raunak-choudhary/tallyproof/commit/43993d5498fe67e51a24aa4c8e1869df4d640d09))
+* **evals:** run the baseline and the judge from make eval ([23ca6f1](https://github.com/raunak-choudhary/tallyproof/commit/23ca6f14b186fd86b5167e382921c8185de0ece0))
+* **lake:** sink the event stream into Iceberg tables ([9ece599](https://github.com/raunak-choudhary/tallyproof/commit/9ece599bd32450bfdfd4fb3bd74a00e3db4ee3ad))
+* **pipeline:** add make load-test on a throwaway stack ([9b19f7b](https://github.com/raunak-choudhary/tallyproof/commit/9b19f7b9079064bbe8c857b3978f1eb6a830cea4))
+* **pipeline:** publish a witnessed checkpoint for the replay log ([152403d](https://github.com/raunak-choudhary/tallyproof/commit/152403d1a345bba30133ddaaf4e04d51f8a93fb4))
+* **web:** add a shareable page for saved answers ([5994659](https://github.com/raunak-choudhary/tallyproof/commit/599465949bce5f74cdba12794ce529007e888aaf))
+* **web:** add a skip link and one main landmark per page ([ef2b98b](https://github.com/raunak-choudhary/tallyproof/commit/ef2b98bbc1f6fde16a5e34c95869f4e74266e050))
+* **web:** add the design tokens and a persisting theme switch ([a9a9ad8](https://github.com/raunak-choudhary/tallyproof/commit/a9a9ad83cdbdc0c96a0e61be85e114b72a487a9d))
+* **web:** add the landing story framework ([ebdea93](https://github.com/raunak-choudhary/tallyproof/commit/ebdea9358c839d3a66e37361e71bb028b35c2a95))
+* **web:** add the motion foundation ([3dbb50c](https://github.com/raunak-choudhary/tallyproof/commit/3dbb50c33bd5a603a5f8388b7e2ef61bbe792fbb))
+* **web:** add the site navigation, footer, and button primitive ([d29b354](https://github.com/raunak-choudhary/tallyproof/commit/d29b354657163c17a08085fcf441f631a2d83eb2))
+* **web:** adopt the Ink and Ultraviolet palette and the display and script faces ([fb35a6e](https://github.com/raunak-choudhary/tallyproof/commit/fb35a6e78a4319afad3998e50635f2a6e1616173))
+* **web:** build the evaluation dashboard ([c0744da](https://github.com/raunak-choudhary/tallyproof/commit/c0744da16794bd5f8329672bcd344792d09b8fa3))
+* **web:** build the how-it-works page ([07a916e](https://github.com/raunak-choudhary/tallyproof/commit/07a916efe142addb382142b905c9912de6ed6685))
+* **web:** build the ledger page ([9698ba4](https://github.com/raunak-choudhary/tallyproof/commit/9698ba43aca085f12656ddb7a30e845ded932634))
+* **web:** build the tamper ladder page ([c108beb](https://github.com/raunak-choudhary/tallyproof/commit/c108beb28a416a5e5d07feec722c4c101a3aada8))
+* **web:** check the outside witness and the displayed values ([08bcbfa](https://github.com/raunak-choudhary/tallyproof/commit/08bcbfa2c28f48c55aaeb6aef46738c9b7657563))
+* **web:** compare the analyst with the naive baseline ([ab784c9](https://github.com/raunak-choudhary/tallyproof/commit/ab784c97f66f331843f25271c96370c49a3f6bde))
+* **web:** draw each citation's records as a beeswarm ([7a239ec](https://github.com/raunak-choudhary/tallyproof/commit/7a239ec37bffc0d54397ddb6aa9d5c9758c3a8aa))
+* **web:** draw the audit path on every verification ([f15d913](https://github.com/raunak-choudhary/tallyproof/commit/f15d9131311e6764e204d1191b228d6618a9c1b7))
+* **web:** draw the seven landing scenes ([3bf323c](https://github.com/raunak-choudhary/tallyproof/commit/3bf323cb7d11228ce844af0370c5e0171e255e2b))
+* **web:** fetch saved answers and link to them ([3af7e56](https://github.com/raunak-choudhary/tallyproof/commit/3af7e56fa0e1766ebd55620782a5207fcfc21fbf))
+* **web:** lay out a beeswarm of the records behind a total ([d015ef5](https://github.com/raunak-choudhary/tallyproof/commit/d015ef5ef3cba975bbb290936cc2b259f35cd53c))
+* **web:** lay out a record's audit path as a radial climb ([c665830](https://github.com/raunak-choudhary/tallyproof/commit/c665830fa3f1b8e8a68b77d63a0409d0c0d14b89))
+* **web:** lay out a Sankey from awarding agency to industry ([ad1b957](https://github.com/raunak-choudhary/tallyproof/commit/ad1b957604cbeee7fe57f3b9779eb23c9853483c))
+* **web:** lay out a streamgraph and an arrival raster ([8015cfe](https://github.com/raunak-choudhary/tallyproof/commit/8015cfe07fe262971441fad8bd060b518fce9ae9))
+* **web:** lay out the evaluation charts ([9a5ceae](https://github.com/raunak-choudhary/tallyproof/commit/9a5ceaedf097ada15c6fa7049c6d984fce51e5e2))
+* **web:** link how it works from the nav and the responsive contract ([92356a8](https://github.com/raunak-choudhary/tallyproof/commit/92356a82a48637a2e3017b190f619015fcd9b493))
+* **web:** link the evaluation page from the nav and the responsive contract ([1957673](https://github.com/raunak-choudhary/tallyproof/commit/195767324df682f8bada9187150cfa08df7a5c69))
+* **web:** load exported eval reports and score question outcomes ([0906b79](https://github.com/raunak-choudhary/tallyproof/commit/0906b79e7dd4fcb2b29527fc251f0b985e71805f))
+* **web:** open the landing with the problem, then Tallyproof, then the tagline ([76fcd9d](https://github.com/raunak-choudhary/tallyproof/commit/76fcd9d6071b8b668cf0df2b4936402482ea1710))
+* **web:** place the story between the hero and the records ([3ab58ee](https://github.com/raunak-choudhary/tallyproof/commit/3ab58ee34c8ba2e174d33cc916aa00da3aec12cf))
+* **web:** read ledger rows from canonical bytes and the live stream ([f911d06](https://github.com/raunak-choudhary/tallyproof/commit/f911d06baded9d643e326ba77d00d0bc0ca68534))
+* **web:** stage the four tamper attacks and the witness check ([26f0622](https://github.com/raunak-choudhary/tallyproof/commit/26f0622490f6b797a47901b7bcffdac9a4839d1d))
+* **web:** verify record pages against the witness on a second origin ([3a57e07](https://github.com/raunak-choudhary/tallyproof/commit/3a57e0718b703a0470776ef0488698aac60fe892))
+* **web:** work the streamgraph and question matrix from the keyboard ([da2b6dc](https://github.com/raunak-choudhary/tallyproof/commit/da2b6dc1be9b076b035ec734e7a840753949558a))
+
+
+### Fixes
+
+* **web:** darken the light theme's cyan and gold to meet AA contrast ([512e35c](https://github.com/raunak-choudhary/tallyproof/commit/512e35c3b21bcc0603f9f90f22bc156a2c3690e4))
+* **web:** keep the record summary's values whole ([759af23](https://github.com/raunak-choudhary/tallyproof/commit/759af23cb021727de0616aa1fd0155fcb851316b))
+* **web:** make the scrollable record bytes reachable by keyboard ([e193cd1](https://github.com/raunak-choudhary/tallyproof/commit/e193cd14fb9da9a3477b331a06878a942c8f4c9f))
+* **web:** set the CI worker count without an undefined option ([ece25d9](https://github.com/raunak-choudhary/tallyproof/commit/ece25d91b82a66702f5b51ffad5eb79e7a95cd25))
+
+
+### Documentation
+
+* add a hero diagram and a verify-and-tamper GIF to the README ([2617383](https://github.com/raunak-choudhary/tallyproof/commit/2617383be4341f0a20eb64ffc9690d9e8e0ebb21))
+* add the measured load-test report ([f260eaf](https://github.com/raunak-choudhary/tallyproof/commit/f260eaf3cb61e4e7e431e5277fd8df9b1aab72a4))
+* describe the browser tests ([a52e082](https://github.com/raunak-choudhary/tallyproof/commit/a52e082a5d47335b3794fecf9b9f4ce5f148a612))
+* describe the evaluation page ([941f85d](https://github.com/raunak-choudhary/tallyproof/commit/941f85dad471b957bf2f158d0fa028bf3d8c8cf0))
+* describe the Iceberg lake and its control totals ([fba7344](https://github.com/raunak-choudhary/tallyproof/commit/fba73443eb1adc10267759036fe003c3422fed28))
+* describe the naive baseline and the faithfulness judge ([f01d216](https://github.com/raunak-choudhary/tallyproof/commit/f01d216bba7cb3a515ff480813c2a0a793785f45))
+* describe the tokens, responsive rules, and browser tests ([9aaa041](https://github.com/raunak-choudhary/tallyproof/commit/9aaa041f5f786041aaf876780fad09779620a961))
+* describe the weekly results pull request and its token ([cf189a3](https://github.com/raunak-choudhary/tallyproof/commit/cf189a329c6f4602c01e852bb124f46d4031a3f0))
+* document the WebSocket URL for the ledger page ([31ef8da](https://github.com/raunak-choudhary/tallyproof/commit/31ef8da2b6368fa18d54ab048505c150323c9c76))
+* say the browser checks the witness ([23a61e2](https://github.com/raunak-choudhary/tallyproof/commit/23a61e21500af71e469da78a30fd8bfbc355aa82))
+
+
+### Build and release
+
+* **deps:** add pyiceberg 0.12 with pyarrow 26 for the lake ([983b37f](https://github.com/raunak-choudhary/tallyproof/commit/983b37fd3b0296a3b55be8dd28d259127c04c89f))
+* **web:** add the pinned motion, styling, and browser-test libraries ([c4d252b](https://github.com/raunak-choudhary/tallyproof/commit/c4d252baec96805c60a4b5dd515a8b5d81d2ebd2))
+
 ## [0.1.1](https://github.com/raunak-choudhary/tallyproof/compare/v0.1.0...v0.1.1) (2026-10-29)
 
 
