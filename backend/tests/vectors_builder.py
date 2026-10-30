@@ -5,6 +5,7 @@ Run ``make vectors`` after changing canonicalization or hashing; a unit test
 fails if the committed files no longer match what this builder produces.
 """
 
+import dataclasses
 import hashlib
 import json
 from pathlib import Path
@@ -16,6 +17,15 @@ from tallyproof_core.canonical import MAX_SAFE_INTEGER, canonicalize
 from tallyproof_core.checkpoint import Checkpoint, Signer
 from tallyproof_core.hashing import leaf_hash
 from tallyproof_core.merkle import root
+from tallyproof_core.sum_tree import (
+    LeafPiece,
+    NodePiece,
+    SumLeaf,
+    SumTree,
+    TotalProof,
+    proof_to_json,
+    verify_total,
+)
 
 VECTORS_DIR = Path(__file__).resolve().parents[2] / "testdata" / "vectors"
 
@@ -146,6 +156,108 @@ def build_checkpoints() -> dict[str, Any]:
     }
 
 
+SUM_ROWS: list[tuple[str, str, str, int]] = [
+    ("obligations", "Agency A", "2024", 12_500_000),
+    ("obligations", "Agency A", "2025", -796_000),
+    ("obligations", "Agency A", "2024", 1),
+    ("obligations", "Agency AB", "2024", 99),
+    ("obligations", "", "2024", 4_200),
+    ("obligations", "Département é", "2025", 31_415),
+    ("obligations", "Agency B", "", 0),
+    ("outlays", "Agency A", "2024", 158_172),
+    ("outlays", "Département é", "2024", 7),
+    ("outlays", "", "2024", 900),
+    ("outlays", "Agency A", "2024", -50),
+    ("obligations", "Agency A", "2025", 2_000_000_000_000),
+    ("outlays", "Agency AB", "2025", 3),
+]
+"""(entity, agency, fiscal year, cents); the leaf index is the row's position."""
+
+SUM_PREFIXES: list[tuple[str, ...]] = [
+    (),
+    ("obligations",),
+    ("obligations", "Agency A"),
+    ("obligations", "Agency A", "2024"),
+    ("obligations", "Agency AB"),
+    ("obligations", ""),
+    ("outlays", "Département é"),
+    ("outlays", "Agency B"),
+    ("nothing",),
+]
+
+
+def build_sum_tree() -> dict[str, Any]:
+    """A small Merkle-sum tree, honest total proofs, and forged ones that must fail."""
+    leaves = [
+        SumLeaf((e, a, y, f"{n:020d}"), amount, hashlib.sha256(f"record {n}".encode()).digest())
+        for n, (e, a, y, amount) in enumerate(SUM_ROWS)
+    ]
+    tree = SumTree(leaves, cache_min=1)
+    root_hash = tree.root()
+    cases = []
+    for prefix in SUM_PREFIXES:
+        proof = tree.prove(prefix)
+        proven = verify_total(proof, root_hash)
+        assert proven is not None
+        cases.append(
+            {
+                "prefix": list(prefix),
+                "proof": proof_to_json(proof),
+                "total": str(proven.total),
+                "count": proven.count,
+            }
+        )
+
+    agency_a = ("obligations", "Agency A")
+    honest = tree.prove(agency_a)
+    start, end = tree.run(agency_a)
+    node = next(i for i, p in enumerate(honest.pieces) if isinstance(p, NodePiece))
+    leaf = next(i for i, p in enumerate(honest.pieces) if isinstance(p, LeafPiece))
+
+    def with_piece(index: int, piece: LeafPiece | NodePiece) -> TotalProof:
+        pieces = list(honest.pieces)
+        pieces[index] = piece
+        return dataclasses.replace(honest, pieces=tuple(pieces))
+
+    inflated = honest.pieces[node]
+    changed = honest.pieces[leaf]
+    assert isinstance(inflated, NodePiece)
+    assert isinstance(changed, LeafPiece)
+    forged = [
+        (
+            "a subtree's sum inflated",
+            with_piece(node, dataclasses.replace(inflated, total=inflated.total + 100)),
+        ),
+        (
+            "a record's amount changed",
+            with_piece(
+                leaf, LeafPiece(dataclasses.replace(changed.leaf, amount=changed.leaf.amount + 1))
+            ),
+        ),
+        ("the run made one record shorter, hiding it", tree._prove(agency_a, start + 1, end)),
+        ("the run widened past the prefix", tree._prove(agency_a, start, end + 1)),
+        ("a piece dropped", dataclasses.replace(honest, pieces=honest.pieces[:-1])),
+    ]
+    must_fail = []
+    for reason, proof in forged:
+        assert verify_total(proof, root_hash) is None, reason
+        must_fail.append({"reason": reason, "proof": proof_to_json(proof)})
+    return {
+        "leaves": [
+            {
+                "key": list(leaf.key),
+                "amount": str(leaf.amount),
+                "record_hash": leaf.record_hash.hex(),
+            }
+            for leaf in leaves
+        ],
+        "root_hex": root_hash.hex(),
+        "total": str(tree.total()),
+        "cases": cases,
+        "must_fail": must_fail,
+    }
+
+
 def render(contents: dict[str, Any]) -> str:
     """Serialize a vector file the same way every time."""
     return json.dumps(contents, indent=2, ensure_ascii=False) + "\n"
@@ -155,6 +267,7 @@ def main() -> None:
     """Write every vector file."""
     (VECTORS_DIR / "canonical.json").write_text(render(build_canonical()), encoding="utf-8")
     (VECTORS_DIR / "checkpoint.json").write_text(render(build_checkpoints()), encoding="utf-8")
+    (VECTORS_DIR / "sum_tree.json").write_text(render(build_sum_tree()), encoding="utf-8")
 
 
 if __name__ == "__main__":

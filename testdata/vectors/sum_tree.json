@@ -1,0 +1,1433 @@
+{
+  "leaves": [
+    {
+      "key": [
+        "obligations",
+        "Agency A",
+        "2024",
+        "00000000000000000000"
+      ],
+      "amount": "12500000",
+      "record_hash": "e00d4616051cce59f50090fafabb0d9b5172e50b72037a7a85c603b117257648"
+    },
+    {
+      "key": [
+        "obligations",
+        "Agency A",
+        "2025",
+        "00000000000000000001"
+      ],
+      "amount": "-796000",
+      "record_hash": "3dba37bb0871edefb95b6655128dbe1922522f17be0cd1089ef7dd45c9badcd1"
+    },
+    {
+      "key": [
+        "obligations",
+        "Agency A",
+        "2024",
+        "00000000000000000002"
+      ],
+      "amount": "1",
+      "record_hash": "55f3858e9bf30865a06984a61ea4e7c0f078549cd1106a11281ab39ff8cd7801"
+    },
+    {
+      "key": [
+        "obligations",
+        "Agency AB",
+        "2024",
+        "00000000000000000003"
+      ],
+      "amount": "99",
+      "record_hash": "7322e1c393bf2dffd7c20450a6b421b8681388696b5faee4e5d21cf2d358eb58"
+    },
+    {
+      "key": [
+        "obligations",
+        "",
+        "2024",
+        "00000000000000000004"
+      ],
+      "amount": "4200",
+      "record_hash": "a2b360096f137fc59d82b5ac580e611ca8cf38a114e63c07ed68e3e16c88f79e"
+    },
+    {
+      "key": [
+        "obligations",
+        "Département é",
+        "2025",
+        "00000000000000000005"
+      ],
+      "amount": "31415",
+      "record_hash": "28fdd77254977237364a167ba289ff718fbe76799cfd983dbf447346fa62a033"
+    },
+    {
+      "key": [
+        "obligations",
+        "Agency B",
+        "",
+        "00000000000000000006"
+      ],
+      "amount": "0",
+      "record_hash": "ff265ddacaf872945c31beb9ab4820014bfe1f9990967ee612d9e9578d843126"
+    },
+    {
+      "key": [
+        "outlays",
+        "Agency A",
+        "2024",
+        "00000000000000000007"
+      ],
+      "amount": "158172",
+      "record_hash": "18c49c3d2bbfb66335adf138654aaaf638f695f1e8824850eca26819675e844e"
+    },
+    {
+      "key": [
+        "outlays",
+        "Département é",
+        "2024",
+        "00000000000000000008"
+      ],
+      "amount": "7",
+      "record_hash": "fed11fbcd9bdf82bbca7f06501f20321edf8175461e71f31bb57c82a7954b781"
+    },
+    {
+      "key": [
+        "outlays",
+        "",
+        "2024",
+        "00000000000000000009"
+      ],
+      "amount": "900",
+      "record_hash": "f36a218bc281ec0b908e9f33fcf2b9658f9aa623425601f4e7ecfea467c54021"
+    },
+    {
+      "key": [
+        "outlays",
+        "Agency A",
+        "2024",
+        "00000000000000000010"
+      ],
+      "amount": "-50",
+      "record_hash": "c59cca6787e3f47cb7f3e874696a8386b50778bf8dfc7b9dde48ad2bb24205c5"
+    },
+    {
+      "key": [
+        "obligations",
+        "Agency A",
+        "2025",
+        "00000000000000000011"
+      ],
+      "amount": "2000000000000",
+      "record_hash": "9ec94284a307b392b3fb30ed20b3b0e91dff83ad13fe0086320ef1fa632b3f90"
+    },
+    {
+      "key": [
+        "outlays",
+        "Agency AB",
+        "2025",
+        "00000000000000000012"
+      ],
+      "amount": "3",
+      "record_hash": "850a77dd3acbaa42555e7ef88b0d971356424ba13d6cd9621785486d79b9d1a5"
+    }
+  ],
+  "root_hex": "cf70999f660557a3d7764795543240adaf01641b149bd9585451da70025ee814",
+  "total": "2000011898747",
+  "cases": [
+    {
+      "prefix": [],
+      "proof": {
+        "size": 13,
+        "prefix": [],
+        "start": 0,
+        "end": 13,
+        "pieces": [
+          {
+            "node": {
+              "left": "df36054840dade8fa04e5b2b3e6be1e1d477a60eb08e47c63b002a666c22170b",
+              "right": "f77e52618feca0d3e45d7dac553113f84aaca62a75ab9e0781030844cb5c742e",
+              "total": "2000011898747",
+              "count": 13,
+              "low": [
+                "obligations",
+                "",
+                "2024",
+                "00000000000000000004"
+              ],
+              "high": [
+                "outlays",
+                "Département é",
+                "2024",
+                "00000000000000000008"
+              ]
+            }
+          }
+        ]
+      },
+      "total": "2000011898747",
+      "count": 13
+    },
+    {
+      "prefix": [
+        "obligations"
+      ],
+      "proof": {
+        "size": 13,
+        "prefix": [
+          "obligations"
+        ],
+        "start": 0,
+        "end": 8,
+        "pieces": [
+          {
+            "node": {
+              "left": "597baa4ce53885cd1c4e024e7f81dac4308f5ec1623ae14cdd5231ab20512ce6",
+              "right": "19c9b35215c70e410dda668953b4fd4c7257c885ae1e3204430fe4782b31009b",
+              "total": "2000011739715",
+              "count": 8,
+              "low": [
+                "obligations",
+                "",
+                "2024",
+                "00000000000000000004"
+              ],
+              "high": [
+                "obligations",
+                "Département é",
+                "2025",
+                "00000000000000000005"
+              ]
+            }
+          },
+          {
+            "node": {
+              "left": "0ed66c6b1b94527f860cb107b8098eed4b1e5ec3eeb6a36f48e436e0513dcdd5",
+              "right": "99668bce2e0ee0f8f394165fc78ff7286e4a4d116f595e3a089f6bb4b0203c0b",
+              "total": "159032",
+              "count": 5,
+              "low": [
+                "outlays",
+                "",
+                "2024",
+                "00000000000000000009"
+              ],
+              "high": [
+                "outlays",
+                "Département é",
+                "2024",
+                "00000000000000000008"
+              ]
+            }
+          }
+        ]
+      },
+      "total": "2000011739715",
+      "count": 8
+    },
+    {
+      "prefix": [
+        "obligations",
+        "Agency A"
+      ],
+      "proof": {
+        "size": 13,
+        "prefix": [
+          "obligations",
+          "Agency A"
+        ],
+        "start": 1,
+        "end": 5,
+        "pieces": [
+          {
+            "leaf": {
+              "key": [
+                "obligations",
+                "",
+                "2024",
+                "00000000000000000004"
+              ],
+              "amount": "4200",
+              "record_hash": "a2b360096f137fc59d82b5ac580e611ca8cf38a114e63c07ed68e3e16c88f79e"
+            }
+          },
+          {
+            "leaf": {
+              "key": [
+                "obligations",
+                "Agency A",
+                "2024",
+                "00000000000000000000"
+              ],
+              "amount": "12500000",
+              "record_hash": "e00d4616051cce59f50090fafabb0d9b5172e50b72037a7a85c603b117257648"
+            }
+          },
+          {
+            "node": {
+              "left": "99c9fd9b5b14846115422234c0854209079b7f13712e516c8bac02f63dcbcb2c",
+              "right": "682f608f2624f5b2041e4660ea762bb7a7854ded487cba487c5229525710781c",
+              "total": "-795999",
+              "count": 2,
+              "low": [
+                "obligations",
+                "Agency A",
+                "2024",
+                "00000000000000000002"
+              ],
+              "high": [
+                "obligations",
+                "Agency A",
+                "2025",
+                "00000000000000000001"
+              ]
+            }
+          },
+          {
+            "leaf": {
+              "key": [
+                "obligations",
+                "Agency A",
+                "2025",
+                "00000000000000000011"
+              ],
+              "amount": "2000000000000",
+              "record_hash": "9ec94284a307b392b3fb30ed20b3b0e91dff83ad13fe0086320ef1fa632b3f90"
+            }
+          },
+          {
+            "leaf": {
+              "key": [
+                "obligations",
+                "Agency AB",
+                "2024",
+                "00000000000000000003"
+              ],
+              "amount": "99",
+              "record_hash": "7322e1c393bf2dffd7c20450a6b421b8681388696b5faee4e5d21cf2d358eb58"
+            }
+          },
+          {
+            "node": {
+              "left": "77ed0db3a3a05ff78c80a9666a43a629d57425bf15796b76b8c77ea5bf0ad215",
+              "right": "97a0add7db25ed0f1e4896a6ac12db9fb57297e91fa921e0489a1d7aa3ec316d",
+              "total": "31415",
+              "count": 2,
+              "low": [
+                "obligations",
+                "Agency B",
+                "",
+                "00000000000000000006"
+              ],
+              "high": [
+                "obligations",
+                "Département é",
+                "2025",
+                "00000000000000000005"
+              ]
+            }
+          },
+          {
+            "node": {
+              "left": "0ed66c6b1b94527f860cb107b8098eed4b1e5ec3eeb6a36f48e436e0513dcdd5",
+              "right": "99668bce2e0ee0f8f394165fc78ff7286e4a4d116f595e3a089f6bb4b0203c0b",
+              "total": "159032",
+              "count": 5,
+              "low": [
+                "outlays",
+                "",
+                "2024",
+                "00000000000000000009"
+              ],
+              "high": [
+                "outlays",
+                "Département é",
+                "2024",
+                "00000000000000000008"
+              ]
+            }
+          }
+        ]
+      },
+      "total": "2000011704001",
+      "count": 4
+    },
+    {
+      "prefix": [
+        "obligations",
+        "Agency A",
+        "2024"
+      ],
+      "proof": {
+        "size": 13,
+        "prefix": [
+          "obligations",
+          "Agency A",
+          "2024"
+        ],
+        "start": 1,
+        "end": 3,
+        "pieces": [
+          {
+            "leaf": {
+              "key": [
+                "obligations",
+                "",
+                "2024",
+                "00000000000000000004"
+              ],
+              "amount": "4200",
+              "record_hash": "a2b360096f137fc59d82b5ac580e611ca8cf38a114e63c07ed68e3e16c88f79e"
+            }
+          },
+          {
+            "leaf": {
+              "key": [
+                "obligations",
+                "Agency A",
+                "2024",
+                "00000000000000000000"
+              ],
+              "amount": "12500000",
+              "record_hash": "e00d4616051cce59f50090fafabb0d9b5172e50b72037a7a85c603b117257648"
+            }
+          },
+          {
+            "leaf": {
+              "key": [
+                "obligations",
+                "Agency A",
+                "2024",
+                "00000000000000000002"
+              ],
+              "amount": "1",
+              "record_hash": "55f3858e9bf30865a06984a61ea4e7c0f078549cd1106a11281ab39ff8cd7801"
+            }
+          },
+          {
+            "leaf": {
+              "key": [
+                "obligations",
+                "Agency A",
+                "2025",
+                "00000000000000000001"
+              ],
+              "amount": "-796000",
+              "record_hash": "3dba37bb0871edefb95b6655128dbe1922522f17be0cd1089ef7dd45c9badcd1"
+            }
+          },
+          {
+            "node": {
+              "left": "b2999bb392c53511da2d2b175497c7ef7fde31a64c25be6c70f92910b94f99c6",
+              "right": "f6c35444c21a56ab6ccb4026a30ff033532b69f4abee7453e463ebc0ecd8ca72",
+              "total": "2000000031514",
+              "count": 4,
+              "low": [
+                "obligations",
+                "Agency A",
+                "2025",
+                "00000000000000000011"
+              ],
+              "high": [
+                "obligations",
+                "Département é",
+                "2025",
+                "00000000000000000005"
+              ]
+            }
+          },
+          {
+            "node": {
+              "left": "0ed66c6b1b94527f860cb107b8098eed4b1e5ec3eeb6a36f48e436e0513dcdd5",
+              "right": "99668bce2e0ee0f8f394165fc78ff7286e4a4d116f595e3a089f6bb4b0203c0b",
+              "total": "159032",
+              "count": 5,
+              "low": [
+                "outlays",
+                "",
+                "2024",
+                "00000000000000000009"
+              ],
+              "high": [
+                "outlays",
+                "Département é",
+                "2024",
+                "00000000000000000008"
+              ]
+            }
+          }
+        ]
+      },
+      "total": "12500001",
+      "count": 2
+    },
+    {
+      "prefix": [
+        "obligations",
+        "Agency AB"
+      ],
+      "proof": {
+        "size": 13,
+        "prefix": [
+          "obligations",
+          "Agency AB"
+        ],
+        "start": 5,
+        "end": 6,
+        "pieces": [
+          {
+            "node": {
+              "left": "007e818832a4d63182df747584a4225a887da072a01df21de7b05261fad5f7f5",
+              "right": "5db48e9929b03a9ead78915950cbd96fb9af21eea1a814aa0aa31e5654b3b4ca",
+              "total": "11708201",
+              "count": 4,
+              "low": [
+                "obligations",
+                "",
+                "2024",
+                "00000000000000000004"
+              ],
+              "high": [
+                "obligations",
+                "Agency A",
+                "2025",
+                "00000000000000000001"
+              ]
+            }
+          },
+          {
+            "leaf": {
+              "key": [
+                "obligations",
+                "Agency A",
+                "2025",
+                "00000000000000000011"
+              ],
+              "amount": "2000000000000",
+              "record_hash": "9ec94284a307b392b3fb30ed20b3b0e91dff83ad13fe0086320ef1fa632b3f90"
+            }
+          },
+          {
+            "leaf": {
+              "key": [
+                "obligations",
+                "Agency AB",
+                "2024",
+                "00000000000000000003"
+              ],
+              "amount": "99",
+              "record_hash": "7322e1c393bf2dffd7c20450a6b421b8681388696b5faee4e5d21cf2d358eb58"
+            }
+          },
+          {
+            "node": {
+              "left": "77ed0db3a3a05ff78c80a9666a43a629d57425bf15796b76b8c77ea5bf0ad215",
+              "right": "97a0add7db25ed0f1e4896a6ac12db9fb57297e91fa921e0489a1d7aa3ec316d",
+              "total": "31415",
+              "count": 2,
+              "low": [
+                "obligations",
+                "Agency B",
+                "",
+                "00000000000000000006"
+              ],
+              "high": [
+                "obligations",
+                "Département é",
+                "2025",
+                "00000000000000000005"
+              ]
+            }
+          },
+          {
+            "node": {
+              "left": "0ed66c6b1b94527f860cb107b8098eed4b1e5ec3eeb6a36f48e436e0513dcdd5",
+              "right": "99668bce2e0ee0f8f394165fc78ff7286e4a4d116f595e3a089f6bb4b0203c0b",
+              "total": "159032",
+              "count": 5,
+              "low": [
+                "outlays",
+                "",
+                "2024",
+                "00000000000000000009"
+              ],
+              "high": [
+                "outlays",
+                "Département é",
+                "2024",
+                "00000000000000000008"
+              ]
+            }
+          }
+        ]
+      },
+      "total": "99",
+      "count": 1
+    },
+    {
+      "prefix": [
+        "obligations",
+        ""
+      ],
+      "proof": {
+        "size": 13,
+        "prefix": [
+          "obligations",
+          ""
+        ],
+        "start": 0,
+        "end": 1,
+        "pieces": [
+          {
+            "leaf": {
+              "key": [
+                "obligations",
+                "",
+                "2024",
+                "00000000000000000004"
+              ],
+              "amount": "4200",
+              "record_hash": "a2b360096f137fc59d82b5ac580e611ca8cf38a114e63c07ed68e3e16c88f79e"
+            }
+          },
+          {
+            "leaf": {
+              "key": [
+                "obligations",
+                "Agency A",
+                "2024",
+                "00000000000000000000"
+              ],
+              "amount": "12500000",
+              "record_hash": "e00d4616051cce59f50090fafabb0d9b5172e50b72037a7a85c603b117257648"
+            }
+          },
+          {
+            "node": {
+              "left": "99c9fd9b5b14846115422234c0854209079b7f13712e516c8bac02f63dcbcb2c",
+              "right": "682f608f2624f5b2041e4660ea762bb7a7854ded487cba487c5229525710781c",
+              "total": "-795999",
+              "count": 2,
+              "low": [
+                "obligations",
+                "Agency A",
+                "2024",
+                "00000000000000000002"
+              ],
+              "high": [
+                "obligations",
+                "Agency A",
+                "2025",
+                "00000000000000000001"
+              ]
+            }
+          },
+          {
+            "node": {
+              "left": "b2999bb392c53511da2d2b175497c7ef7fde31a64c25be6c70f92910b94f99c6",
+              "right": "f6c35444c21a56ab6ccb4026a30ff033532b69f4abee7453e463ebc0ecd8ca72",
+              "total": "2000000031514",
+              "count": 4,
+              "low": [
+                "obligations",
+                "Agency A",
+                "2025",
+                "00000000000000000011"
+              ],
+              "high": [
+                "obligations",
+                "Département é",
+                "2025",
+                "00000000000000000005"
+              ]
+            }
+          },
+          {
+            "node": {
+              "left": "0ed66c6b1b94527f860cb107b8098eed4b1e5ec3eeb6a36f48e436e0513dcdd5",
+              "right": "99668bce2e0ee0f8f394165fc78ff7286e4a4d116f595e3a089f6bb4b0203c0b",
+              "total": "159032",
+              "count": 5,
+              "low": [
+                "outlays",
+                "",
+                "2024",
+                "00000000000000000009"
+              ],
+              "high": [
+                "outlays",
+                "Département é",
+                "2024",
+                "00000000000000000008"
+              ]
+            }
+          }
+        ]
+      },
+      "total": "4200",
+      "count": 1
+    },
+    {
+      "prefix": [
+        "outlays",
+        "Département é"
+      ],
+      "proof": {
+        "size": 13,
+        "prefix": [
+          "outlays",
+          "Département é"
+        ],
+        "start": 12,
+        "end": 13,
+        "pieces": [
+          {
+            "node": {
+              "left": "597baa4ce53885cd1c4e024e7f81dac4308f5ec1623ae14cdd5231ab20512ce6",
+              "right": "19c9b35215c70e410dda668953b4fd4c7257c885ae1e3204430fe4782b31009b",
+              "total": "2000011739715",
+              "count": 8,
+              "low": [
+                "obligations",
+                "",
+                "2024",
+                "00000000000000000004"
+              ],
+              "high": [
+                "obligations",
+                "Département é",
+                "2025",
+                "00000000000000000005"
+              ]
+            }
+          },
+          {
+            "node": {
+              "left": "ec365fe354d54b11e330beb73c4d7fa448f2d453250c7008e3f5ce2086c999ff",
+              "right": "4104bafbecde00164c70bd90cc414e8a7638b7ebaaf8e0609bba26e0670d83b8",
+              "total": "159025",
+              "count": 4,
+              "low": [
+                "outlays",
+                "",
+                "2024",
+                "00000000000000000009"
+              ],
+              "high": [
+                "outlays",
+                "Agency AB",
+                "2025",
+                "00000000000000000012"
+              ]
+            }
+          },
+          {
+            "leaf": {
+              "key": [
+                "outlays",
+                "Département é",
+                "2024",
+                "00000000000000000008"
+              ],
+              "amount": "7",
+              "record_hash": "fed11fbcd9bdf82bbca7f06501f20321edf8175461e71f31bb57c82a7954b781"
+            }
+          }
+        ]
+      },
+      "total": "7",
+      "count": 1
+    },
+    {
+      "prefix": [
+        "outlays",
+        "Agency B"
+      ],
+      "proof": {
+        "size": 13,
+        "prefix": [
+          "outlays",
+          "Agency B"
+        ],
+        "start": 12,
+        "end": 12,
+        "pieces": [
+          {
+            "node": {
+              "left": "597baa4ce53885cd1c4e024e7f81dac4308f5ec1623ae14cdd5231ab20512ce6",
+              "right": "19c9b35215c70e410dda668953b4fd4c7257c885ae1e3204430fe4782b31009b",
+              "total": "2000011739715",
+              "count": 8,
+              "low": [
+                "obligations",
+                "",
+                "2024",
+                "00000000000000000004"
+              ],
+              "high": [
+                "obligations",
+                "Département é",
+                "2025",
+                "00000000000000000005"
+              ]
+            }
+          },
+          {
+            "node": {
+              "left": "ec365fe354d54b11e330beb73c4d7fa448f2d453250c7008e3f5ce2086c999ff",
+              "right": "4104bafbecde00164c70bd90cc414e8a7638b7ebaaf8e0609bba26e0670d83b8",
+              "total": "159025",
+              "count": 4,
+              "low": [
+                "outlays",
+                "",
+                "2024",
+                "00000000000000000009"
+              ],
+              "high": [
+                "outlays",
+                "Agency AB",
+                "2025",
+                "00000000000000000012"
+              ]
+            }
+          },
+          {
+            "leaf": {
+              "key": [
+                "outlays",
+                "Département é",
+                "2024",
+                "00000000000000000008"
+              ],
+              "amount": "7",
+              "record_hash": "fed11fbcd9bdf82bbca7f06501f20321edf8175461e71f31bb57c82a7954b781"
+            }
+          }
+        ]
+      },
+      "total": "0",
+      "count": 0
+    },
+    {
+      "prefix": [
+        "nothing"
+      ],
+      "proof": {
+        "size": 13,
+        "prefix": [
+          "nothing"
+        ],
+        "start": 0,
+        "end": 0,
+        "pieces": [
+          {
+            "node": {
+              "left": "df36054840dade8fa04e5b2b3e6be1e1d477a60eb08e47c63b002a666c22170b",
+              "right": "f77e52618feca0d3e45d7dac553113f84aaca62a75ab9e0781030844cb5c742e",
+              "total": "2000011898747",
+              "count": 13,
+              "low": [
+                "obligations",
+                "",
+                "2024",
+                "00000000000000000004"
+              ],
+              "high": [
+                "outlays",
+                "Département é",
+                "2024",
+                "00000000000000000008"
+              ]
+            }
+          }
+        ]
+      },
+      "total": "0",
+      "count": 0
+    }
+  ],
+  "must_fail": [
+    {
+      "reason": "a subtree's sum inflated",
+      "proof": {
+        "size": 13,
+        "prefix": [
+          "obligations",
+          "Agency A"
+        ],
+        "start": 1,
+        "end": 5,
+        "pieces": [
+          {
+            "leaf": {
+              "key": [
+                "obligations",
+                "",
+                "2024",
+                "00000000000000000004"
+              ],
+              "amount": "4200",
+              "record_hash": "a2b360096f137fc59d82b5ac580e611ca8cf38a114e63c07ed68e3e16c88f79e"
+            }
+          },
+          {
+            "leaf": {
+              "key": [
+                "obligations",
+                "Agency A",
+                "2024",
+                "00000000000000000000"
+              ],
+              "amount": "12500000",
+              "record_hash": "e00d4616051cce59f50090fafabb0d9b5172e50b72037a7a85c603b117257648"
+            }
+          },
+          {
+            "node": {
+              "left": "99c9fd9b5b14846115422234c0854209079b7f13712e516c8bac02f63dcbcb2c",
+              "right": "682f608f2624f5b2041e4660ea762bb7a7854ded487cba487c5229525710781c",
+              "total": "-795899",
+              "count": 2,
+              "low": [
+                "obligations",
+                "Agency A",
+                "2024",
+                "00000000000000000002"
+              ],
+              "high": [
+                "obligations",
+                "Agency A",
+                "2025",
+                "00000000000000000001"
+              ]
+            }
+          },
+          {
+            "leaf": {
+              "key": [
+                "obligations",
+                "Agency A",
+                "2025",
+                "00000000000000000011"
+              ],
+              "amount": "2000000000000",
+              "record_hash": "9ec94284a307b392b3fb30ed20b3b0e91dff83ad13fe0086320ef1fa632b3f90"
+            }
+          },
+          {
+            "leaf": {
+              "key": [
+                "obligations",
+                "Agency AB",
+                "2024",
+                "00000000000000000003"
+              ],
+              "amount": "99",
+              "record_hash": "7322e1c393bf2dffd7c20450a6b421b8681388696b5faee4e5d21cf2d358eb58"
+            }
+          },
+          {
+            "node": {
+              "left": "77ed0db3a3a05ff78c80a9666a43a629d57425bf15796b76b8c77ea5bf0ad215",
+              "right": "97a0add7db25ed0f1e4896a6ac12db9fb57297e91fa921e0489a1d7aa3ec316d",
+              "total": "31415",
+              "count": 2,
+              "low": [
+                "obligations",
+                "Agency B",
+                "",
+                "00000000000000000006"
+              ],
+              "high": [
+                "obligations",
+                "Département é",
+                "2025",
+                "00000000000000000005"
+              ]
+            }
+          },
+          {
+            "node": {
+              "left": "0ed66c6b1b94527f860cb107b8098eed4b1e5ec3eeb6a36f48e436e0513dcdd5",
+              "right": "99668bce2e0ee0f8f394165fc78ff7286e4a4d116f595e3a089f6bb4b0203c0b",
+              "total": "159032",
+              "count": 5,
+              "low": [
+                "outlays",
+                "",
+                "2024",
+                "00000000000000000009"
+              ],
+              "high": [
+                "outlays",
+                "Département é",
+                "2024",
+                "00000000000000000008"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "reason": "a record's amount changed",
+      "proof": {
+        "size": 13,
+        "prefix": [
+          "obligations",
+          "Agency A"
+        ],
+        "start": 1,
+        "end": 5,
+        "pieces": [
+          {
+            "leaf": {
+              "key": [
+                "obligations",
+                "",
+                "2024",
+                "00000000000000000004"
+              ],
+              "amount": "4201",
+              "record_hash": "a2b360096f137fc59d82b5ac580e611ca8cf38a114e63c07ed68e3e16c88f79e"
+            }
+          },
+          {
+            "leaf": {
+              "key": [
+                "obligations",
+                "Agency A",
+                "2024",
+                "00000000000000000000"
+              ],
+              "amount": "12500000",
+              "record_hash": "e00d4616051cce59f50090fafabb0d9b5172e50b72037a7a85c603b117257648"
+            }
+          },
+          {
+            "node": {
+              "left": "99c9fd9b5b14846115422234c0854209079b7f13712e516c8bac02f63dcbcb2c",
+              "right": "682f608f2624f5b2041e4660ea762bb7a7854ded487cba487c5229525710781c",
+              "total": "-795999",
+              "count": 2,
+              "low": [
+                "obligations",
+                "Agency A",
+                "2024",
+                "00000000000000000002"
+              ],
+              "high": [
+                "obligations",
+                "Agency A",
+                "2025",
+                "00000000000000000001"
+              ]
+            }
+          },
+          {
+            "leaf": {
+              "key": [
+                "obligations",
+                "Agency A",
+                "2025",
+                "00000000000000000011"
+              ],
+              "amount": "2000000000000",
+              "record_hash": "9ec94284a307b392b3fb30ed20b3b0e91dff83ad13fe0086320ef1fa632b3f90"
+            }
+          },
+          {
+            "leaf": {
+              "key": [
+                "obligations",
+                "Agency AB",
+                "2024",
+                "00000000000000000003"
+              ],
+              "amount": "99",
+              "record_hash": "7322e1c393bf2dffd7c20450a6b421b8681388696b5faee4e5d21cf2d358eb58"
+            }
+          },
+          {
+            "node": {
+              "left": "77ed0db3a3a05ff78c80a9666a43a629d57425bf15796b76b8c77ea5bf0ad215",
+              "right": "97a0add7db25ed0f1e4896a6ac12db9fb57297e91fa921e0489a1d7aa3ec316d",
+              "total": "31415",
+              "count": 2,
+              "low": [
+                "obligations",
+                "Agency B",
+                "",
+                "00000000000000000006"
+              ],
+              "high": [
+                "obligations",
+                "Département é",
+                "2025",
+                "00000000000000000005"
+              ]
+            }
+          },
+          {
+            "node": {
+              "left": "0ed66c6b1b94527f860cb107b8098eed4b1e5ec3eeb6a36f48e436e0513dcdd5",
+              "right": "99668bce2e0ee0f8f394165fc78ff7286e4a4d116f595e3a089f6bb4b0203c0b",
+              "total": "159032",
+              "count": 5,
+              "low": [
+                "outlays",
+                "",
+                "2024",
+                "00000000000000000009"
+              ],
+              "high": [
+                "outlays",
+                "Département é",
+                "2024",
+                "00000000000000000008"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "reason": "the run made one record shorter, hiding it",
+      "proof": {
+        "size": 13,
+        "prefix": [
+          "obligations",
+          "Agency A"
+        ],
+        "start": 2,
+        "end": 5,
+        "pieces": [
+          {
+            "node": {
+              "left": "a5aa7cfd9e88194212b81ec947d287784287a2c144c072f217543d8a072a4bc6",
+              "right": "e7b99975ee9614236145b6b4513a35e2ba85ee44e313c9d58739f6a7f4d3497f",
+              "total": "12504200",
+              "count": 2,
+              "low": [
+                "obligations",
+                "",
+                "2024",
+                "00000000000000000004"
+              ],
+              "high": [
+                "obligations",
+                "Agency A",
+                "2024",
+                "00000000000000000000"
+              ]
+            }
+          },
+          {
+            "node": {
+              "left": "99c9fd9b5b14846115422234c0854209079b7f13712e516c8bac02f63dcbcb2c",
+              "right": "682f608f2624f5b2041e4660ea762bb7a7854ded487cba487c5229525710781c",
+              "total": "-795999",
+              "count": 2,
+              "low": [
+                "obligations",
+                "Agency A",
+                "2024",
+                "00000000000000000002"
+              ],
+              "high": [
+                "obligations",
+                "Agency A",
+                "2025",
+                "00000000000000000001"
+              ]
+            }
+          },
+          {
+            "leaf": {
+              "key": [
+                "obligations",
+                "Agency A",
+                "2025",
+                "00000000000000000011"
+              ],
+              "amount": "2000000000000",
+              "record_hash": "9ec94284a307b392b3fb30ed20b3b0e91dff83ad13fe0086320ef1fa632b3f90"
+            }
+          },
+          {
+            "leaf": {
+              "key": [
+                "obligations",
+                "Agency AB",
+                "2024",
+                "00000000000000000003"
+              ],
+              "amount": "99",
+              "record_hash": "7322e1c393bf2dffd7c20450a6b421b8681388696b5faee4e5d21cf2d358eb58"
+            }
+          },
+          {
+            "node": {
+              "left": "77ed0db3a3a05ff78c80a9666a43a629d57425bf15796b76b8c77ea5bf0ad215",
+              "right": "97a0add7db25ed0f1e4896a6ac12db9fb57297e91fa921e0489a1d7aa3ec316d",
+              "total": "31415",
+              "count": 2,
+              "low": [
+                "obligations",
+                "Agency B",
+                "",
+                "00000000000000000006"
+              ],
+              "high": [
+                "obligations",
+                "Département é",
+                "2025",
+                "00000000000000000005"
+              ]
+            }
+          },
+          {
+            "node": {
+              "left": "0ed66c6b1b94527f860cb107b8098eed4b1e5ec3eeb6a36f48e436e0513dcdd5",
+              "right": "99668bce2e0ee0f8f394165fc78ff7286e4a4d116f595e3a089f6bb4b0203c0b",
+              "total": "159032",
+              "count": 5,
+              "low": [
+                "outlays",
+                "",
+                "2024",
+                "00000000000000000009"
+              ],
+              "high": [
+                "outlays",
+                "Département é",
+                "2024",
+                "00000000000000000008"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "reason": "the run widened past the prefix",
+      "proof": {
+        "size": 13,
+        "prefix": [
+          "obligations",
+          "Agency A"
+        ],
+        "start": 1,
+        "end": 6,
+        "pieces": [
+          {
+            "leaf": {
+              "key": [
+                "obligations",
+                "",
+                "2024",
+                "00000000000000000004"
+              ],
+              "amount": "4200",
+              "record_hash": "a2b360096f137fc59d82b5ac580e611ca8cf38a114e63c07ed68e3e16c88f79e"
+            }
+          },
+          {
+            "leaf": {
+              "key": [
+                "obligations",
+                "Agency A",
+                "2024",
+                "00000000000000000000"
+              ],
+              "amount": "12500000",
+              "record_hash": "e00d4616051cce59f50090fafabb0d9b5172e50b72037a7a85c603b117257648"
+            }
+          },
+          {
+            "node": {
+              "left": "99c9fd9b5b14846115422234c0854209079b7f13712e516c8bac02f63dcbcb2c",
+              "right": "682f608f2624f5b2041e4660ea762bb7a7854ded487cba487c5229525710781c",
+              "total": "-795999",
+              "count": 2,
+              "low": [
+                "obligations",
+                "Agency A",
+                "2024",
+                "00000000000000000002"
+              ],
+              "high": [
+                "obligations",
+                "Agency A",
+                "2025",
+                "00000000000000000001"
+              ]
+            }
+          },
+          {
+            "node": {
+              "left": "b1a60a4ccc92dbdfcf4936ff669075d8f2d58a05378e014afe81df2e87ec3388",
+              "right": "c348ade4841bbe83c09453933efe3c0c66bcd3e4ff18137ec812e0d68830ffde",
+              "total": "2000000000099",
+              "count": 2,
+              "low": [
+                "obligations",
+                "Agency A",
+                "2025",
+                "00000000000000000011"
+              ],
+              "high": [
+                "obligations",
+                "Agency AB",
+                "2024",
+                "00000000000000000003"
+              ]
+            }
+          },
+          {
+            "node": {
+              "left": "77ed0db3a3a05ff78c80a9666a43a629d57425bf15796b76b8c77ea5bf0ad215",
+              "right": "97a0add7db25ed0f1e4896a6ac12db9fb57297e91fa921e0489a1d7aa3ec316d",
+              "total": "31415",
+              "count": 2,
+              "low": [
+                "obligations",
+                "Agency B",
+                "",
+                "00000000000000000006"
+              ],
+              "high": [
+                "obligations",
+                "Département é",
+                "2025",
+                "00000000000000000005"
+              ]
+            }
+          },
+          {
+            "node": {
+              "left": "0ed66c6b1b94527f860cb107b8098eed4b1e5ec3eeb6a36f48e436e0513dcdd5",
+              "right": "99668bce2e0ee0f8f394165fc78ff7286e4a4d116f595e3a089f6bb4b0203c0b",
+              "total": "159032",
+              "count": 5,
+              "low": [
+                "outlays",
+                "",
+                "2024",
+                "00000000000000000009"
+              ],
+              "high": [
+                "outlays",
+                "Département é",
+                "2024",
+                "00000000000000000008"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "reason": "a piece dropped",
+      "proof": {
+        "size": 13,
+        "prefix": [
+          "obligations",
+          "Agency A"
+        ],
+        "start": 1,
+        "end": 5,
+        "pieces": [
+          {
+            "leaf": {
+              "key": [
+                "obligations",
+                "",
+                "2024",
+                "00000000000000000004"
+              ],
+              "amount": "4200",
+              "record_hash": "a2b360096f137fc59d82b5ac580e611ca8cf38a114e63c07ed68e3e16c88f79e"
+            }
+          },
+          {
+            "leaf": {
+              "key": [
+                "obligations",
+                "Agency A",
+                "2024",
+                "00000000000000000000"
+              ],
+              "amount": "12500000",
+              "record_hash": "e00d4616051cce59f50090fafabb0d9b5172e50b72037a7a85c603b117257648"
+            }
+          },
+          {
+            "node": {
+              "left": "99c9fd9b5b14846115422234c0854209079b7f13712e516c8bac02f63dcbcb2c",
+              "right": "682f608f2624f5b2041e4660ea762bb7a7854ded487cba487c5229525710781c",
+              "total": "-795999",
+              "count": 2,
+              "low": [
+                "obligations",
+                "Agency A",
+                "2024",
+                "00000000000000000002"
+              ],
+              "high": [
+                "obligations",
+                "Agency A",
+                "2025",
+                "00000000000000000001"
+              ]
+            }
+          },
+          {
+            "leaf": {
+              "key": [
+                "obligations",
+                "Agency A",
+                "2025",
+                "00000000000000000011"
+              ],
+              "amount": "2000000000000",
+              "record_hash": "9ec94284a307b392b3fb30ed20b3b0e91dff83ad13fe0086320ef1fa632b3f90"
+            }
+          },
+          {
+            "leaf": {
+              "key": [
+                "obligations",
+                "Agency AB",
+                "2024",
+                "00000000000000000003"
+              ],
+              "amount": "99",
+              "record_hash": "7322e1c393bf2dffd7c20450a6b421b8681388696b5faee4e5d21cf2d358eb58"
+            }
+          },
+          {
+            "node": {
+              "left": "77ed0db3a3a05ff78c80a9666a43a629d57425bf15796b76b8c77ea5bf0ad215",
+              "right": "97a0add7db25ed0f1e4896a6ac12db9fb57297e91fa921e0489a1d7aa3ec316d",
+              "total": "31415",
+              "count": 2,
+              "low": [
+                "obligations",
+                "Agency B",
+                "",
+                "00000000000000000006"
+              ],
+              "high": [
+                "obligations",
+                "Département é",
+                "2025",
+                "00000000000000000005"
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
