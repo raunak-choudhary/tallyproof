@@ -10,6 +10,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
   { href: "/ask/", label: "Ask" },
   { href: "/tamper/", label: "Tamper" },
   { href: "/evals/", label: "Evals" },
+  { href: "/how-it-works/", label: "How it works" },
 ];
 
 /** Whether a navigation link is the page being viewed; the home link matches only itself. */

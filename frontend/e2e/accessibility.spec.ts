@@ -12,6 +12,7 @@ const PAGES = [
   "/ask/",
   "/tamper/",
   "/evals/",
+  "/how-it-works/",
   "/ledger/events/evt_01J92P0V00ZQSM7FGKNG6F5228/",
 ] as const;
 
