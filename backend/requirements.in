@@ -30,3 +30,6 @@ pillow>=13.0.0,<14             # pulled in by fastembed; 13.0 fixes the CVEs in 
 pyiceberg[pyarrow,sql-sqlite,pyiceberg-core]==0.12.0  # Iceberg tables for the lake with a local SQLite catalog; core does the partition transforms
 pyarrow>=26,<27                # Arrow tables and Parquet files under the Iceberg lake
 duckdb>=1.5.6,<1.6            # batch reconciliation in SQL over the gold events and the silver lake (ADR-0012)
+opentelemetry-api==1.45.1     # tracing across ingest, checkpoint, and analyst; off unless an OTLP endpoint is set
+opentelemetry-sdk==1.45.1
+opentelemetry-exporter-otlp-proto-http==1.45.1  # HTTP export only; lighter than gRPC
