@@ -194,3 +194,65 @@ describe("verifyEvent", () => {
     expect(result.ok).toBe(false);
   });
 });
+
+describe("the outside witness and displayed values", () => {
+  const witnessedNote = signNote(`${NAME}\n4\n${toBase64(root(leaves.slice(0, 4)))}\n`);
+  const run = (extra: Partial<Parameters<typeof verifyEvent>[0]>, publishedLeaves = leaves) =>
+    verifyEvent({
+      canonical: records[5]!,
+      leafIndex: 5,
+      publishedLeaves,
+      checkpointNote: note,
+      pinnedKey,
+      ...extra,
+    });
+  const step = (r: ReturnType<typeof verifyEvent>, id: string) => r.steps.find((s) => s.id === id);
+
+  it("passes when the signed log extends the witnessed checkpoint", () => {
+    const r = run({ witness: { note: witnessedNote, source: "raw.githubusercontent.com" } });
+    expect(step(r, "witness")?.ok).toBe(true);
+    expect(r.ok).toBe(true);
+  });
+
+  it("fails when history before the witness was rewritten and re-signed with the key", () => {
+    const rewritten = [...leaves];
+    rewritten[1] = leafHash(utf8(canonicalize({ event_id: "evt_1", payload: { amount: "1.00" } })));
+    const resigned = signNote(`${NAME}\n7\n${toBase64(root(rewritten))}\n`);
+    const r = run(
+      {
+        checkpointNote: resigned,
+        witness: { note: witnessedNote, source: "raw.githubusercontent.com" },
+      },
+      rewritten,
+    );
+    expect(step(r, "inclusion")?.ok).toBe(true);
+    expect(step(r, "witness")?.ok).toBe(false);
+    expect(r.ok).toBe(false);
+  });
+
+  it("refuses a witness that the pinned key didn't sign", () => {
+    const other = sha256(utf8("someone else"));
+    const r = run({
+      witness: {
+        note: signNote(`${NAME}\n4\n${toBase64(root(leaves.slice(0, 4)))}\n`, other),
+        source: "x",
+      },
+    });
+    expect(step(r, "witness")?.ok).toBe(false);
+  });
+
+  it("fails visibly when the witness couldn't be fetched", () => {
+    const r = run({ witness: { error: "it answered 404", source: "raw.githubusercontent.com" } });
+    expect(step(r, "witness")?.detail).toContain("404");
+    expect(r.ok).toBe(false);
+  });
+
+  it("checks each displayed value against the verified bytes", () => {
+    const shown = [{ label: "Amount", path: ["payload", "amount"], value: "600.00" }];
+    expect(step(run({ displayed: shown }), "values")?.ok).toBe(true);
+    const wrong = [{ label: "Amount", path: ["payload", "amount"], value: "601.00" }];
+    const r = run({ displayed: wrong });
+    expect(step(r, "values")?.ok).toBe(false);
+    expect(step(r, "values")?.detail).toContain("amount");
+  });
+});

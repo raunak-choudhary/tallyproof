@@ -5,9 +5,16 @@ import { canonicalize } from "./canonical";
 import type { Checkpoint, VerifierKey } from "./checkpoint";
 import { verifyCheckpoint } from "./checkpoint";
 import { leafHash } from "./hashing";
-import { inclusionProof, root, verifyInclusion } from "./merkle";
+import {
+  consistencyProof,
+  inclusionProof,
+  root,
+  verifyConsistency,
+  verifyInclusion,
+} from "./merkle";
 
-export type StepId = "signature" | "canonical" | "leaf" | "inclusion" | "match";
+export type StepId =
+  "signature" | "canonical" | "leaf" | "inclusion" | "witness" | "values" | "match";
 
 /** What a citation claims about the record it points to. */
 export interface Expected {
@@ -24,6 +31,22 @@ export interface Step {
   label: string;
   ok: boolean;
   detail: string;
+}
+
+/** A checkpoint someone outside witnessed, fetched from a different origin than the bundle. */
+export interface Witness {
+  note: string;
+  /** Where it came from, shown to the reader, for example raw.githubusercontent.com. */
+  source: string;
+  /** A consistency proof from a live API; otherwise it is built from the published leaves. */
+  consistency?: readonly Uint8Array[];
+}
+
+/** A value the page shows from this record, and where it sits in the record. */
+export interface Displayed {
+  label: string;
+  path: readonly string[];
+  value: string;
 }
 
 export interface VerifyInput {
@@ -46,6 +69,14 @@ export interface VerifyInput {
    * for some other record, leaf, or checkpoint then fails instead of passing.
    */
   expected?: Expected;
+  /**
+   * The outside witness. When given, the signed checkpoint must extend the witnessed one
+   * (or be extended by it): a consistency proof between their roots has to verify, so a
+   * history rewritten with a stolen key fails here.
+   */
+  witness?: Witness | { error: string; source: string };
+  /** Values the page displays from this record; each must match the verified bytes. */
+  displayed?: readonly Displayed[];
 }
 
 export interface VerifyResult {
@@ -135,8 +166,81 @@ export function verifyEvent(input: VerifyInput): VerifyResult {
       ? `${proof.length} sibling hashes, root ${toHex(checkpoint.rootHash).slice(0, 16)}…`
       : "The recomputed leaf does not reproduce the signed root",
   });
+  if (input.witness) steps.push(witnessStep(input.witness, checkpoint, input));
+  if (input.displayed?.length) steps.push(valuesStep(input.displayed, parsed));
   if (input.expected) steps.push(matchStep(input.expected, parsed, input.leafIndex, size));
   return done({ checkpoint, computedLeafHex: toHex(computed) });
+}
+
+const WITNESS_LABEL = "Consistent with the outside witness";
+
+function witnessStep(
+  witness: NonNullable<VerifyInput["witness"]>,
+  checkpoint: Checkpoint,
+  input: VerifyInput,
+): Step {
+  const fail = (detail: string): Step => ({
+    id: "witness",
+    label: WITNESS_LABEL,
+    ok: false,
+    detail,
+  });
+  if ("error" in witness) return fail(`Couldn't fetch it from ${witness.source}: ${witness.error}`);
+  let witnessed: Checkpoint;
+  try {
+    witnessed = verifyCheckpoint(witness.note, input.pinnedKey);
+  } catch (error) {
+    return fail(
+      `The witnessed checkpoint from ${witness.source} isn't signed by the pinned key: ${
+        error instanceof Error ? error.message : "signature check failed"
+      }`,
+    );
+  }
+  if (witnessed.origin !== checkpoint.origin)
+    return fail(`The witness is for log ${witnessed.origin}, not ${checkpoint.origin}`);
+  const [first, second] =
+    witnessed.treeSize <= checkpoint.treeSize ? [witnessed, checkpoint] : [checkpoint, witnessed];
+  const proof =
+    witness.consistency ??
+    (input.publishedLeaves.length >= second.treeSize
+      ? consistencyProof(input.publishedLeaves.slice(0, second.treeSize), first.treeSize)
+      : null);
+  if (proof === null) return fail("No consistency proof is available for these two sizes");
+  const ok = verifyConsistency(
+    first.treeSize,
+    second.treeSize,
+    first.rootHash,
+    second.rootHash,
+    proof,
+  );
+  return {
+    id: "witness",
+    label: WITNESS_LABEL,
+    ok,
+    detail: ok
+      ? `Checkpoint ${witnessed.treeSize.toLocaleString("en-US")}, fetched from ${witness.source}, is a prefix of this log (${proof.length} hashes)`
+      : `This log does not extend checkpoint ${witnessed.treeSize.toLocaleString("en-US")} witnessed at ${witness.source}: history was rewritten`,
+  };
+}
+
+function valuesStep(displayed: readonly Displayed[], record: unknown): Step {
+  const mismatched = displayed.filter((d) => {
+    let at: unknown = record;
+    for (const key of d.path)
+      at = at && typeof at === "object" ? (at as Record<string, unknown>)[key] : undefined;
+    return at === undefined || String(at) !== d.value;
+  });
+  return {
+    id: "values",
+    label: "Values on this page match the verified bytes",
+    ok: mismatched.length === 0,
+    detail:
+      mismatched.length === 0
+        ? displayed.map((d) => d.label.toLowerCase()).join(", ")
+        : `The page's ${mismatched.map((d) => d.label.toLowerCase()).join(", ")} ${
+            mismatched.length > 1 ? "don't" : "doesn't"
+          } match the verified record`,
+  };
 }
 
 function matchStep(expected: Expected, record: unknown, leafIndex: number, size: number): Step {
