@@ -4,6 +4,8 @@ import path from "node:path";
 import Link from "next/link";
 
 import { Hero } from "@/features/landing/Hero";
+import { Story } from "@/features/landing/Story";
+import { storyData } from "@/features/landing/storyData";
 
 interface Preview {
   eventId: string;
@@ -42,7 +44,8 @@ export default function HomePage() {
   return (
     <>
       <Hero firstEventId={items[0]?.eventId ?? null} />
-      <main className="mx-auto max-w-3xl px-[var(--gutter)] py-16">
+      <Story data={storyData()} />
+      <main id="records" className="mx-auto max-w-3xl scroll-mt-16 px-[var(--gutter)] py-16">
         <section aria-labelledby="records-heading">
           <h2 id="records-heading" className="text-lg font-semibold">
             Records from the signed log
