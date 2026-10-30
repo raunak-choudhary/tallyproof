@@ -5,3 +5,5 @@ pnpm-lock.yaml
 next-env.d.ts
 playwright-report/
 test-results/
+# Evaluation reports, written by make eval-export
+public/replay/evals/
