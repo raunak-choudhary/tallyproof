@@ -3,12 +3,22 @@ import json
 import pytest
 
 from tallyproof_core.checkpoint import CheckpointError, Verifier
-from tests.vectors_builder import VECTORS_DIR, build_canonical, build_checkpoints, render
+from tests.vectors_builder import (
+    VECTORS_DIR,
+    build_canonical,
+    build_checkpoints,
+    build_sum_tree,
+    render,
+)
 
 
 @pytest.mark.parametrize(
     ("filename", "builder"),
-    [("canonical.json", build_canonical), ("checkpoint.json", build_checkpoints)],
+    [
+        ("canonical.json", build_canonical),
+        ("checkpoint.json", build_checkpoints),
+        ("sum_tree.json", build_sum_tree),
+    ],
 )
 def test_committed_vectors_match_the_core_library(filename, builder):
     committed = (VECTORS_DIR / filename).read_text(encoding="utf-8")
