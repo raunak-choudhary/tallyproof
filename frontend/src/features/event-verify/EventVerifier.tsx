@@ -9,7 +9,9 @@ import { pinnedVerifierKey } from "@/lib/replay/pinnedKey";
 import { utf8 } from "@/lib/verify/bytes";
 import { canonicalize } from "@/lib/verify/canonical";
 import { leafHash } from "@/lib/verify/hashing";
-import type { VerifyResult } from "@/lib/verify/verifyEvent";
+import type { Displayed, VerifyResult } from "@/lib/verify/verifyEvent";
+import type { FetchedWitness } from "@/lib/verify/witness";
+import { fetchWitness, witnessUrl } from "@/lib/verify/witness";
 import { forgeCheckpointWithNewRoot, verifyEvent } from "@/lib/verify/verifyEvent";
 
 import { MerkleRadial } from "@/features/proof/MerkleRadial";
@@ -26,13 +28,21 @@ function withAmount(canonical: string, amount: string): string {
   return canonicalize({ ...record, payload: { ...record.payload, amount } });
 }
 
-export function EventVerifier({ eventId }: { eventId: string }) {
+export function EventVerifier({
+  eventId,
+  displayed = [],
+}: {
+  eventId: string;
+  /** Values the page printed at build time, checked against the verified bytes. */
+  displayed?: readonly Displayed[];
+}) {
   const [bundle, setBundle] = useState<Bundle | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [amount, setAmount] = useState<string>("");
   const [mode, setMode] = useState<Mode>("original");
   const [result, setResult] = useState<VerifyResult | null>(null);
   const [path, setPath] = useState<Climb | null>(null);
+  const [witness, setWitness] = useState<FetchedWitness | null>(null);
 
   useEffect(() => {
     loadBundle(replayBase(), pinnedVerifierKey())
@@ -40,6 +50,8 @@ export function EventVerifier({ eventId }: { eventId: string }) {
       .catch((error: unknown) =>
         setLoadError(error instanceof Error ? error.message : String(error)),
       );
+    const url = witnessUrl();
+    if (url) void fetchWitness(url).then(setWitness);
   }, []);
 
   const record = useMemo(
@@ -98,6 +110,8 @@ export function EventVerifier({ eventId }: { eventId: string }) {
         publishedLeaves: leaves,
         checkpointNote: note,
         pinnedKey: pinnedVerifierKey(),
+        ...(witness ? { witness } : {}),
+        displayed,
       }),
     );
   };
@@ -124,6 +138,15 @@ export function EventVerifier({ eventId }: { eventId: string }) {
         <h2 id="verify-heading" className="text-lg font-semibold">
           Check it yourself
         </h2>
+        <p className="text-sm text-fg-muted">
+          {witness === null
+            ? witnessUrl()
+              ? "Fetching the witnessed checkpoint from a second origin…"
+              : "No outside witness is configured for this build, so the consistency check is skipped."
+            : "error" in witness
+              ? `The witnessed checkpoint couldn't be fetched from ${witness.source}; verifying will say so.`
+              : `A witnessed checkpoint was fetched from ${witness.source}, separately from this site. Verifying also proves this log extends it.`}
+        </p>
         <div className="flex flex-wrap items-end gap-3">
           <button
             type="button"

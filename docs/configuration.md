@@ -161,6 +161,7 @@ The evaluation runner has no settings of its own. A run is bounded by `LLM_RUN_M
 | `NEXT_PUBLIC_REPLAY_BASE` | Where the replay bundle is served from; empty means `<base path>/replay` |
 | `NEXT_PUBLIC_BUILD_COMMIT`, `NEXT_PUBLIC_SOURCE_URL` | Set by the publishing workflow so every page names, and links, the commit it was built from |
 | `NEXT_PUBLIC_WS_URL` | WebSocket base URL (for example `ws://127.0.0.1:8001`) for the ledger page's live stream; empty means the page replays the demo bundle |
+| `NEXT_PUBLIC_WITNESS_URL` | Where the record page fetches the witnessed checkpoint for the replay log. It must be a different origin than the site; GitHub Pages builds use the raw file in `witness/replay/` at the commit being published. Empty skips the consistency check |
 
 The frontend reads its own `frontend/.env.example`, not the repository's `.env`.
 
