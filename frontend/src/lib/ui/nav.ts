@@ -9,6 +9,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
   { href: "/ledger/", label: "Ledger" },
   { href: "/ask/", label: "Ask" },
   { href: "/tamper/", label: "Tamper" },
+  { href: "/evals/", label: "Evals" },
 ];
 
 /** Whether a navigation link is the page being viewed; the home link matches only itself. */
