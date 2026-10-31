@@ -6,7 +6,7 @@ Tallyproof is a streaming ledger for public spending data with an AI analyst on 
 
 <p align="center"><img alt="Verifying a record on the site: six checks pass and the audit path climbs to the signed root. Then the amount is changed by one cent, and the proof and the displayed-value checks fail." src="docs/images/verify-and-tamper.gif" width="560"></p>
 
-> **Status, October 2026.** The batch pipeline, the streaming ledger, the proof API, and the browser verifier work end to end on real data. Federal contract events, their payments, and the Treasury's daily cash statement stream through Kafka into an append-only Postgres ledger, get signed into checkpoints that are timestamped on OpenTimestamps, and can be verified in your browser or from a terminal. A double-entry journal and reconciliation breaks are derived from the ledger and pushed live over WebSockets. The AI analyst answers questions about it, binding every number to a query over the ledger and citing the records behind it. This note will always say exactly what works.
+> **Status, October 2026.** The batch pipeline, the streaming ledger, the proof API, the AI analyst, and the browser verifier work end to end on real data. Federal contract events, their payments, and the Treasury's daily cash statement stream through Kafka into an append-only Postgres ledger, get signed into checkpoints that are timestamped on OpenTimestamps, and can be verified in your browser or from a terminal. A double-entry journal and reconciliation breaks, including bursts of awards to a recipient found with a Count-Min Sketch, are derived from the ledger and pushed live over WebSockets. Totals per agency are signed as a Merkle-sum tree, so a total can be proven without listing its records. The analyst binds every number to a query over the ledger and cites the records behind it, and it has been scored on all 218 evaluation questions. The full history also lands in an Iceberg lake, where DuckDB re-runs the reconciliation rules as SQL. The site, the tamper ladder, the evaluation dashboard, and ten precomputed analyst answers run from static files; asking new questions needs the local stack. This note will always say exactly what works.
 
 ## Why I built it
 
@@ -56,13 +56,16 @@ Numbers from running the pipeline on FY2024 and FY2025 federal contract transact
 | Outlays | 2,188,954 contract rows turned into 1,084,223 monthly payments in 82 seconds; 3,515 whose running total went down were quarantined |
 | Quality (Deequ) | All 11 constraints pass on all 13.1 million rows in 30 seconds: complete and unique keys, dates inside the fiscal years, amounts within bounds, recipient IDs in the right format |
 | Build events (gold) | 1,000,000 contract events and their 704,400 payment events in arrival order in 3.5 minutes, with 225 labeled anomalies of nine types (400 injected records) mixed in and none rejected |
-| Reconcile | Every injected anomaly caught by its rule, 25 of 25 for each type. On the real stream the rules also raise about 218,000 breaks, mostly because the slice starts in October 2023 and doesn't include the earlier obligations behind them |
+| Reconcile | Every injected anomaly caught by its rule, 25 of 25 for each of the six types the rules check, in 3.6 minutes over 1.7 million events. That includes bursts of new awards to a recipient with no awards in the month before, counted with Count-Min Sketches. On the real stream the rules also raise about 218,000 breaks, mostly because the slice starts in October 2023 and doesn't include the earlier obligations behind them; 216 of them are real bursts no label explains |
 | Journal | 100,887 events turned into 159,000 balanced journal lines in 9 seconds; the trial balance is zero, and rebuilding gives the same lines |
 | Live updates | A WebSocket client received about 52,000 appended events and breaks in 25 seconds with no errors; a connection from another origin was refused |
 | Verify | 2,000 real events signed into a Merkle log; the browser verifies any of them and catches an edited amount |
 | Stream | 20,000 events published to Kafka in 4.0 seconds using 72 MB; all landed with gap-free leaf indexes, and replaying them again added nothing |
 | Sign | A checkpoint covering 20,000 events signed within 2 seconds of the log changing, and accepted by two public OpenTimestamps calendars |
 | Prove | Inclusion proofs from the API in about 4 ms over 20,000 leaves; the in-memory tree builds one in under half a millisecond over a million |
+| Prove a total | Each agency's total over the replay data signed as a Merkle-sum tree; the browser checks a total against the signed root without the records behind it |
+| Load | About 3,000 events a second into the ledger, flat from one to three consumers because every append takes the same lock. At 1,600 a second, an event is appended within 747 ms and covered by a signed checkpoint within 915 ms at p95 ([load test](docs/load-test.md)) |
+| Lake | All 1,704,800 messages written to Iceberg tables in 4.5 minutes, with the 25 duplicates refused and the 25 malformed records set aside; the lake's counts match the stream's, and a second run appends nothing |
 | Live feed | One week of the Daily Treasury Statement became 890 cash movements, with detail lines checked against the statement's own totals |
 
 Several bugs only showed up on the real data and are fixed in the history. Report dates turned out to be timestamps, and zoned timestamps shifted every event by four hours depending on the machine's time zone. An out-of-memory failure when building a million events led to a streaming design that keeps memory flat at any size. Older records get edited for years, so timing events by their last edit made three in four FY2024 transactions look reported late; they're now timed by their first report. And a reconciliation rule kept only one Treasury account's running total per award, which could hide an award paid from two accounts.
@@ -132,6 +135,9 @@ The documents below are also published as a site, with API reference pages gener
 | System architecture and the tamper-detection model | [architecture.md](docs/architecture.md) |
 | Schemas, Kafka topics, database, and API | [backend-design.md](docs/backend-design.md) |
 | How answer quality is measured | [evaluation.md](docs/evaluation.md) |
+| What the full evaluation run found, miss by miss | [evaluation-results.md](docs/evaluation-results.md) |
+| Throughput, latency, and the single-writer ceiling | [load-test.md](docs/load-test.md) |
+| The reconciliation rules as SQL in DuckDB, compared with the stream | [batch-reconciliation.md](docs/batch-reconciliation.md) |
 | What was scaled down for one laptop and free tiers, and how to run the real thing | [limitations.md](docs/limitations.md) |
 | What the full FY2025 build produced | [data-profile.md](docs/data-profile.md) |
 | Threat model and security controls | [threat-model.md](docs/threat-model.md) |
@@ -140,6 +146,7 @@ The documents below are also published as a site, with API reference pages gener
 | Configuration reference | [configuration.md](docs/configuration.md) |
 | Technology choices and versions | [tech-stack.md](docs/tech-stack.md) |
 | How this maps to AWS services | [aws-reference-architecture.md](docs/aws-reference-architecture.md) |
+| The same mapping written as Terraform, never applied | [infra/terraform/aws](infra/terraform/aws/) |
 | Architecture decision records | [docs/adr](docs/adr/) |
 | Sources | [references.md](docs/references.md) |
 
