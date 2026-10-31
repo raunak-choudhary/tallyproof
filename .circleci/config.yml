@@ -269,8 +269,10 @@ jobs:
       LLM_PROVIDER: openai_compatible
     steps:
       - setup-machine-python
+      # The smoke set, live: the full set takes about 550,000 tokens, past the free
+      # tier's 200,000 a day, so it runs by hand over several days (docs/evaluation.md).
       - run-eval:
-          set: all
+          set: smoke
           mode: live
       - run:
           name: Open a pull request with the README results table
