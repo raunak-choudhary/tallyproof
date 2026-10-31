@@ -4,6 +4,54 @@ This file is maintained by [release-please](https://github.com/googleapis/releas
 
 Version 0.1.0 is the minimum viable product. It covers a streaming ledger of real federal spending events in an append-only Postgres log, RFC 9162 Merkle proofs against Ed25519-signed checkpoints that are timestamped externally, verification of any record in the browser, double-entry journal and reconciliation projections that find planted anomalies, and an analyst whose every number is bound to records the reader can prove, measured against an exact oracle.
 
+## [0.3.0](https://github.com/raunak-choudhary/tallyproof/compare/v0.2.0...v0.3.0) (2026-10-31)
+
+
+### Features
+
+* **analyst:** prove totals as a whole when the sum tree can ([c312bd0](https://github.com/raunak-choudhary/tallyproof/commit/c312bd0932d12c1de2d75b5c0309a840a89564b9))
+* **api:** serve signed totals and total proofs ([742a5ae](https://github.com/raunak-choudhary/tallyproof/commit/742a5ae7e4d022c418e1b4d46effe4169d26f000))
+* **core:** add a Count-Min Sketch ([3d23c88](https://github.com/raunak-choudhary/tallyproof/commit/3d23c880e5eed4783a1fbd9bbd011f92085ef6a7))
+* **core:** add a sorted Merkle-sum tree with total proofs ([f2d9d4a](https://github.com/raunak-choudhary/tallyproof/commit/f2d9d4ab923ab2f263e91b71af11ee7051e7dd98))
+* **core:** key provable totals the way the analyst groups them ([c328426](https://github.com/raunak-choudhary/tallyproof/commit/c3284265951c2ef10101be7b32070020069c2fbf))
+* **core:** sign totals notes that never pass for checkpoints ([8d9cbd0](https://github.com/raunak-choudhary/tallyproof/commit/8d9cbd0fc85943333d6a83cf2c661bc63b43ec6c))
+* **evals:** score every reconciliation rule against gold ([2a30262](https://github.com/raunak-choudhary/tallyproof/commit/2a30262ab1b2fe3e0606a79d82817834d6a33f07))
+* **infra:** add a Jaeger collector behind the tracing profile ([9311f3c](https://github.com/raunak-choudhary/tallyproof/commit/9311f3c755f068bd4f38e273e00b4e3b72708f79))
+* **ingestion:** evolve the event schema to version 2 ([d39e1b3](https://github.com/raunak-choudhary/tallyproof/commit/d39e1b31e197df5ac202902ca7724d7ddac08b0a))
+* **ledger:** sign each checkpoint's sum tree in the checkpointer ([4911489](https://github.com/raunak-choudhary/tallyproof/commit/4911489a1ce37d5f590546aeaee8569dcf9bcc57))
+* **pipeline:** inject bursts on brand-new recipients ([6beb16b](https://github.com/raunak-choudhary/tallyproof/commit/6beb16b2e38d5e358909b002a8cddbaf4b2c42e6))
+* **pipeline:** sign the replay bundle's totals ([39d5c40](https://github.com/raunak-choudhary/tallyproof/commit/39d5c40596f2cbdb9ee8e1cd48ec89879d696122))
+* **recon:** flag recipient bursts after a quiet month ([dae7b09](https://github.com/raunak-choudhary/tallyproof/commit/dae7b09c8c2358e36de992dc6b56c74ae0f6c057))
+* **recon:** run the reconciliation rules as SQL in DuckDB ([d8038eb](https://github.com/raunak-choudhary/tallyproof/commit/d8038ebe80989a4d358bb0cf56b32366deba96c1))
+* trace ingest, checkpoints, and the analyst with OpenTelemetry ([ccb5edb](https://github.com/raunak-choudhary/tallyproof/commit/ccb5edb667372d10da894c7b1b2ba425d3ce7fe0))
+* **web:** prove each agency's total on the ledger page ([3d70610](https://github.com/raunak-choudhary/tallyproof/commit/3d70610a31748711c962449c452ab53b517d3930))
+* **web:** verify a whole total against the signed sum tree ([3cb43c5](https://github.com/raunak-choudhary/tallyproof/commit/3cb43c5ea85d07933c6b6d12889e6ca43560a1a7))
+* **web:** verify total proofs in the browser ([8d5d656](https://github.com/raunak-choudhary/tallyproof/commit/8d5d656a6e786effabd2d6f00d448500ff7a0893))
+
+
+### Fixes
+
+* **api:** bound sum-tree rebuilds for total proofs ([d8f513d](https://github.com/raunak-choudhary/tallyproof/commit/d8f513d1ef17232a428cdd9c618b6ab613514925))
+* **recon:** spill DuckDB to the data folder, not the working directory ([b0b6365](https://github.com/raunak-choudhary/tallyproof/commit/b0b63651368689954c7871f16ac58d4d5fff2a3e))
+
+
+### Documentation
+
+* ADR-0024, a Merkle-sum tree for provable totals ([7c915e8](https://github.com/raunak-choudhary/tallyproof/commit/7c915e8289a10c43eeafb685cf14a77bc0b1980b))
+* ADR-0025, recipient bursts with Count-Min Sketches ([21a53b7](https://github.com/raunak-choudhary/tallyproof/commit/21a53b7c09431cd1485e91f8e6b9540bede3379b))
+* close the sampled-totals limitation ([13fc5ee](https://github.com/raunak-choudhary/tallyproof/commit/13fc5ee7dad84bfd9ca43c594a91ca5032ad1186))
+* describe batch reconciliation and how it differs from the stream ([afa8d16](https://github.com/raunak-choudhary/tallyproof/commit/afa8d161508f23976151228517629b546bb70f14))
+* explain how the event schema evolves ([10cdb32](https://github.com/raunak-choudhary/tallyproof/commit/10cdb320802752bae07d26e6b2681e94668d7294))
+* record why there is no public live backend ([4868801](https://github.com/raunak-choudhary/tallyproof/commit/4868801744fd42220a64b151cee39999d3b262c4))
+* sketch the AWS reference architecture in Terraform ([d44ee39](https://github.com/raunak-choudhary/tallyproof/commit/d44ee39665fe69077152a0ee483fc678f71f8179))
+
+
+### Build and release
+
+* **deps:** add DuckDB 1.5.6 for batch reconciliation ([7960492](https://github.com/raunak-choudhary/tallyproof/commit/7960492c747d1ca40ee633a0bf3d57e4ff067fcf))
+* **deps:** add OpenTelemetry 1.45 with the OTLP HTTP exporter ([93e7be8](https://github.com/raunak-choudhary/tallyproof/commit/93e7be899126e5986b38346cd0ca7cf8dbcb58d0))
+* **web:** ignore a lint-only minimatch advisory in the audit ([a382f33](https://github.com/raunak-choudhary/tallyproof/commit/a382f3344d94572860b2679997858a01b7ffa144))
+
 ## [0.2.0](https://github.com/raunak-choudhary/tallyproof/compare/v0.1.1...v0.2.0) (2026-10-30)
 
 
