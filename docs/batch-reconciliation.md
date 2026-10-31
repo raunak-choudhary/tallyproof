@@ -54,4 +54,4 @@ Over the 13,124,445 transactions in silver:
 | De-obligation below zero | 216,901 | 5.8 |
 | Recipient burst | 419 | 137.9 |
 
-The duplicate count is high because the rule only flags a possible duplicate: on real data, many awards share a recipient, an amount, and a date for ordinary reasons, such as a delivery order split by line. The burst rule is the slow one, since every crossing looks back over the recipient's previous 30 days.
+The duplicate count is high because the rule only flags a possible duplicate: on real data, many awards share a recipient, an amount, and a date for ordinary reasons, so each is a lead to check, not a finding. The burst rule is the slow one, since every crossing looks back over the recipient's previous 30 days.
