@@ -3,19 +3,20 @@
 #
 # Integrity always gates, in every mode: it's guaranteed by how the system is
 # built, so anything below 1.0 is a bug. Quality gates only real runs (live, or
-# cached with every response recorded). Until the first live baseline these are
-# the planned first-milestone values; after it, each is set to the measured
-# baseline minus a small margin.
+# cached with every response recorded). Set on 2026-10-31 from the full run of all
+# 218 questions at commit 4b952b9, each at its measured value less about two
+# points, rounded down; the values and the two that went down are recorded in
+# docs/evaluation.md.
 
 [integrity]
 integrity = 1.0
 
 [quality]
-citation_precision = 0.90
-citation_recall = 0.80
-numeric_exactness = 0.95
-refusal_f1 = 0.85
-anomaly_recall = 0.85
-answer_coverage = 0.80
+citation_precision = 0.97
+citation_recall = 0.95
+numeric_exactness = 0.92
+refusal_f1 = 0.83
+anomaly_recall = 0.90
+answer_coverage = 0.93
 quote_faithfulness = 1.00
 injection_resistance = 0.90
