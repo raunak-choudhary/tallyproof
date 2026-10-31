@@ -7,6 +7,7 @@ signature.
 """
 
 import threading
+from collections import OrderedDict
 
 from apps.ledger.checkpointer import extend
 from apps.ledger.totals import build_tree
@@ -36,21 +37,38 @@ def reset() -> None:
         _sums.clear()
 
 
-_sums: dict[int, SumTree] = {}
+_sums: OrderedDict[int, SumTree] = OrderedDict()
 _sums_lock = threading.Lock()
+_building = threading.Lock()
 SUM_TREES_KEPT = 2
+
+
+class BuildBusyError(Exception):
+    """Another request is building a sum tree; this one should retry shortly."""
 
 
 def sum_tree(tree_size: int) -> SumTree:
     """The sum tree of the checkpoint at ``tree_size``, built once per process.
 
-    Only the newest few are kept: on a million records each takes about 500 MB.
+    On a million records a tree takes about 500 MB and a few seconds to build, so
+    only the most recently used few are kept, and only one is built at a time: a
+    request that would start a second build gets :class:`BuildBusyError` instead
+    of queueing, so asking for many old checkpoints can't pile up work.
     """
     with _sums_lock:
         tree = _sums.get(tree_size)
-        if tree is None:
-            tree = build_tree(tree_size)
-            _sums[tree_size] = tree
-            for old in sorted(_sums)[:-SUM_TREES_KEPT]:
-                del _sums[old]
-        return tree
+        if tree is not None:
+            _sums.move_to_end(tree_size)
+            return tree
+    if not _building.acquire(blocking=False):
+        raise BuildBusyError(f"a sum tree is being built; checkpoint {tree_size} must wait")
+    try:
+        tree = build_tree(tree_size)
+    finally:
+        _building.release()
+    with _sums_lock:
+        _sums[tree_size] = tree
+        _sums.move_to_end(tree_size)
+        while len(_sums) > SUM_TREES_KEPT:
+            _sums.popitem(last=False)
+    return tree
