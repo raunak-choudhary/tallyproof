@@ -5,6 +5,7 @@
       "run_at": "2026-10-29T00:22:11+00:00",
       "commit": "unknown",
       "mode": "live",
+      "system": "analyst",
       "label": "quality run",
       "models": {
         "router": "gemini-3.5-flash",
@@ -28,6 +29,7 @@
         "free_number_rate": 0.0,
         "integrity": 1.0,
         "reconciliation_recall": 1.0,
+        "narrative_faithfulness": null,
         "tokens": 9799,
         "latency_p50_ms": 23924,
         "latency_p95_ms": 35990
@@ -49,6 +51,7 @@
       "run_at": "2026-10-29T00:44:55+00:00",
       "commit": "unknown",
       "mode": "live",
+      "system": "analyst",
       "label": "quality run",
       "models": {
         "router": "openai/gpt-oss-120b",
@@ -72,6 +75,7 @@
         "free_number_rate": 0.0625,
         "integrity": 1.0,
         "reconciliation_recall": 1.0,
+        "narrative_faithfulness": null,
         "tokens": 47076,
         "latency_p50_ms": 29913,
         "latency_p95_ms": 44432
@@ -89,6 +93,7 @@
       "run_at": "2026-10-29T00:54:40+00:00",
       "commit": "unknown",
       "mode": "live",
+      "system": "analyst",
       "label": "quality run",
       "models": {
         "router": "openai/gpt-oss-120b",
@@ -112,6 +117,7 @@
         "free_number_rate": 0.0,
         "integrity": 1.0,
         "reconciliation_recall": 1.0,
+        "narrative_faithfulness": null,
         "tokens": 43069,
         "latency_p50_ms": 22510,
         "latency_p95_ms": 30295
@@ -129,6 +135,7 @@
       "run_at": "2026-10-29T01:06:01+00:00",
       "commit": "unknown",
       "mode": "live",
+      "system": "analyst",
       "label": "quality run",
       "models": {
         "router": "openai/gpt-oss-120b",
@@ -152,6 +159,7 @@
         "free_number_rate": 0.0588,
         "integrity": 1.0,
         "reconciliation_recall": 1.0,
+        "narrative_faithfulness": null,
         "tokens": 46718,
         "latency_p50_ms": 29668,
         "latency_p95_ms": 45108
@@ -166,6 +174,7 @@
       "run_at": "2026-10-29T01:16:34+00:00",
       "commit": "unknown",
       "mode": "live",
+      "system": "analyst",
       "label": "quality run",
       "models": {
         "router": "openai/gpt-oss-120b",
@@ -189,6 +198,7 @@
         "free_number_rate": 0.0,
         "integrity": 1.0,
         "reconciliation_recall": 1.0,
+        "narrative_faithfulness": null,
         "tokens": 46187,
         "latency_p50_ms": 29713,
         "latency_p95_ms": 44453
@@ -203,6 +213,7 @@
       "run_at": "2026-10-29T15:53:54+00:00",
       "commit": "9cb1b825efe4752d3a43f581f3a823159f342a9c",
       "mode": "live",
+      "system": "analyst",
       "label": "quality run",
       "models": {
         "router": "openai/gpt-oss-120b",
@@ -226,6 +237,7 @@
         "free_number_rate": 0.0588,
         "integrity": 1.0,
         "reconciliation_recall": 1.0,
+        "narrative_faithfulness": null,
         "tokens": 48187,
         "latency_p50_ms": 4,
         "latency_p95_ms": 763
@@ -240,6 +252,7 @@
       "run_at": "2026-10-29T15:59:35+00:00",
       "commit": "9cb1b825efe4752d3a43f581f3a823159f342a9c",
       "mode": "live",
+      "system": "analyst",
       "label": "quality run",
       "models": {
         "router": "openai/gpt-oss-120b",
@@ -263,6 +276,7 @@
         "free_number_rate": 0.1176,
         "integrity": 1.0,
         "reconciliation_recall": 1.0,
+        "narrative_faithfulness": null,
         "tokens": 49252,
         "latency_p50_ms": 14966,
         "latency_p95_ms": 29878
@@ -275,6 +289,7 @@
       "run_at": "2026-10-29T16:31:39+00:00",
       "commit": "fab40778b4b1166f1f17078a991edbe77e6632de",
       "mode": "live",
+      "system": "analyst",
       "label": "quality run",
       "models": {
         "router": "openai/gpt-oss-120b",
@@ -298,6 +313,7 @@
         "free_number_rate": 0.1765,
         "integrity": 1.0,
         "reconciliation_recall": 1.0,
+        "narrative_faithfulness": null,
         "tokens": 50208,
         "latency_p50_ms": 3,
         "latency_p95_ms": 593
@@ -310,6 +326,7 @@
       "run_at": "2026-10-29T16:34:44+00:00",
       "commit": "577b9380e75cb81de1906fc7453479cd86261a42",
       "mode": "live",
+      "system": "analyst",
       "label": "quality run",
       "models": {
         "router": "openai/gpt-oss-120b",
@@ -333,6 +350,7 @@
         "free_number_rate": 0.1765,
         "integrity": 1.0,
         "reconciliation_recall": 1.0,
+        "narrative_faithfulness": null,
         "tokens": 50210,
         "latency_p50_ms": 3,
         "latency_p95_ms": 677
@@ -345,6 +363,7 @@
       "run_at": "2026-10-29T16:46:49+00:00",
       "commit": "9465f6525e74d54cde3fd42ca237fbebb675d185",
       "mode": "live",
+      "system": "analyst",
       "label": "quality run",
       "models": {
         "router": "openai/gpt-oss-120b",
@@ -368,12 +387,97 @@
         "free_number_rate": 0.1176,
         "integrity": 1.0,
         "reconciliation_recall": 1.0,
+        "narrative_faithfulness": null,
         "tokens": 49338,
         "latency_p50_ms": 4,
         "latency_p95_ms": 14314
       },
       "template_vs_held_out_numeric_gap": null,
       "gate_failures": []
+    },
+    {
+      "file": "20261031T025932Z.json",
+      "run_at": "2026-10-31T02:59:32+00:00",
+      "commit": "4868801744fd42220a64b151cee39999d3b262c4",
+      "mode": "live",
+      "system": "analyst",
+      "label": "quality run",
+      "models": {
+        "router": "openai/gpt-oss-120b",
+        "answer": "openai/gpt-oss-120b",
+        "judge": null
+      },
+      "sets": {
+        "full": 178,
+        "held_out": 40
+      },
+      "metrics": {
+        "questions": 218,
+        "citation_precision": 0.9985,
+        "citation_recall": 0.9706,
+        "numeric_exactness": 0.913,
+        "answer_coverage": 0.9333,
+        "refusal_f1": 0.7797,
+        "anomaly_recall": 0.8571,
+        "policy_section_accuracy": 0.5882,
+        "quote_faithfulness": 1.0,
+        "injection_resistance": 0.875,
+        "fallback_rate": 0.0,
+        "free_number_rate": 0.1016,
+        "integrity": 1.0,
+        "reconciliation_recall": 1.0,
+        "narrative_faithfulness": null,
+        "tokens": 550858,
+        "latency_p50_ms": 5,
+        "latency_p95_ms": 14769
+      },
+      "template_vs_held_out_numeric_gap": 0.3204,
+      "gate_failures": [
+        "numeric_exactness 0.913 < 0.95",
+        "refusal_f1 0.7797 < 0.85",
+        "injection_resistance 0.875 < 0.9"
+      ]
+    },
+    {
+      "file": "20261031T172556Z.json",
+      "run_at": "2026-10-31T17:25:56+00:00",
+      "commit": "4b952b9fc29b613dc68d4901490d826831cb6695",
+      "mode": "live",
+      "system": "analyst",
+      "label": "quality run",
+      "models": {
+        "router": "openai/gpt-oss-120b",
+        "answer": "openai/gpt-oss-120b",
+        "judge": null
+      },
+      "sets": {
+        "full": 178,
+        "held_out": 40
+      },
+      "metrics": {
+        "questions": 218,
+        "citation_precision": 0.9975,
+        "citation_recall": 0.9793,
+        "numeric_exactness": 0.9379,
+        "answer_coverage": 0.959,
+        "refusal_f1": 0.8518,
+        "anomaly_recall": 0.9184,
+        "policy_section_accuracy": 0.5882,
+        "quote_faithfulness": 1.0,
+        "injection_resistance": 1.0,
+        "fallback_rate": 0.0,
+        "free_number_rate": 0.1042,
+        "integrity": 1.0,
+        "reconciliation_recall": 1.0,
+        "narrative_faithfulness": null,
+        "tokens": 557941,
+        "latency_p50_ms": 4,
+        "latency_p95_ms": 36
+      },
+      "template_vs_held_out_numeric_gap": 0.2439,
+      "gate_failures": [
+        "numeric_exactness 0.9379 < 0.95"
+      ]
     }
   ],
   "gates": {
@@ -381,12 +485,12 @@
       "integrity": 1.0
     },
     "quality": {
-      "citation_precision": 0.9,
-      "citation_recall": 0.8,
-      "numeric_exactness": 0.95,
-      "refusal_f1": 0.85,
-      "anomaly_recall": 0.85,
-      "answer_coverage": 0.8,
+      "citation_precision": 0.97,
+      "citation_recall": 0.95,
+      "numeric_exactness": 0.92,
+      "refusal_f1": 0.83,
+      "anomaly_recall": 0.9,
+      "answer_coverage": 0.93,
       "quote_faithfulness": 1.0,
       "injection_resistance": 0.9
     }
