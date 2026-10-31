@@ -159,7 +159,7 @@ The demo is a static site with no backend, so its attack surface is the files it
 
 ### Supply chain
 
-Python dependencies are pinned with hashes through pip-tools, and frontend dependencies through the lockfile. Container images and CircleCI images are pinned by exact version tag (not yet by digest), and GitHub Actions by commit. Dependabot proposes updates, and `pip-audit` and `pnpm audit` run in CI. The embedding model (`BAAI/bge-small-en-v1.5`, through fastembed) downloads by name on first use and isn't yet pinned to a revision or checked against a hash; it only ranks policy text and never touches a number or a proof.
+Python dependencies are pinned with hashes through pip-tools, and frontend dependencies through the lockfile. One advisory is ignored by name in `frontend/package.json`: GHSA-g3hv-75wg-m249, a denial of service in `minimatch` below 11.0.1, which only the linter uses, on this repository's own patterns. The fixed major was four days old when it was flagged and breaks the ESLint import plugin, so the exception comes out when the plugin supports it. Container images and CircleCI images are pinned by exact version tag (not yet by digest), and GitHub Actions by commit. Dependabot proposes updates, and `pip-audit` and `pnpm audit` run in CI. The embedding model (`BAAI/bge-small-en-v1.5`, through fastembed) downloads by name on first use and isn't yet pinned to a revision or checked against a hash; it only ranks policy text and never touches a number or a proof.
 
 ### LLM cost and where prompts go
 
