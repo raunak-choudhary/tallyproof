@@ -1,12 +1,14 @@
 "use client";
 
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useMemo, useState } from "react";
 
 import type { Answer } from "@/lib/analyst/api";
 import { answerPath, askQuestion } from "@/lib/analyst/api";
+import { apiRecords } from "@/lib/analyst/records";
 import { apiBase } from "@/lib/live/api";
 
 import { AnswerView } from "./AnswerView";
+import { DemoAnswers } from "./DemoAnswers";
 
 const EXAMPLES = [
   "How much did the Department of State obligate in fiscal year 2024?",
@@ -21,15 +23,9 @@ export function AnalystPage() {
   const [answer, setAnswer] = useState<Answer | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const records = useMemo(() => apiRecords(base ?? ""), [base]);
 
-  if (!base) {
-    return (
-      <p className="rounded-[var(--radius)] border border-border bg-bg-elevated p-4">
-        The analyst needs the live API, which this static demo doesn&apos;t have. Run the project
-        locally with <code className="font-mono">make demo</code> and open this page there.
-      </p>
-    );
-  }
+  if (!base) return <DemoAnswers />;
 
   const ask = async (event?: FormEvent) => {
     event?.preventDefault();
@@ -101,7 +97,9 @@ export function AnalystPage() {
           to share it; whoever opens it can verify every citation themselves.
         </p>
       )}
-      {answer && <AnswerView key={answer.answerId} base={base} answer={answer} />}
+      {answer && (
+        <AnswerView key={answer.answerId} records={records} totalsBase={base} answer={answer} />
+      )}
     </div>
   );
 }

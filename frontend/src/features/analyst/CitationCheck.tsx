@@ -8,7 +8,7 @@ import type { Climb } from "@/lib/charts/merkleClimb";
 import { climb } from "@/lib/charts/merkleClimb";
 import { utf8 } from "@/lib/verify/bytes";
 import { leafHash } from "@/lib/verify/hashing";
-import { fetchEvent, fetchProof } from "@/lib/live/api";
+import type { RecordSource } from "@/lib/analyst/records";
 import { pinnedVerifierKey } from "@/lib/replay/pinnedKey";
 import type { VerifyResult } from "@/lib/verify/verifyEvent";
 import { verifyEvent } from "@/lib/verify/verifyEvent";
@@ -18,13 +18,13 @@ import { verifyEvent } from "@/lib/verify/verifyEvent";
 // that the record, leaf, and checkpoint are the ones the answer cited. With a
 // quote, the quoted text must appear in the record itself.
 export function CitationCheck({
-  base,
+  records,
   eventId,
   leafIndex,
   treeSize,
   quote,
 }: {
-  base: string;
+  records: RecordSource;
   eventId: string;
   leafIndex: number;
   treeSize: number;
@@ -40,8 +40,8 @@ export function CitationCheck({
     setState("checking");
     try {
       const [event, proof] = await Promise.all([
-        fetchEvent(base, eventId),
-        fetchProof(base, eventId, fetch, treeSize),
+        records.event(eventId),
+        records.proof(eventId, treeSize),
       ]);
       setPath(
         climb(leafHash(utf8(event.canonical)), proof.leafIndex, proof.treeSize, proof.auditPath),

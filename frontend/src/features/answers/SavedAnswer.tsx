@@ -1,11 +1,12 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { AnswerView } from "@/features/analyst/AnswerView";
 import type { Answer } from "@/lib/analyst/api";
 import { fetchAnswer } from "@/lib/analyst/api";
+import { apiRecords } from "@/lib/analyst/records";
 import { apiBase } from "@/lib/live/api";
 
 // A saved answer, opened from a shared link. The answer is fetched from the API and every
@@ -13,6 +14,7 @@ import { apiBase } from "@/lib/live/api";
 export function SavedAnswer() {
   const base = apiBase();
   const answerId = useSearchParams().get("id");
+  const records = useMemo(() => apiRecords(base ?? ""), [base]);
   const [answer, setAnswer] = useState<Answer | null>(null);
   const [error, setError] = useState("");
 
@@ -43,7 +45,7 @@ export function SavedAnswer() {
   return (
     <div className="space-y-6">
       <h2 className="text-xl font-semibold">{answer.question}</h2>
-      <AnswerView base={base} answer={answer} />
+      <AnswerView records={records} totalsBase={base} answer={answer} />
     </div>
   );
 }

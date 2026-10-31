@@ -4,7 +4,7 @@ import { useEffect, useId, useMemo, useState } from "react";
 
 import { beeswarmLayout } from "@/lib/charts/beeswarm";
 import type { CitedEvent } from "@/lib/analyst/api";
-import { fetchEvent } from "@/lib/live/api";
+import type { RecordSource } from "@/lib/analyst/records";
 
 const WIDTH = 640;
 const RADIUS = 5;
@@ -20,7 +20,13 @@ const exact = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD
 // The records behind one citation as a beeswarm on an amount axis. Amounts are read from
 // the records the API served; they become proven only when a record is verified below, so
 // the chart says so. Choose a dot to jump to that record and its Verify button.
-export function CitationSwarm({ base, events }: { base: string; events: readonly CitedEvent[] }) {
+export function CitationSwarm({
+  records,
+  events,
+}: {
+  records: RecordSource;
+  events: readonly CitedEvent[];
+}) {
   const id = useId();
   const [points, setPoints] = useState<{ id: string; amount: number }[] | null>(null);
   const [hover, setHover] = useState<string | null>(null);
@@ -30,7 +36,8 @@ export function CitationSwarm({ base, events }: { base: string; events: readonly
     let cancelled = false;
     void Promise.all(
       shown.map((e) =>
-        fetchEvent(base, e.eventId)
+        records
+          .event(e.eventId)
           .then((ev) => {
             const amount = Number(
               (JSON.parse(ev.canonical) as { payload?: { amount?: unknown } }).payload?.amount,
@@ -47,7 +54,7 @@ export function CitationSwarm({ base, events }: { base: string; events: readonly
     };
     // The citation's records don't change for the life of this view.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [base]);
+  }, [records]);
 
   const layout = useMemo(
     () => (points?.length ? beeswarmLayout(points, WIDTH, RADIUS) : null),

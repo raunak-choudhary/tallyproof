@@ -174,6 +174,25 @@ for (const theme of ["light", "dark"] as const) {
         await snap(page, info);
       });
 
+      test("the static analyst shows a demo answer whose citations verify", async ({
+        page,
+      }, info) => {
+        await page.goto("/ask/");
+        const asked = "How many new awards did the Department of Defense make?";
+        const question = page.getByRole("button", { name: asked });
+        await expect(question).toBeVisible({ timeout: 20_000 });
+        await expect(async () => {
+          await question.click();
+          await expect(page.getByRole("heading", { name: asked })).toBeVisible({
+            timeout: 2000,
+          });
+        }).toPass({ timeout: 20_000 });
+        await expect(page.getByText(/made 263 new awards/)).toBeVisible();
+        await page.getByRole("button", { name: "Verify" }).first().click();
+        await expect(page.getByText("✓ Verified").first()).toBeVisible({ timeout: 10_000 });
+        await snap(page, info);
+      });
+
       test("the evaluation runs can be compared and opened", async ({ page }, info) => {
         await page.goto("/evals/");
         const run = page.getByRole("combobox", { name: "Run", exact: true });
