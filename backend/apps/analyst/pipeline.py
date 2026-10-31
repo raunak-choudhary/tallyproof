@@ -9,7 +9,7 @@ with fakes.
 
 import json
 from collections.abc import Callable, Sequence
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Any, Literal, Protocol
 
 from django.db import DatabaseError
@@ -26,7 +26,7 @@ from apps.analyst.answer import (
     render,
     verify,
 )
-from apps.analyst.compiler import compile_spec
+from apps.analyst.compiler import ONE_ROW, compile_spec
 from apps.analyst.llm import (
     BudgetExceededError,
     LLMClient,
@@ -360,6 +360,9 @@ def _gather(
         rows = rows[: models.max_rows]
     if not rows and spec.shape != "aggregate":
         return "no_evidence"
+    if spec.shape == "lookup" and len(rows) > 1:
+        subject = compiled.words.removeprefix(ONE_ROW)
+        compiled = replace(compiled, words=f"the {len(rows)} rows of {subject}")
     evidence = from_query(spec, compiled, values, rows, tree_size=tree_size)
     if CATALOG[spec.entity].id_column == "break_id":
         _expand_breaks(evidence, executor)

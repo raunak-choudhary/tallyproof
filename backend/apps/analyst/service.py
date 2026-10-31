@@ -26,7 +26,7 @@ REFUSAL_MESSAGES = {
     "out_of_scope": "That isn't a question about federal contract records.",
     "no_data": "The ledger doesn't hold data that answers this.",
     "no_evidence": "No records in the ledger match this question.",
-    "ambiguous": "More than one record matches; ask about a specific one.",
+    "ambiguous": "More than 10 records match; ask about a specific one.",
     "too_broad": "That list has more records than one answer may carry; narrow the question.",
     "unsafe_query": "The question couldn't be turned into a query that's safe to run.",
     "unverifiable_claim": "The drafted answer didn't pass verification, so it isn't shown.",

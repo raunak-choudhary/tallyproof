@@ -154,6 +154,15 @@ ANOMALIES: tuple[tuple[re.Pattern[str], QuerySpec], ...] = tuple(
             "late_after_close",
             None,
         ),
+        (
+            _words(
+                r"bursts?",
+                r"(?:several|many|lots of) (?:new )?awards "
+                r"(?:with)?in (?:an|one|a single|the same) hour",
+            ),
+            "recipient_burst",
+            None,
+        ),
     )
 )
 

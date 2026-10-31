@@ -9,7 +9,8 @@ Each shape has a defined provenance, which is what makes citations honest:
 
 - ``aggregate``: a metric over the filtered rows; every contributing row is cited.
 - ``list``: rows in a stated order; each listed row is cited.
-- ``lookup``: the fields of exactly one row; that row is cited.
+- ``lookup``: the fields of the rows the filters pick out, at most ``LOOKUP_ROWS``;
+  each is cited. A contract number picks out its award and its modifications.
 - ``absence``: rows for which a named rule finds no match, cited as "not found in
   the log at this checkpoint".
 """
@@ -20,7 +21,9 @@ from decimal import Decimal, InvalidOperation
 from enum import StrEnum
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+
+from tallyproof_core.reconciliation import BreakType
 
 
 class FieldType(StrEnum):
@@ -40,6 +43,8 @@ class CatalogField:
     type: FieldType
     words: str
     groupable: bool = False
+    values: frozenset[str] = frozenset()
+    """The only values the column holds, when it is a fixed set; empty means any."""
 
 
 @dataclass(frozen=True)
@@ -57,8 +62,19 @@ class Entity:
     checkpoint; a query that uses one also pins ``award_leaf_index``."""
 
 
-def _f(column: str, kind: FieldType, words: str, *, group: bool = False) -> CatalogField:
-    return CatalogField(column, kind, words, group)
+def _f(
+    column: str,
+    kind: FieldType,
+    words: str,
+    *,
+    group: bool = False,
+    values: frozenset[str] = frozenset(),
+) -> CatalogField:
+    return CatalogField(column, kind, words, group, values)
+
+
+OBLIGATION_EVENTS = frozenset({"obligation.recorded", "obligation.adjusted"})
+BREAK_TYPES = frozenset(BreakType)
 
 
 _T, _I, _M, _D = FieldType.TEXT, FieldType.INTEGER, FieldType.MONEY, FieldType.DATE
@@ -74,7 +90,7 @@ CATALOG: dict[str, Entity] = {
             "piid": _f("piid", _T, "contract number (PIID)"),
             "awarding_agency": _f("awarding_agency", _T, "awarding agency", group=True),
             "funding_agency": _f("funding_agency", _T, "funding agency", group=True),
-            "event_type": _f("event_type", _T, "event type", group=True),
+            "event_type": _f("event_type", _T, "event type", group=True, values=OBLIGATION_EVENTS),
             "modification_number": _f("modification_number", _T, "modification number"),
             "amount": _f("amount", _M, "amount"),
             "action_date": _f("action_date", _D, "action date"),
@@ -125,7 +141,7 @@ CATALOG: dict[str, Entity] = {
         amount="amount_delta",
         leaf_column="found_at_leaf_index",
         fields={
-            "break_type": _f("break_type", _T, "break type", group=True),
+            "break_type": _f("break_type", _T, "break type", group=True, values=BREAK_TYPES),
             "award_key": _f("award_key", _T, "award key"),
             "amount_delta": _f("amount_delta", _M, "amount difference"),
         },
@@ -172,6 +188,8 @@ CENT = Decimal("0.01")
 INTEGER_LIMIT = 2**63
 """Integer columns are bigint at most."""
 MAX_LIST_ROWS = 100
+LOOKUP_ROWS = 10
+"""A lookup that picks out more rows than this is refused as ambiguous."""
 
 
 class SpecError(ValueError):
@@ -184,6 +202,11 @@ def parse_value(field: CatalogField, raw: object) -> str | int | Decimal | date:
         if field.type is FieldType.TEXT:
             if not isinstance(raw, str) or not 0 < len(raw) <= MAX_TEXT:
                 raise SpecError(f"{field.column} needs text of 1 to {MAX_TEXT} characters")
+            if field.values and raw not in field.values:
+                # A value the column never holds matches nothing, so a count would be a
+                # confident zero; refuse it and say what the column does hold.
+                known = ", ".join(sorted(field.values))
+                raise SpecError(f"{field.column} is one of {known}, not {raw[:40]!r}")
             return raw
         if field.type is FieldType.INTEGER:
             if isinstance(raw, bool) or not isinstance(raw, int | str):
@@ -244,6 +267,14 @@ class QuerySpec(_Strict):
     descending: bool = True
     limit: Annotated[int, Field(ge=1, le=MAX_LIST_ROWS)] | None = None
     absence_rule: AbsenceRule | None = None
+
+    @field_validator("limit", mode="before")
+    @classmethod
+    def _cap_the_limit(cls, value: object) -> object:
+        """Asking for more rows than a list may hold gets the most it may hold."""
+        if isinstance(value, int) and not isinstance(value, bool) and value > MAX_LIST_ROWS:
+            return MAX_LIST_ROWS
+        return value
 
     @model_validator(mode="after")
     def _fits_the_catalog(self) -> "QuerySpec":

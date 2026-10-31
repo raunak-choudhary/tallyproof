@@ -5,7 +5,7 @@ import pytest
 from pydantic import ValidationError
 
 from apps.analyst.compiler import compile_spec
-from apps.analyst.query_spec import CATALOG, MAX_LIST_ROWS, QuerySpec
+from apps.analyst.query_spec import CATALOG, LOOKUP_ROWS, MAX_LIST_ROWS, QuerySpec
 
 
 def spec(**kwargs: object) -> QuerySpec:
@@ -132,7 +132,7 @@ def test_min_and_max_cite_the_extreme_row():
     assert q.words == "largest of obligations and modifications"
 
 
-def test_a_lookup_fetches_two_rows_so_ambiguity_shows():
+def test_a_lookup_fetches_one_row_past_its_cap_so_ambiguity_shows():
     q = compile_spec(
         spec(
             shape="lookup",
@@ -143,8 +143,8 @@ def test_a_lookup_fetches_two_rows_so_ambiguity_shows():
         tree_size=5,
         max_rows=10,
     )
-    assert q.evidence_sql.endswith("LIMIT 2")
-    assert q.evidence_limit == 2
+    assert q.evidence_sql.endswith(f"LIMIT {LOOKUP_ROWS + 1}")
+    assert q.evidence_limit == LOOKUP_ROWS + 1
 
 
 def test_absence_names_its_rule():
@@ -222,7 +222,7 @@ def test_breaks_are_pinned_by_the_leaf_that_found_them():
             "op",
         ),
         ({"shape": "list", "entity": "obligations"}, "needs a limit"),
-        ({"shape": "list", "entity": "obligations", "limit": 500}, "less than or equal"),
+        ({"shape": "list", "entity": "obligations", "limit": 0}, "greater than or equal"),
         ({"shape": "lookup", "entity": "obligations"}, "needs filters"),
         ({"shape": "absence", "entity": "outlays"}, "needs a rule"),
         (
