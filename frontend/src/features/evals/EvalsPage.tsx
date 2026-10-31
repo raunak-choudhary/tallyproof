@@ -78,8 +78,8 @@ export function EvalsPage() {
     .join(", ");
 
   return (
-    <div className="grid gap-10">
-      <section aria-label="Run" className="grid gap-4">
+    <div className="grid min-w-0 gap-10">
+      <section aria-label="Run" className="grid min-w-0 gap-4">
         <div className="flex flex-wrap items-end gap-4">
           <label className="grid gap-1 text-xs text-fg-muted">
             Run
@@ -256,7 +256,7 @@ export function EvalsPage() {
         </section>
       )}
 
-      <section aria-label="Questions">
+      <section aria-label="Questions" className="min-w-0">
         <QuestionMatrix rows={matrix} runIds={ids} labels={labels} selectedRun={current} />
       </section>
 
@@ -265,11 +265,12 @@ export function EvalsPage() {
           What these runs are, and aren&apos;t
         </h2>
         <p>
-          These are the live runs of the 20-question smoke set on 29 October 2026, published as they
-          came out, early failures included: the first run scored 0.18 on numeric exactness, and the
-          fixes between runs are in the commit history. The held-out set and the full 218-question
-          run join this page once their runs are published, with the template against held-out gap
-          beside them.
+          Runs 1 to 10 are live runs of the 20-question smoke set on 29 October 2026, published as
+          they came out, early failures included: the first scored 0.18 on numeric exactness, and
+          the fixes between runs are in the commit history. Runs 11 and 12 are all 218 questions,
+          template and held-out: the first was blind, answered over three nights, and the second was
+          scored after the fixes it led to. The held-out questions score well below the template
+          ones; the results page in the docs goes through every miss.
         </p>
       </section>
     </div>
