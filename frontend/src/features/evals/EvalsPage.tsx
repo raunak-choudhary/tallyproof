@@ -48,6 +48,14 @@ export function EvalsPage() {
 
   const runs = useMemo(() => bySystem(index?.runs ?? []).analyst, [index]);
   const baseline = useMemo(() => bySystem(index?.runs ?? []).naive.at(-1) ?? null, [index]);
+  // The baseline is compared with the newest analyst run over the same questions.
+  const peer = useMemo(() => {
+    if (!baseline) return -1;
+    const same = (r: (typeof runs)[number]) =>
+      JSON.stringify(Object.entries(r.sets).sort()) ===
+      JSON.stringify(Object.entries(baseline.sets).sort());
+    return runs.map(same).lastIndexOf(true);
+  }, [runs, baseline]);
   const ids = useMemo(() => runs.map((r) => r.file), [runs]);
   const labels = useMemo(
     () => Object.fromEntries(runs.map((r) => [r.file, runLabel(r.run_at)])),
@@ -210,14 +218,15 @@ export function EvalsPage() {
         </div>
       </section>
 
-      {baseline && (
+      {baseline && peer >= 0 && (
         <section aria-labelledby="baseline-heading" className="grid gap-3">
           <h2 id="baseline-heading" className="text-base font-semibold">
             Against a naive baseline
           </h2>
           <p className="max-w-[65ch] text-sm text-fg-muted">
             The same questions, answered by retrieving rows and passages and letting the model
-            answer and cite freely: no query spec, no bound values, no verifier. Run{" "}
+            answer and cite freely: no query spec, no bound values, no verifier. Compared with the
+            analyst&apos;s run {peer + 1}, which asked the same questions. Run{" "}
             {runLabel(baseline.run_at)} with{" "}
             <code className="font-mono">{baseline.models.answer}</code>.
           </p>
@@ -233,7 +242,7 @@ export function EvalsPage() {
                     Metric
                   </th>
                   <th scope="col" className="py-2 pr-4 font-medium">
-                    Analyst, run {at + 1}
+                    Analyst, run {peer + 1}
                   </th>
                   <th scope="col" className="py-2 font-medium">
                     Naive baseline
@@ -246,7 +255,9 @@ export function EvalsPage() {
                     <th scope="row" className="py-1.5 pr-4 font-sans font-normal">
                       {m.label}
                     </th>
-                    <td className="py-1.5 pr-4">{run.metrics[m.key]?.toFixed(2) ?? "n/a"}</td>
+                    <td className="py-1.5 pr-4">
+                      {runs[peer]!.metrics[m.key]?.toFixed(2) ?? "n/a"}
+                    </td>
                     <td className="py-1.5">{baseline.metrics[m.key]?.toFixed(2) ?? "n/a"}</td>
                   </tr>
                 ))}

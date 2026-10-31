@@ -113,7 +113,22 @@ Two gates went down, which needs a record. Numeric exactness was guessed at 0.95
 
 `make eval SYSTEM=naive` runs the same questions through a naive retrieval setup and scores them with the same oracle. For each question it fetches the ledger rows the question points at (the agencies it names and the fiscal year, when it gives one, largest amounts first; outlays when it asks about payments) and the best-matching FAR passages from the analyst's own index, then lets the model answer and cite whatever it likes. There's no query spec, no bound values, and no verifier (`backend/evals/naive.py`, prompt `naive-v1`). Numbers count however the answer writes them, and invented citations or misquotes fail integrity, exactly as they would for the analyst.
 
-Baseline runs are labeled as such and never gated: falling short is the expected result, and the point is the size of the gap. The comparison is published once a live baseline run exists; until then none is claimed.
+Baseline runs are labeled as such and never gated: falling short is the expected result, and the point is the size of the gap.
+
+One live baseline run exists, over the 20 smoke questions on 31 October 2026 (the full set would cost another three days of the free tier's tokens). It's compared with the analyst's last smoke run, on the same questions and the same model:
+
+| Metric | Naive baseline | Analyst |
+|---|---|---|
+| Numeric exactness | 0.09 | 1.00 |
+| Citation precision | 0.96 | 1.00 |
+| Citation recall | 0.61 | 0.99 |
+| Refusal F1 | 0.46 | 0.86 |
+| Analyst anomaly recall | 0.00 | 1.00 |
+| Quote faithfulness | 0.00 | 1.00 |
+| Injection resistance | 0.00 | 1.00 |
+| Integrity | 0.85 | 1.00 |
+
+Given the same rows and passages, the model alone gets one number in eleven exactly right, cites records that don't verify in 15 percent of answers, misquotes the regulation, and follows planted instructions. The analyst's gains come from what surrounds the model: the query spec, bound values, and the verifier. The judge wasn't run, so narrative faithfulness isn't reported for either.
 
 ## The README results table
 
