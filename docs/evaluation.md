@@ -10,9 +10,9 @@ This document explains how Tallyproof measures the quality of its answers, and h
 
 Each expected answer lists the events a complete answer must cite and the events it may cite without being wrong (for an anomalous outlay, the award behind it), so citation recall and precision are both well defined.
 
-**Deterministic checks come first.** Anything that can be scored exactly is. An LLM judge is planned for one thing only, whether the prose connecting claims is supported, with its prompt and model versioned. Until it exists, narrative faithfulness isn't reported, and the verifier's structural rules (no free numbers, every sentence bound to a value or a citation) are the only checks on the prose.
+**Deterministic checks come first.** Anything that can be scored exactly is. An LLM judge exists for one thing only, whether the prose connecting claims is supported, with its prompt and model versioned (`backend/evals/judge.py`). It runs only when `LLM_JUDGE_MODEL` is set, is reported as probabilistic, and never gates. Without it, the verifier's structural rules (no free numbers, every sentence bound to a value or a citation) are the checks on the prose.
 
-**Thresholds only go up.** They live in `backend/evals/thresholds.toml`. Today they hold the planned first-milestone values, which the latest smoke run passes. Once the full run sets them from its baseline, lowering one needs a written decision record.
+**Thresholds only go up.** They live in `backend/evals/thresholds.toml` and were set from the first full live run (see [thresholds](#thresholds)). Lowering one needs a written decision record.
 
 **Results are labeled honestly.** Runs that use the fake LLM client test the evaluation harness, not answer quality. They're labeled as harness checks and never published as quality results.
 
@@ -37,7 +37,7 @@ The smoke set has 20 fixed questions that cover every category (`backend/evals/q
 
 ### Held-out questions
 
-A frozen set of 40 free-form questions (`backend/evals/questions/held_out.toml`) was written before any prompt or router tuning, and it's never used for tuning. A test pins the file's hash, so changing a question has to be deliberate. So far all 40 were written by the author; questions from someone else are planned for the final phase, added word for word. Expected answers come from the oracle, and ten of them are also checked by hand. Every report shows the gap between template and held-out scores. A large gap means the system is overfit to its templates, and that gets reported, not hidden.
+A frozen set of 40 free-form questions (`backend/evals/questions/held_out.toml`) was written before any prompt or router tuning, and it's never used for tuning. A test pins the file's hash, so changing a question has to be deliberate. All 40 were written by the author. The first full run read them blind; the fixes that followed were found by reading their failures, so the held-out scores after 31 October 2026 are no longer blind, and the [results](evaluation-results.md) say which numbers are which. Questions written by someone else would give a blind measure again. Expected answers come from the oracle, and ten of them are also checked by hand. Every report shows the gap between template and held-out scores. A large gap means the system is overfit to its templates, and that gets reported, not hidden.
 
 ## Metrics
 
@@ -81,29 +81,33 @@ Each run writes a machine-readable JSON report and a readable Markdown report to
 | When | Questions | Mode | Gate |
 |---|---|---|---|
 | Every pull request (`eval-smoke`, part of `ci-gate`) | Smoke set | Cached. Uncached items fall back to the fake client and the run is labeled a harness check | Integrity always; every quality threshold when every response is recorded. A harness check fails the pull request if it touches the analyst, the question sets, the policy corpus, or the evaluation dataset (`scripts/ci/check_eval_recordings.py`); record fresh responses with `make eval-record` |
-| Weekly (scheduled trigger, Sundays 03:00 UTC) | Full and held-out sets | Live, with the key from the `llm-eval` context | Fails on regression; reports kept as artifacts |
-| Release tag | Full set | Live | Planned with the first release |
+| Weekly (scheduled trigger, Sundays 03:00 UTC) | Smoke set | Live, with the key from the `llm-eval` context | Every quality threshold; reports kept as artifacts |
+| By hand, over several days | Full and held-out sets | Live, resuming from recorded responses each day | Every quality threshold; the README table comes from this run |
+
+The weekly job runs the smoke set because a full run takes about 550,000 tokens and the free tier allows 200,000 a day. The full run is started by hand on consecutive evenings with `make eval SET=all MODE=live`, and it picks up where the last one stopped.
 
 Pull request pipelines never receive the model key: the `llm-eval` context is restricted to the `main` branch and the scheduled job, so a pull request, forked or not, can only replay recordings.
 
-## Starting thresholds
+## Thresholds
 
-| Metric | First milestone | 1.0 release | Gated today |
+The first thresholds were educated guesses made before any live run. On 31 October 2026 they were set from the first full live run of all 218 questions (commit `4b952b9`, after the fixes described in the [results](evaluation-results.md)), each at its measured value less about two points, rounded down.
+
+| Metric | Guess | Measured | Gate now |
 |---|---|---|---|
-| Citation precision | 0.90 | 0.95 | Yes |
-| Citation recall | 0.80 | 0.90 | Yes |
-| Numeric exactness | 0.95 | 0.98 | Yes |
-| Refusal F1 | 0.85 | 0.90 | Yes |
-| Analyst anomaly recall | 0.85 | 0.90 | Yes |
-| Answer coverage | 0.80 | 0.90 | Yes |
-| Quote faithfulness | 1.00 | 1.00 | Yes |
-| Injection resistance | 0.90 | 0.95 | Yes |
+| Citation precision | 0.90 | 0.998 | 0.97 |
+| Citation recall | 0.80 | 0.979 | 0.95 |
+| Numeric exactness | 0.95 | 0.938 | 0.92 |
+| Refusal F1 | 0.85 | 0.852 | 0.83 |
+| Analyst anomaly recall | 0.85 | 0.918 | 0.90 |
+| Answer coverage | 0.80 | 0.959 | 0.93 |
+| Quote faithfulness | 1.00 | 1.00 | 1.00 |
+| Injection resistance | 0.90 | 1.00 | 0.90 |
 | Reconciliation recall | 1.00 | 1.00 | Reported |
-| Held-out numeric exactness | reported only | 0.90 | Reported |
+| Held-out numeric exactness | reported only | 0.727 | Reported |
 
 Integrity checks must always pass completely, and any failure blocks a merge.
 
-These were educated guesses before any live run, and the smoke run passes all of them. The full run of every question sets each threshold to its measured baseline minus a small margin; after that they only go up.
+Two gates went down, which needs a record. Numeric exactness was guessed at 0.95 and measured at 0.938, and refusal F1 was guessed at 0.85 and measured at 0.852. The guesses were set before any live run; the measured values come from every question, including the 40 held-out ones that pull both down (the results page lists each miss). A gate above what the system measures would fail every run without telling anyone anything new, so both are set from the measurement like the rest. Injection resistance stays at 0.90 rather than at its measured value less two points: there are eight injection questions, so one miss already brings it to 0.875.
 
 ## Comparing against a naive baseline
 
