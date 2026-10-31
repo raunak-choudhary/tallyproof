@@ -137,7 +137,7 @@ The append-only tables have no update or delete grants for the application role,
 - Passing secrets to forked pull requests is off.
 - The README results table is rendered from a fixed schema of numbers and model IDs (`backend/evals/readme_table.py`), which refuses harness checks. No model-written text reaches it.
 - CODEOWNERS covers CI configuration, the Makefile, the demo bundle, the policy corpus, the evaluation thresholds and question sets, the recorded model responses, and the ADRs.
-- Planned with the weekly results pull request: a fine-grained token, scoped to this repository's contents and pull requests, that can open a pull request but never push to `main`.
+- The results pull request uses `GH_TOKEN` from the `llm-eval` context: a fine-grained token scoped to this repository's contents and pull requests. It pushes a dated `eval/results-` branch and opens a pull request, which goes through the same checks and review as any other; branch protection stops it from pushing to `main`. It only acts on a full run that passed its gates.
 
 ### Public endpoints
 
