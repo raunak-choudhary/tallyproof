@@ -183,6 +183,8 @@ for (const theme of ["light", "dark"] as const) {
           await expect(run).toHaveValue("20261029T002211Z.json", { timeout: 1000 });
         }).toPass({ timeout: 20_000 });
         await expect(page.locator("figcaption").getByText("Oct 29, 00:22 UTC")).toBeVisible();
+        // The smoke questions come after the newest run's, past the rows drawn at first.
+        await page.getByRole("button", { name: /^Show all \d+ questions$/ }).click();
         await page.getByRole("button", { name: /^S001, run 1:/ }).click();
         await expect(page.getByText(/^S001 · numeric aggregate · run 1/)).toBeVisible();
         if (size.name === "laptop") {
