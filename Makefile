@@ -32,7 +32,7 @@ COMPOSE := docker --context colima-$(COLIMA_PROFILE) compose --env-file .env -f 
 SPARK_VERSION ?= 4.1
 export SPARK_VERSION
 
-.PHONY: help docs docs-build doctor venv deps deps-sync require-venv lint format typecheck test check audit vectors vectors-check web-install web-lint web-typecheck web-test web-build web-e2e web-check web-audit web-live data-fetch data-outlays data-build data-build-outlays data-quality data-profile require-no-containers data-gold keygen replay replay-witness replay-totals data-sample lake lake-check recon-report batch-recon eval eval-record eval-export eval-questions eval-dataset test-integration coverage coverage-report require-colima up down reset ps logs db-roles migrate ingest checkpointer project relay fanout stream check-derived rebuild-derived check-totals dead-letters verify-witness data-replay data-treasury policy-fetch policy-publish demo demo-stop load-test tamper schemas register-schemas verify-event console tracing clean
+.PHONY: help docs docs-build doctor venv deps deps-sync require-venv lint format typecheck test check audit vectors vectors-check web-install web-lint web-typecheck web-test web-build web-e2e web-check web-audit web-live data-fetch data-outlays data-build data-build-outlays data-quality data-profile require-no-containers data-gold keygen replay replay-witness replay-totals replay-answers data-sample lake lake-check recon-report batch-recon eval eval-record eval-export eval-questions eval-dataset test-integration coverage coverage-report require-colima up down reset ps logs db-roles migrate ingest checkpointer project relay fanout stream check-derived rebuild-derived check-totals dead-letters verify-witness data-replay data-treasury policy-fetch policy-publish demo demo-stop load-test tamper schemas register-schemas verify-event console tracing clean
 
 help: ## List available commands
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -196,6 +196,9 @@ replay: require-venv ## Export a signed demo bundle from gold to data/replay
 
 replay-witness: require-venv ## Publish a witnessed checkpoint of the replay bundle to witness/replay and timestamp it
 	cd $(BACKEND) && .venv/bin/python -m tallyproof_pipeline.replay_witness --stamp
+
+replay-answers: require-venv $(INTEGRATION_NEEDS) ## Answer the demo questions live on a ledger built from the replay bundle, into frontend/public/replay/answers.json (needs the model key)
+	cd $(BACKEND) && $(INTEGRATION_ENV) .venv/bin/python -m evals.demo_answers
 
 replay-totals: require-venv ## Sign the committed replay bundle's totals (Merkle-sum tree) into frontend/public/replay/totals.json
 	cd $(BACKEND) && .venv/bin/python -m tallyproof_pipeline.replay_totals
