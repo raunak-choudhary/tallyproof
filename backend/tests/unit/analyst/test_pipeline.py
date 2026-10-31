@@ -9,7 +9,7 @@ import pytest
 
 from apps.analyst.llm import Budget, BudgetedClient, FakeClient, LLMRequest
 from apps.analyst.pipeline import Models, ask
-from apps.analyst.query_spec import MAX_LIST_ROWS
+from apps.analyst.query_spec import LOOKUP_ROWS, MAX_LIST_ROWS
 from apps.analyst.retrieval import Chunk, Hit, PolicyLeaf
 
 MODELS = Models(router="router-m", answer="answer-m", max_output_tokens=400, max_rows=100)
@@ -166,22 +166,50 @@ def test_anomaly_lists_cite_the_events_behind_each_break():
     assert answer.evidence.citations["c1"].event_ids == ("evt_award", "evt_outlay")
 
 
-def test_an_ambiguous_lookup_and_empty_results_are_refused():
-    spec = {
-        "shape": "lookup",
-        "entity": "obligations",
-        "filters": [{"field": "piid", "op": "eq", "value": "P1"}],
-        "fields": ["amount"],
-    }
-    route = json.dumps({"category": "lookup", "spec": spec})
+LOOKUP_SPEC = {
+    "shape": "lookup",
+    "entity": "obligations",
+    "filters": [{"field": "piid", "op": "eq", "value": "P1"}],
+    "fields": ["amount"],
+}
+
+
+def lookup_client() -> FakeClient:
+    return FakeClient(
+        model(**{
+            "router.v2": json.dumps({"category": "lookup", "spec": LOOKUP_SPEC}),
+            "composer.v4": json.dumps({"answer": "P1 has {{s1}} [[c1]] and {{s2}} [[c2]]."}),
+        })
+    )  # fmt: skip
+
+
+def test_a_lookup_that_matches_a_few_rows_answers_with_each_of_them():
+    # A contract number picks out its award and its modifications; refusing that as
+    # ambiguous loses an answer the records give.
     two = Database(evidence=[("evt_a", 1, Decimal(1)), ("evt_b", 2, Decimal(2))])
-    assert (
-        run("Amount on P1?", FakeClient(model(**{"router.v2": route})), two).refusal == "ambiguous"
-    )
-    assert (
-        run("Amount on P1?", FakeClient(model(**{"router.v2": route})), Database()).refusal
-        == "no_evidence"
-    )
+    fake = lookup_client()
+    answer = run("Amount on P1?", fake, two)
+    assert answer.status == "answered"
+    assert [c.event_ids for c in answer.evidence.citations.values()] == [("evt_a",), ("evt_b",)]
+    assert "the 2 rows of" in fake.requests[-1].messages[1].content
+
+
+def test_a_lookup_that_matches_one_row_reads_as_before():
+    one = Database(evidence=[("evt_a", 1, Decimal(1))])
+    fake = FakeClient(
+        model(**{
+            "router.v2": json.dumps({"category": "lookup", "spec": LOOKUP_SPEC}),
+            "composer.v4": json.dumps({"answer": "P1 has {{s1}} [[c1]]."}),
+        })
+    )  # fmt: skip
+    assert run("Amount on P1?", fake, one).status == "answered"
+    assert "the one row of" in fake.requests[-1].messages[1].content
+
+
+def test_a_lookup_matching_too_many_rows_and_an_empty_one_are_refused():
+    many = Database(evidence=[(f"evt_{i}", i, Decimal(i)) for i in range(LOOKUP_ROWS + 1)])
+    assert run("Amount on P1?", lookup_client(), many).refusal == "ambiguous"
+    assert run("Amount on P1?", lookup_client(), Database()).refusal == "no_evidence"
 
 
 def test_without_the_fallback_an_inexpressible_question_is_refused():

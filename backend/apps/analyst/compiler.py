@@ -14,7 +14,14 @@ from dataclasses import dataclass, field
 from datetime import date
 from decimal import Decimal
 
-from apps.analyst.query_spec import CATALOG, MAX_LIST_ROWS, Entity, QuerySpec, parse_value
+from apps.analyst.query_spec import (
+    CATALOG,
+    LOOKUP_ROWS,
+    MAX_LIST_ROWS,
+    Entity,
+    QuerySpec,
+    parse_value,
+)
 
 Param = str | int | Decimal | date | list[str] | list[int] | list[Decimal] | list[date]
 
@@ -42,6 +49,10 @@ ABSENCE_RULES = {
         "with no recorded obligation for their award",
     ),
 }
+
+
+ONE_ROW = "the one row of "
+"""How a lookup's words begin; a lookup that finds several rows says how many."""
 
 
 @dataclass(frozen=True)
@@ -227,9 +238,12 @@ def compile_spec(spec: QuerySpec, *, tree_size: int, max_rows: int) -> CompiledQ
 
     if spec.shape == "lookup":
         evidence_sql = (
-            f"SELECT {citable}{columns} FROM {view} t WHERE {where} ORDER BY {leaf} LIMIT 2"
+            f"SELECT {citable}{columns} FROM {view} t WHERE {where} "
+            f"ORDER BY {leaf} LIMIT {LOOKUP_ROWS + 1}"
         )
-        return CompiledQuery(spec.shape, f"the one row of {subject}", evidence_sql, params, 2)
+        return CompiledQuery(
+            spec.shape, f"{ONE_ROW}{subject}", evidence_sql, params, LOOKUP_ROWS + 1
+        )
 
     assert spec.absence_rule is not None  # noqa: S101 - guaranteed by spec validation
     rule, rule_words = ABSENCE_RULES[spec.absence_rule]

@@ -5,6 +5,7 @@ import json
 import pytest
 
 from apps.analyst.llm import FakeClient
+from apps.analyst.query_spec import MAX_LIST_ROWS
 from apps.analyst.router import PROMPT_VERSION, Route, by_rules, route
 
 AGENCIES = ["Department of Energy", "Department of State"]
@@ -56,6 +57,8 @@ def test_refusals_are_decided_by_rules(question, reason):
         ("Any de-obligations exceeding what was awarded?", "deobligation_exceeds_award"),
         ("Was any contract recorded twice?", "possible_duplicate_award"),
         ("Which reports came in as late arrivals?", "late_after_close"),
+        ("Show vendors with a sudden burst of new awards", "recipient_burst"),
+        ("Which recipients got several awards within an hour?", "recipient_burst"),
     ],
 )
 def test_known_anomalies_map_to_their_break_type(question, break_type):
@@ -201,3 +204,44 @@ def test_the_exception_is_only_for_judgment():
     salary = by_rules("What salary does the FAR officer on this contract earn?")
     assert salary is not None
     assert salary.refusal_reason == "personal_data"
+
+
+def test_an_unknown_event_type_gets_a_repair_naming_the_real_ones():
+    # A made-up event type matches nothing, so the count would be a confident zero.
+    made_up = {
+        "category": "numeric_aggregate",
+        "spec": {
+            "shape": "aggregate",
+            "entity": "obligations",
+            "metric": "count",
+            "filters": [{"field": "event_type", "op": "eq", "value": "de-obligation"}],
+        },
+    }
+    fixed = json.loads(json.dumps(made_up))
+    fixed["spec"]["filters"] = [{"field": "amount", "op": "lt", "value": "0"}]
+    fake = FakeClient([json.dumps(made_up), json.dumps(fixed)])
+    decided = route("How many give-backs?", fake, model="m", agencies=AGENCIES, max_tokens=300)
+    assert decided.spec is not None
+    assert decided.spec.filters[0].field == "amount"
+    repair = fake.requests[1].messages[-1].content
+    assert "obligation.recorded" in repair
+    assert "obligation.adjusted" in repair
+
+
+def test_a_list_asked_for_more_rows_than_allowed_is_capped():
+    reply = json.dumps(
+        {
+            "category": "lookup",
+            "spec": {
+                "shape": "list",
+                "entity": "obligations",
+                "filters": [{"field": "piid", "op": "eq", "value": "P1"}],
+                "fields": ["amount"],
+                "limit": 1000,
+            },
+        }
+    )
+    decided, fake = ask("Every change on P1?", reply)
+    assert decided.spec is not None
+    assert decided.spec.limit == MAX_LIST_ROWS
+    assert len(fake.requests) == 1

@@ -29,7 +29,7 @@ Provenance per shape:
 |---|---|---|---|
 | aggregate | metric over filtered rows | every contributing event | recompute metric from cited events; filter shown in words |
 | list | rows | each listed event | each row matches its leaf |
-| lookup | fields of one row | that event | field values equal verified canonical bytes |
+| lookup | fields of the rows the filters pick out, at most 10 | each of those events | field values equal verified canonical bytes |
 | absence ("no matching invoice") | set of payments | each payment plus the matching rule and checkpoint | each payment verifies; absence is "not found in log at checkpoint N", labeled as such |
 
 Every value chip in the UI shows the compiled filter in plain words ("invoices for acct_X with occurred_at on or before 2026-09-30"). The badge reads **"integrity verified, filter shown"**, never just "verified". A wrong filter is then visible to the reader, and caught by evals.
@@ -64,3 +64,5 @@ The only absence rule so far is outlays whose award has no recorded obligation.
 - Award fields on obligations and outlays (contract number and agencies) come from the award's first record, so a query that uses one also pins that record's leaf (`award_leaf_index`). Award totals are built in the compiled query from leaves before the checkpoint, not read from the `awards` view.
 - A grouped aggregate's evidence is fetched per returned group, with the citation cap shared between them, instead of every row of the returned groups. An unranked grouping returns at most 100 groups; more is refused as too broad.
 - Filter values must fit their columns: amounts fit `numeric(19, 2)` in whole cents, and integers fit a `bigint`.
+
+Implementation note (2026-10-31): a lookup used to answer only when its filters picked out exactly one row, and refused two or more as ambiguous. A contract number picks out its award and each modification, so the full evaluation saw contract-number lookups refused that the records answer. A lookup now answers with up to 10 rows, each cited, and refuses past that. Two related checks came from the same run: a filter on a column with a fixed set of values (`event_type`, `break_type`) refuses any other value and names the real ones, since a made-up value matches nothing and a count would be a confident zero; and a list asked for more than 100 rows gets 100 and says more may match.
