@@ -107,3 +107,17 @@ def test_the_top_group_never_is_an_unknown_one():
     )
     assert expected.group == "Department of Health and Human Services"
     assert not expected.may_cite & {r.event_id for r in unknown}
+
+
+def test_a_grouped_sum_expects_each_groups_total(oracle):
+    agencies = ["Department of Justice", "Department of State"]
+    expect = {
+        "kind": "sum", "entity": "obligations", "group_by": "awarding_agency",
+        "awarding_agency_in": agencies,
+    }  # fmt: skip
+    each = {
+        sum((r.fields["amount"] for r in oracle._select({**expect, "awarding_agency": a})),
+            Decimal(0))
+        for a in agencies
+    }  # fmt: skip
+    assert oracle.expected(expect).group_amounts == frozenset(each)

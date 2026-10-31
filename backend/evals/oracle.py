@@ -39,6 +39,8 @@ class Expected:
     amount: Decimal | None = None
     count: int | None = None
     group: str | None = None
+    group_amounts: frozenset[Decimal] = frozenset()
+    """Each group's total, for a sum split by group: a correct answer states them all."""
     fields: dict[str, str] = field(default_factory=dict)
     values: frozenset[str] = frozenset()
     section: str | None = None
@@ -154,7 +156,13 @@ class Oracle:
         ids = frozenset(r.event_id for r in rows)
         if kind == "sum":
             if expect.get("group_by"):
-                return Expected(must_cite=ids, may_cite=ids)
+                groups: dict[str, Decimal] = defaultdict(Decimal)
+                for r in rows:
+                    if r.fields.get(expect["group_by"]) is not None:
+                        groups[r.fields[expect["group_by"]]] += r.fields["amount"]
+                return Expected(
+                    group_amounts=frozenset(groups.values()), must_cite=ids, may_cite=ids
+                )
             return Expected(
                 amount=sum((r.fields["amount"] for r in rows), Decimal(0)),
                 count=len(rows),

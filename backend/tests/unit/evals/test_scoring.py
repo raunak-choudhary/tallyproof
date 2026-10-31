@@ -144,3 +144,13 @@ def test_faithfulness_is_averaged_over_judged_answers_only() -> None:
         metrics([score("a", "q", "lookup", True, SUM, observed())])["narrative_faithfulness"]
         is None
     )
+
+
+def test_a_grouped_sum_is_judged_on_every_groups_amount():
+    # A grouped total has no single amount; without per-group amounts it could never pass.
+    grouped = Expected(group_amounts=frozenset({Decimal("10.00"), Decimal("2.50")}))
+    right = score(
+        "Q", "q", "numeric_aggregate", True, grouped, observed(used_values=["10.00", "2.50"])
+    )
+    wrong = score("Q", "q", "numeric_aggregate", True, grouped, observed(used_values=["10.00"]))
+    assert (right.numeric_exact, wrong.numeric_exact) == (True, False)

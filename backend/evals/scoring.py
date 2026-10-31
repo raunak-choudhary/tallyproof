@@ -112,6 +112,9 @@ def score(
             )
         if expected.group is not None:
             checks.append(expected.group in observed.used_values)
+        checks.extend(
+            any(_same(v, amount) for v in observed.used_values) for amount in expected.group_amounts
+        )
         checks.extend(v in observed.used_values for v in expected.fields.values())
         numeric = answered and bool(checks) and all(checks)
     policy_ok = quotes_ok = None
