@@ -188,6 +188,9 @@ for (const theme of ["light", "dark"] as const) {
           });
         }).toPass({ timeout: 20_000 });
         await expect(page.getByText(/made 263 new awards/)).toBeVisible();
+        await expect(
+          page.getByRole("group", { name: /^Beeswarm of \d+ cited records/ }),
+        ).toBeVisible();
         await page.getByRole("button", { name: "Verify" }).first().click();
         await expect(page.getByText("✓ Verified").first()).toBeVisible({ timeout: 10_000 });
         await snap(page, info);
@@ -228,7 +231,9 @@ for (const theme of ["light", "dark"] as const) {
           await page.getByRole("button", { name: "Ask", exact: true }).click();
           await expect(page.getByText("Agencies obligated")).toBeVisible({ timeout: 2000 });
         }).toPass({ timeout: 20_000 });
-        await expect(page.getByRole("img", { name: /Beeswarm of 24 cited records/ })).toBeVisible();
+        await expect(
+          page.getByRole("group", { name: /Beeswarm of 24 cited records/ }),
+        ).toBeVisible();
         await page.getByRole("button", { name: "Verify", exact: true }).first().click();
         await expect(page.getByText("✓ Verified").first()).toBeVisible();
         const share = page.getByRole("link", { name: "Link to this answer" });
