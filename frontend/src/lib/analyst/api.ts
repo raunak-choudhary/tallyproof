@@ -50,7 +50,7 @@ export interface Answer {
   quotes: Quote[];
 }
 
-interface RawAnswer {
+export interface RawAnswer {
   answer_id: string;
   question: string;
   status: "answered" | "refused";

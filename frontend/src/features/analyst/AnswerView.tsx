@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import type { Answer, Citation, Slot } from "@/lib/analyst/api";
 import { assuranceNote, sampleNote, segments } from "@/lib/analyst/api";
+import type { RecordSource } from "@/lib/analyst/records";
 
 import { CitationCheck } from "./CitationCheck";
 import { CitationSwarm } from "./CitationSwarm";
@@ -12,12 +13,14 @@ import { TotalCheck } from "./TotalCheck";
 const SHOWN = 10;
 
 function CitationBlock({
-  base,
+  records,
+  totalsBase,
   citation,
   treeSize,
   slots,
 }: {
-  base: string;
+  records: RecordSource;
+  totalsBase: string | null;
   citation: Citation;
   treeSize: number;
   slots: Slot[];
@@ -42,21 +45,21 @@ function CitationBlock({
       {sampleNote(citation, treeSize) && (
         <p className="mt-1 text-sm text-warn">{sampleNote(citation, treeSize)}</p>
       )}
-      {citation.totalProofUrl && (
+      {citation.totalProofUrl && totalsBase && (
         <TotalCheck
-          base={base}
+          base={totalsBase}
           path={citation.totalProofUrl}
           treeSize={treeSize}
           {...(amount === undefined ? {} : { amount })}
           {...(counted === undefined ? {} : { count: Number(counted) })}
         />
       )}
-      {citation.events.length > 1 && <CitationSwarm base={base} events={citation.events} />}
+      {citation.events.length > 1 && <CitationSwarm records={records} events={citation.events} />}
       <ul className="mt-2 divide-y divide-border">
         {events.map((e) => (
           <CitationCheck
             key={`${e.eventId}@${treeSize}`}
-            base={base}
+            records={records}
             eventId={e.eventId}
             leafIndex={e.leafIndex}
             treeSize={treeSize}
@@ -78,7 +81,17 @@ function CitationBlock({
 
 // An answer as the analyst returned it. Every value links to its citation, and
 // every citation's records can be verified here, against the answer's checkpoint.
-export function AnswerView({ base, answer }: { base: string; answer: Answer }) {
+// `records` serves the cited records and their proofs; a proof of a whole total
+// needs the live API, so `totalsBase` is null on the static site.
+export function AnswerView({
+  records,
+  totalsBase,
+  answer,
+}: {
+  records: RecordSource;
+  totalsBase: string | null;
+  answer: Answer;
+}) {
   if (answer.status === "refused") {
     return (
       <section aria-live="polite" className="rounded-[var(--radius)] border border-warn p-4">
@@ -132,7 +145,7 @@ export function AnswerView({ base, answer }: { base: string; answer: Answer }) {
               <ul className="mt-1">
                 <CitationCheck
                   key={`${q.eventId}@${answer.treeSize}`}
-                  base={base}
+                  records={records}
                   eventId={q.eventId}
                   leafIndex={q.leafIndex}
                   treeSize={answer.treeSize}
@@ -168,7 +181,8 @@ export function AnswerView({ base, answer }: { base: string; answer: Answer }) {
             {answer.citations.map((c) => (
               <CitationBlock
                 key={c.label}
-                base={base}
+                records={records}
+                totalsBase={totalsBase}
                 citation={c}
                 treeSize={answer.treeSize}
                 slots={answer.slots}
