@@ -174,7 +174,7 @@ The application role has no update or delete grants on the append-only tables, t
 
 ## Tamper detection
 
-The browser trusts one thing today: a release public key compiled into the web build. From that it checks the record's bytes, the leaf hash, the inclusion proof, and the checkpoint's signature itself. The design adds a second anchor, a checkpoint timestamped by a third party, checked through a consistency proof; today that check runs in `make verify-witness` and the integration tests, and moving it into the browser is planned with the site ([ADR-0015](adr/0015-verification-trust-model.md)).
+The browser trusts two things: a release public key compiled into the web build, and a checkpoint timestamped by a third party, which it fetches from a second origin (the committed witness export on GitHub). From the key it checks the record's bytes, the leaf hash, the inclusion proof, and the checkpoint's signature itself; against the witnessed checkpoint it checks a consistency proof, so a log rewritten with the real key still fails. `make verify-witness` and the integration tests run the same check from a terminal ([ADR-0015](adr/0015-verification-trust-model.md)).
 
 | Level | What the attacker can do | What catches it | Where it's checked today |
 |---|---|---|---|
