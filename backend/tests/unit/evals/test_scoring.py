@@ -154,3 +154,12 @@ def test_a_grouped_sum_is_judged_on_every_groups_amount():
     )
     wrong = score("Q", "q", "numeric_aggregate", True, grouped, observed(used_values=["10.00"]))
     assert (right.numeric_exact, wrong.numeric_exact) == (True, False)
+
+
+def test_distinct_values_are_judged_on_every_value():
+    # Without a check on the values, a "which accounts" question could never pass.
+    accounts = Expected(values=frozenset({"014-X-4523-000", "012-016-2023/2024-0181-000"}))
+    both = observed(used_values=["014-X-4523-000", "012-016-2023/2024-0181-000"])
+    one = observed(used_values=["014-X-4523-000"])
+    assert score("Q", "q", "lookup", True, accounts, both).numeric_exact
+    assert not score("Q", "q", "lookup", True, accounts, one).numeric_exact

@@ -116,6 +116,7 @@ def score(
             any(_same(v, amount) for v in observed.used_values) for amount in expected.group_amounts
         )
         checks.extend(v in observed.used_values for v in expected.fields.values())
+        checks.extend(v in observed.used_values for v in sorted(expected.values))
         numeric = answered and bool(checks) and all(checks)
     policy_ok = quotes_ok = None
     cited = observed.cited
