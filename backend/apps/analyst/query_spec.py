@@ -45,6 +45,8 @@ class CatalogField:
     groupable: bool = False
     values: frozenset[str] = frozenset()
     """The only values the column holds, when it is a fixed set; empty means any."""
+    hint: str = ""
+    """Said with a refused value, when a common word for one isn't a value."""
 
 
 @dataclass(frozen=True)
@@ -69,8 +71,9 @@ def _f(
     *,
     group: bool = False,
     values: frozenset[str] = frozenset(),
+    hint: str = "",
 ) -> CatalogField:
-    return CatalogField(column, kind, words, group, values)
+    return CatalogField(column, kind, words, group, values, hint)
 
 
 OBLIGATION_EVENTS = frozenset({"obligation.recorded", "obligation.adjusted"})
@@ -90,7 +93,14 @@ CATALOG: dict[str, Entity] = {
             "piid": _f("piid", _T, "contract number (PIID)"),
             "awarding_agency": _f("awarding_agency", _T, "awarding agency", group=True),
             "funding_agency": _f("funding_agency", _T, "funding agency", group=True),
-            "event_type": _f("event_type", _T, "event type", group=True, values=OBLIGATION_EVENTS),
+            "event_type": _f(
+                "event_type",
+                _T,
+                "event type",
+                group=True,
+                values=OBLIGATION_EVENTS,
+                hint="a de-obligation is an obligation.adjusted with an amount below 0",
+            ),
             "modification_number": _f("modification_number", _T, "modification number"),
             "amount": _f("amount", _M, "amount"),
             "action_date": _f("action_date", _D, "action date"),
@@ -206,7 +216,8 @@ def parse_value(field: CatalogField, raw: object) -> str | int | Decimal | date:
                 # A value the column never holds matches nothing, so a count would be a
                 # confident zero; refuse it and say what the column does hold.
                 known = ", ".join(sorted(field.values))
-                raise SpecError(f"{field.column} is one of {known}, not {raw[:40]!r}")
+                hint = f"; {field.hint}" if field.hint else ""
+                raise SpecError(f"{field.column} is one of {known}, not {raw[:40]!r}{hint}")
             return raw
         if field.type is FieldType.INTEGER:
             if isinstance(raw, bool) or not isinstance(raw, int | str):
