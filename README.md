@@ -65,6 +65,7 @@ Numbers from running the pipeline on FY2024 and FY2025 federal contract transact
 | Prove | Inclusion proofs from the API in about 4 ms over 20,000 leaves; the in-memory tree builds one in under half a millisecond over a million |
 | Prove a total | Each agency's total over the replay data signed as a Merkle-sum tree; the browser checks a total against the signed root without the records behind it |
 | Load | About 3,000 events a second into the ledger, flat from one to three consumers because every append takes the same lock. At 1,600 a second, an event is appended within 747 ms and covered by a signed checkpoint within 915 ms at p95 ([load test](docs/load-test.md)) |
+| Batch reconciliation | The same rules as SQL in DuckDB over all 1.7 million gold events in 11 seconds, against 215 for the stream; four rules agree break for break. Over all 13.1 million silver transactions, duplicates take 14 seconds and bursts 2.3 minutes ([details](docs/batch-reconciliation.md)) |
 | Lake | All 1,704,800 messages written to Iceberg tables in 4.5 minutes, with the 25 duplicates refused and the 25 malformed records set aside; the lake's counts match the stream's, and a second run appends nothing |
 | Live feed | One week of the Daily Treasury Statement became 890 cash movements, with detail lines checked against the statement's own totals |
 
