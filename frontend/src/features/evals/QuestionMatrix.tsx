@@ -8,7 +8,11 @@ import { categoryLabel, OUTCOMES, outcomeInfo } from "@/lib/evals/reports";
 
 // Questions down, runs across, each cell coloured by how the question went. A row that
 // stays one colour is a steady result; a row that changes is a flaky one. Every cell is a
-// button: choose one to read the question, the answer, and how it was scored.
+// button: choose one to read the question, the answer, and how it was scored. A full run
+// has hundreds of questions, so the first ROWS_SHOWN are drawn until the reader asks
+// for the rest; a phone shouldn't have to lay out thousands of buttons up front.
+const ROWS_SHOWN = 40;
+
 export function QuestionMatrix({
   rows,
   runIds,
@@ -22,6 +26,8 @@ export function QuestionMatrix({
 }) {
   const id = useId();
   const [picked, setPicked] = useState<{ row: number; col: number } | null>(null);
+  const [all, setAll] = useState(false);
+  const shown = all ? rows : rows.slice(0, ROWS_SHOWN);
   const flaky = useMemo(() => rows.filter((r) => !r.steady).length, [rows]);
   const cell: MatrixCell | null = picked ? (rows[picked.row]?.cells[picked.col] ?? null) : null;
   // One tab stop for the whole grid; arrow keys move between cells (roving tabindex).
@@ -48,7 +54,7 @@ export function QuestionMatrix({
     for (;;) {
       row += delta[0];
       col += delta[1];
-      if (row < 0 || row >= rows.length || col < 0 || col >= runIds.length) return;
+      if (row < 0 || row >= shown.length || col < 0 || col >= runIds.length) return;
       if (rows[row]!.cells[col]) break;
     }
     setCursor({ row, col });
@@ -94,7 +100,7 @@ export function QuestionMatrix({
             </tr>
           </thead>
           <tbody>
-            {rows.map((row, i) => (
+            {shown.map((row, i) => (
               <tr key={`${row.id}-${i}`}>
                 <th
                   scope="row"
@@ -138,6 +144,15 @@ export function QuestionMatrix({
           </tbody>
         </table>
       </div>
+      {rows.length > ROWS_SHOWN && (
+        <button
+          type="button"
+          onClick={() => setAll(!all)}
+          className="mt-2 text-sm text-accent underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+        >
+          {all ? `Show the first ${ROWS_SHOWN}` : `Show all ${rows.length} questions`}
+        </button>
+      )}
       <ul
         className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-fg-muted"
         aria-label="Outcomes"
