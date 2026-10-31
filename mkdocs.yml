@@ -67,6 +67,7 @@ nav:
       - Architecture and tamper detection: architecture.md
       - Backend design: backend-design.md
       - Evaluation: evaluation.md
+      - Evaluation results: evaluation-results.md
       - Limitations and how to lift them: limitations.md
       - Load test: load-test.md
       - Batch reconciliation: batch-reconciliation.md
