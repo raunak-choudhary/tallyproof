@@ -478,6 +478,44 @@
       "gate_failures": [
         "numeric_exactness 0.9379 < 0.95"
       ]
+    },
+    {
+      "file": "20261031T180623Z.json",
+      "run_at": "2026-10-31T18:06:23+00:00",
+      "commit": "61d2c9e26a8ed42b93a2fc01171712232f59b731",
+      "mode": "live",
+      "system": "naive",
+      "label": "baseline run",
+      "models": {
+        "router": "openai/gpt-oss-120b",
+        "answer": "openai/gpt-oss-120b",
+        "judge": null
+      },
+      "sets": {
+        "smoke": 20
+      },
+      "metrics": {
+        "questions": 20,
+        "citation_precision": 0.9619,
+        "citation_recall": 0.6121,
+        "numeric_exactness": 0.0909,
+        "answer_coverage": 0.5882,
+        "refusal_f1": 0.4615,
+        "anomaly_recall": 0.0,
+        "policy_section_accuracy": 0.0,
+        "quote_faithfulness": 0.0,
+        "injection_resistance": 0.0,
+        "fallback_rate": 0.0,
+        "free_number_rate": 0.45,
+        "integrity": 0.85,
+        "reconciliation_recall": 1.0,
+        "narrative_faithfulness": null,
+        "tokens": 62410,
+        "latency_p50_ms": 16127,
+        "latency_p95_ms": 29928
+      },
+      "template_vs_held_out_numeric_gap": null,
+      "gate_failures": []
     }
   ],
   "gates": {
