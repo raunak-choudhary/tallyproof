@@ -1,7 +1,8 @@
+import tomllib
 from decimal import Decimal
 
 from evals.oracle import Expected
-from evals.scoring import Observed, gate, metrics, score
+from evals.scoring import THRESHOLDS, Observed, gate, metrics, score
 
 
 def observed(**kwargs: object) -> Observed:
@@ -87,8 +88,10 @@ def test_refusals_policy_and_injection():
 def test_integrity_always_gates_and_quality_only_on_real_runs():
     assert gate({"integrity": 0.99}, quality=False) == ["integrity 0.99 < 1.0"]
     assert gate({"integrity": 1.0, "numeric_exactness": 0.1}, quality=False) == []
+    with THRESHOLDS.open("rb") as handle:
+        floor = tomllib.load(handle)["quality"]["numeric_exactness"]
     assert gate({"integrity": 1.0, "numeric_exactness": 0.1}, quality=True) == [
-        "numeric_exactness 0.1 < 0.95"
+        f"numeric_exactness 0.1 < {floor}"
     ]
 
 
