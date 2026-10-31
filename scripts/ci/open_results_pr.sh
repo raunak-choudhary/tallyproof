@@ -18,6 +18,13 @@ if [ -z "$REPORT" ]; then
   exit 0
 fi
 
+# The README shows a run of every question, template and held-out; a smoke run,
+# like the weekly one, is kept as an artifact but doesn't replace it.
+if ! python3 -c 'import json, sys; sys.exit("held_out" not in json.load(open(sys.argv[1]))["by_set"])' "$REPORT"; then
+  echo "$REPORT has no held-out questions; the README keeps the full run's table."
+  exit 0
+fi
+
 # Refuses anything that isn't a quality run, so a placeholder never reaches the README.
 if ! (cd backend && .venv/bin/python -m evals.readme_table "../$REPORT"); then
   echo "$REPORT is not a quality run; the README is left as it is."
