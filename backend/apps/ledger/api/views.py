@@ -1,7 +1,7 @@
 """Ledger API views. They return proofs and signed data, never verdicts."""
 
 from django.db.models import QuerySet
-from drf_spectacular.utils import OpenApiParameter, extend_schema
+from drf_spectacular.utils import OpenApiParameter, OpenApiResponse, extend_schema
 from rest_framework import generics, status
 from rest_framework.pagination import CursorPagination
 from rest_framework.request import Request
@@ -250,6 +250,9 @@ class BatchConsistencyView(APIView):
         )
 
 
+TOTALS_RETRY_AFTER_SECONDS = 5
+
+
 def _totals(tree_size: int | None) -> LedgerTotals:
     rows = LedgerTotals.objects.order_by("-tree_size")
     totals = rows.first() if tree_size is None else rows.filter(tree_size=tree_size).first()
@@ -286,7 +289,10 @@ class TotalProofView(APIView):
             OpenApiParameter("fiscal_year", int, description="Needs an agency."),
             OpenApiParameter("tree_size", int, description="Defaults to the newest signed totals."),
         ],
-        responses=TotalProofSerializer,
+        responses={
+            200: TotalProofSerializer,
+            503: OpenApiResponse(description="Another checkpoint's totals are being built"),
+        },
     )
     def get(self, request: Request) -> Response:
         """Return the proof, the signed note it checks against, and what it establishes."""
@@ -300,7 +306,17 @@ class TotalProofView(APIView):
         if year is not None and agency is None:
             raise _bad_request("fiscal_year needs an agency.")
         totals = _totals(_int_param(request, "tree_size"))
-        tree = proofs.sum_tree(totals.tree_size)
+        try:
+            tree = proofs.sum_tree(totals.tree_size)
+        except proofs.BuildBusyError as error:
+            busy = Problem(
+                status.HTTP_503_SERVICE_UNAVAILABLE,
+                "totals-busy",
+                "Totals are being prepared",
+                "Another checkpoint's totals are being built; try again shortly.",
+            )
+            busy.wait = TOTALS_RETRY_AFTER_SECONDS  # DRF turns this into a Retry-After header
+            raise busy from error
         proof = tree.prove(prefix(entity, agency, year))
         proven = verify_total(proof, bytes(totals.root_hash))
         if proven is None:  # the stored root and the rebuilt tree disagree: say so loudly
