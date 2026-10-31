@@ -79,7 +79,7 @@ export function CitationSwarm({
       <svg
         viewBox={`0 0 ${WIDTH} ${layout.height + 18}`}
         className="mt-1 block w-full"
-        role="img"
+        role="group"
         aria-label={`Beeswarm of ${points.length} cited records by amount`}
       >
         <line x1={0} x2={WIDTH} y1={mid} y2={mid} stroke="var(--chart-grid)" />
