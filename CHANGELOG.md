@@ -4,6 +4,40 @@ This file is maintained by [release-please](https://github.com/googleapis/releas
 
 Version 0.1.0 is the minimum viable product. It covers a streaming ledger of real federal spending events in an append-only Postgres log, RFC 9162 Merkle proofs against Ed25519-signed checkpoints that are timestamped externally, verification of any record in the browser, double-entry journal and reconciliation projections that find planted anomalies, and an analyst whose every number is bound to records the reader can prove, measured against an exact oracle.
 
+## [1.0.0](https://github.com/raunak-choudhary/tallyproof/compare/v0.3.0...v1.0.0) (2026-10-31)
+
+
+### Features
+
+* **evals:** answer the demo questions on a ledger built from the replay bundle ([c7011ef](https://github.com/raunak-choudhary/tallyproof/commit/c7011efc08b2ab72244addedb185176e09a67c9f))
+* **evals:** publish the full run, blind and after the fixes, to the dashboard ([ac77899](https://github.com/raunak-choudhary/tallyproof/commit/ac77899dd6a65e58b11a2b3ebefe095abf17d3f5))
+* **evals:** publish the naive baseline against the analyst ([ef3bd20](https://github.com/raunak-choudhary/tallyproof/commit/ef3bd20942768dcbff4fd33503ee335624d153fa))
+* **evals:** set the gates from the full run ([6aa4565](https://github.com/raunak-choudhary/tallyproof/commit/6aa4565d1597d7929e8732cd11fbae2175e373a2))
+* **web:** add the demo answers to the replay data ([cdd14e7](https://github.com/raunak-choudhary/tallyproof/commit/cdd14e79cdc6f001ccc8aa08dd36496b7624900f))
+* **web:** answer the demo questions on the static site ([a661792](https://github.com/raunak-choudhary/tallyproof/commit/a661792478f58606c2cacbaf5d6a9bcc9387ea4d))
+
+
+### Fixes
+
+* **analyst:** close the gaps the full evaluation found ([dd0570c](https://github.com/raunak-choudhary/tallyproof/commit/dd0570c815184c9a1e6b5883cc2bf6c7e95d04d3))
+* **analyst:** say what a de-obligation is when a made-up event type is refused ([03f7b36](https://github.com/raunak-choudhary/tallyproof/commit/03f7b3625e151ac9ea5b8bae03e92dc7792761af))
+* **evals:** judge a distinct-values answer on every value ([8d0b402](https://github.com/raunak-choudhary/tallyproof/commit/8d0b402545a5105cedf72405d08e9ce9e9dac481))
+* **evals:** judge a grouped sum on each group's total ([0164f43](https://github.com/raunak-choudhary/tallyproof/commit/0164f43fd9cdce44731ab6b942a0e04e7fdd1b37))
+* **web:** draw the first 40 questions of the evals matrix until asked ([000ae9e](https://github.com/raunak-choudhary/tallyproof/commit/000ae9eaf0c5f80a45d467f6281422bccf2feb68))
+* **web:** keep the evals page inside a phone's width with twelve runs ([2a79dba](https://github.com/raunak-choudhary/tallyproof/commit/2a79dba4d2a1c23a1c35e3bbfba3abc8ba33d382))
+* **web:** make the citation beeswarm a group, not an image ([ebe7ec1](https://github.com/raunak-choudhary/tallyproof/commit/ebe7ec177417702d8697f92fd1a916993e0a5576))
+
+
+### Documentation
+
+* add the measured batch reconciliation figures ([ba618a8](https://github.com/raunak-choudhary/tallyproof/commit/ba618a87d03d90241e4fc6178ac592d3118e8116))
+* bring the README and threat model up to what's built ([d317fcd](https://github.com/raunak-choudhary/tallyproof/commit/d317fcd4bb4bb6a980907ac176d89964477efecb))
+* call a possible duplicate a lead, not a finding ([f96e0d6](https://github.com/raunak-choudhary/tallyproof/commit/f96e0d674b959b959f4a57993ef11234d68472cc))
+* close the project's documentation at 1.0.0 ([31db52f](https://github.com/raunak-choudhary/tallyproof/commit/31db52f0bc031984e92479d7c2a793a528657fd8))
+* describe the demo answers on the static site ([5459282](https://github.com/raunak-choudhary/tallyproof/commit/5459282a6d08f8497db5e86a061dde6d2f9091c8))
+* **evals:** analyse the first full live run ([d840709](https://github.com/raunak-choudhary/tallyproof/commit/d840709fe7bd485f512926e8c48b963b166ae094))
+* **readme:** publish the full run's results table ([1cec022](https://github.com/raunak-choudhary/tallyproof/commit/1cec022ef12f3ecbd9265ad8d089b60056dbc8f6))
+
 ## [0.3.0](https://github.com/raunak-choudhary/tallyproof/compare/v0.2.0...v0.3.0) (2026-10-31)
 
 
