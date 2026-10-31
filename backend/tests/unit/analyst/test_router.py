@@ -226,6 +226,7 @@ def test_an_unknown_event_type_gets_a_repair_naming_the_real_ones():
     repair = fake.requests[1].messages[-1].content
     assert "obligation.recorded" in repair
     assert "obligation.adjusted" in repair
+    assert "amount below 0" in repair  # a de-obligation is a negative adjustment
 
 
 def test_a_list_asked_for_more_rows_than_allowed_is_capped():
