@@ -1,0 +1,1 @@
+The main topic is fin dot events dot raw, with six partitions. Events are keyed by award, so everything about one award lands on the same partition, in order. The replay producer publishes the gold events, and a live connector adds the Treasury's daily cash statement.

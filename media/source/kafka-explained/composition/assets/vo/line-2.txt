@@ -1,0 +1,1 @@
+Kafka is a distributed log. Producers append messages to a topic. Consumers read them in order, at their own pace, and remember how far they got. Messages are kept, not deleted on read, so a stream can be replayed. Tallyproof runs Redpanda, a Kafka-compatible broker in a single binary, so the whole stack starts on a laptop with one command.

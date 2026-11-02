@@ -1,0 +1,78 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; font-family: var(--font-sans); color: var(--ink); }
+    #k-label { position: absolute; left: 120px; top: 64px; font-weight: 600; font-size: 28px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--live); opacity: 0; }
+    #k-name { position: absolute; right: 120px; top: 56px; font-family: var(--font-display); font-weight: 400; font-size: 40px; opacity: 0; }
+    #k-head { position: absolute; left: 120px; top: 170px; width: 1680px; font-family: var(--font-display); font-weight: 400; font-size: 64px; line-height: 1.1; letter-spacing: -0.01em; opacity: 0; }
+    .actor { position: absolute; width: 380px; height: 110px; border: 2px solid var(--border); border-radius: 16px; background: var(--elevated); display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0; }
+    .actor .n { font-weight: 700; font-size: 32px; }
+    .actor .s { font-size: 28px; color: var(--muted); margin-top: 4px; }
+    #producer { left: 160px; top: 420px; }
+    #consumer-a { left: 560px; top: 720px; }
+    #consumer-b { left: 1200px; top: 720px; }
+    #topic { position: absolute; left: 540px; top: 400px; width: 1060px; height: 150px; border: 2px dashed #3a4052; border-radius: 18px; opacity: 0; }
+    #topic-name { position: absolute; left: 560px; top: 356px; font-family: var(--font-mono); font-size: 28px; color: var(--muted); opacity: 0; }
+    .blk { position: absolute; top: 430px; width: 80px; height: 90px; border-radius: 10px; background: var(--accent); display: flex; align-items: center; justify-content: center; opacity: 0; }
+    .blk .bn { font-family: var(--font-mono); font-size: 28px; color: #0a0b10; font-weight: 700; }
+    .ptr { position: absolute; top: 566px; left: 0px; width: 0; height: 0; border-left: 16px solid transparent; border-right: 16px solid transparent; border-bottom: 22px solid var(--live); opacity: 0; }
+    #ptr-a { left: 584px; }
+    #ptr-b { left: 584px; border-bottom-color: var(--gold); }
+    .ptr-label { position: absolute; top: 600px; font-size: 28px; font-family: var(--font-mono); opacity: 0; }
+    #lab-a { left: 560px; color: var(--live); }
+    #lab-b { left: 1200px; color: var(--gold); }
+    .line { position: absolute; left: 120px; width: 1680px; top: 900px; font-size: 38px; line-height: 1.3; font-weight: 500; text-align: center; opacity: 0; }
+    .line em { font-style: normal; color: var(--live); }
+  </style>
+  <div id="root" data-composition-id="concept" data-width="1920" data-height="1080">
+    <div id="k-block" class="clip" data-start="0" data-duration="24.1" data-hold>
+      <div id="k-label">What is Kafka</div>
+      <div id="k-name">Tallyproof</div>
+      <div id="k-head">A distributed log. Producers append, consumers read in order at their own pace, and nothing is deleted on read.</div>
+      <div class="actor" id="producer"><div class="n">Producer</div><div class="s">appends</div></div>
+      <div id="topic-name">topic: fin.events.raw.v1</div>
+      <div id="topic"></div>
+      <div class="blk" id="blk-0" style="left:560px"><div class="bn">0</div></div>
+      <div class="blk" id="blk-1" style="left:652px"><div class="bn">1</div></div>
+      <div class="blk" id="blk-2" style="left:744px"><div class="bn">2</div></div>
+      <div class="blk" id="blk-3" style="left:836px"><div class="bn">3</div></div>
+      <div class="blk" id="blk-4" style="left:928px"><div class="bn">4</div></div>
+      <div class="blk" id="blk-5" style="left:1020px"><div class="bn">5</div></div>
+      <div class="blk" id="blk-6" style="left:1112px"><div class="bn">6</div></div>
+      <div class="blk" id="blk-7" style="left:1204px"><div class="bn">7</div></div>
+      <div class="blk" id="blk-8" style="left:1296px"><div class="bn">8</div></div>
+      <div class="blk" id="blk-9" style="left:1388px"><div class="bn">9</div></div>
+      <div class="blk" id="blk-10" style="left:1480px"><div class="bn">10</div></div>
+
+      <div class="ptr" id="ptr-a"></div>
+      <div class="ptr" id="ptr-b"></div>
+      <div class="ptr-label" id="lab-a">consumer A, offset</div>
+      <div class="ptr-label" id="lab-b">consumer B, slower</div>
+      <div class="actor" id="consumer-a"><div class="n">Ingestion</div><div class="s">reads, remembers offset</div></div>
+      <div class="actor" id="consumer-b"><div class="n">Lake sink</div><div class="s">reads at its own pace</div></div>
+      <div class="line" id="l-1">Messages are <em>kept</em>, so the whole stream can be replayed.</div>
+      <div class="line" id="l-2">Tallyproof runs <em>Redpanda</em>: Kafka-compatible, one binary, starts on a laptop.</div>
+    </div>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    tl.fromTo("#k-label", { opacity: 0, y: 6 }, { opacity: 1, y: 0, duration: 0.3 }, 0);
+    tl.fromTo("#k-name", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 0);
+    tl.fromTo("#k-head", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 0.2);
+    tl.fromTo("#producer, #topic, #topic-name", { opacity: 0 }, { opacity: 1, duration: 0.4 }, 1.2);
+    // one block appended every 1.3 s
+    for (let i = 0; i < 11; i++) {
+      tl.fromTo("#blk-" + i, { opacity: 0, x: -30 }, { opacity: 1, x: 0, duration: 0.35, ease: "power2.out", immediateRender: false }, 1.8 + i * 1.3);
+    }
+    tl.fromTo("#consumer-a, #consumer-b, #lab-a, #lab-b", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.4, stagger: 0.1 }, 5.2);
+    tl.fromTo("#ptr-a", { opacity: 0 }, { opacity: 1, duration: 0.3, immediateRender: false }, 5.6);
+    tl.fromTo("#ptr-b", { opacity: 0 }, { opacity: 1, duration: 0.3, immediateRender: false }, 5.6);
+    // pointers advance: A keeps up, B trails
+    tl.fromTo("#ptr-a", { x: 0 }, { x: 92 * 8, duration: 10.4, ease: "steps(8)", immediateRender: false }, 6.0);
+    tl.fromTo("#ptr-b", { x: 0 }, { x: 92 * 5, duration: 10.4, ease: "steps(5)", immediateRender: false }, 6.0);
+    tl.fromTo("#l-1", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.4 }, 11.6);
+    tl.to("#l-1", { opacity: 0, duration: 0.3 }, 16.6);
+    tl.fromTo("#l-2", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.4, immediateRender: false }, 17.0);
+    tl.to("#k-block", { opacity: 0, duration: 0.3, ease: "power3.in" }, 23.80);
+    window.__timelines["concept"] = tl;
+  </script>
+</template>

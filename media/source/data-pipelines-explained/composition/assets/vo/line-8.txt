@@ -1,0 +1,1 @@
+In the repository, the batch pipeline is the tallyproof pipeline package: silver, quality, gold, overlay, replay, and lake. The streaming side is the ingestion app, the ledger, and the projections.

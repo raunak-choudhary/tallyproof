@@ -1,0 +1,1 @@
+In the repository, look at the ingestion app for the consumer, deduplication, offsets and dead letters; the replay module for the producer; and the compose file for the broker and its topics.

@@ -1,0 +1,1 @@
+The gold step turns clean rows into a million ledger events in arrival order, and mixes in a seeded set of labeled anomalies, so the right answers are known before any model is asked. A replay tool then publishes those events into Kafka at a controlled pace.
