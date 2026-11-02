@@ -4,6 +4,19 @@ This file is maintained by [release-please](https://github.com/googleapis/releas
 
 Version 0.1.0 is the minimum viable product. It covers a streaming ledger of real federal spending events in an append-only Postgres log, RFC 9162 Merkle proofs against Ed25519-signed checkpoints that are timestamped externally, verification of any record in the browser, double-entry journal and reconciliation projections that find planted anomalies, and an analyst whose every number is bound to records the reader can prove, measured against an exact oracle.
 
+## [1.1.1](https://github.com/raunak-choudhary/tallyproof/compare/v1.1.0...v1.1.1) (2026-11-02)
+
+
+### Documentation
+
+* open the README with the mark, the tagline and the live links ([6d13c8d](https://github.com/raunak-choudhary/tallyproof/commit/6d13c8d402943ee95b18a08d37bbdb6b38834e21))
+* rewrite the contributing guide and the security policy ([a229fdb](https://github.com/raunak-choudhary/tallyproof/commit/a229fdb2d335add8241d4c2a600a2997526729ea))
+
+
+### Build and release
+
+* **web:** move minimatch to the patched major ([1a24aac](https://github.com/raunak-choudhary/tallyproof/commit/1a24aac7dc9dc7513b0689c8d8f2c532b1f3ef97))
+
 ## [1.1.0](https://github.com/raunak-choudhary/tallyproof/compare/v1.0.0...v1.1.0) (2026-11-02)
 
 
