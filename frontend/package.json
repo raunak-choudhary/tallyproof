@@ -58,10 +58,8 @@
     "ignoredBuiltDependencies": [
       "unrs-resolver"
     ],
-    "auditConfig": {
-      "ignoreGhsas": [
-        "GHSA-g3hv-75wg-m249"
-      ]
+    "overrides": {
+      "minimatch": "^11.0.1"
     }
   }
 }
