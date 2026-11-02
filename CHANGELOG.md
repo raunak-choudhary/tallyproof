@@ -4,6 +4,37 @@ This file is maintained by [release-please](https://github.com/googleapis/releas
 
 Version 0.1.0 is the minimum viable product. It covers a streaming ledger of real federal spending events in an append-only Postgres log, RFC 9162 Merkle proofs against Ed25519-signed checkpoints that are timestamped externally, verification of any record in the browser, double-entry journal and reconciliation projections that find planted anomalies, and an analyst whose every number is bound to records the reader can prove, measured against an exact oracle.
 
+## [1.1.0](https://github.com/raunak-choudhary/tallyproof/compare/v1.0.0...v1.1.0) (2026-11-02)
+
+
+### Features
+
+* **media:** add the data pipelines and Kafka explainers ([34e82ad](https://github.com/raunak-choudhary/tallyproof/commit/34e82ad4c55a34b4d7ade9eaf07a9e733ee7d9d4))
+* **media:** add the product demo, the architecture video, and the diagrams ([59d1868](https://github.com/raunak-choudhary/tallyproof/commit/59d186852b71f88b7c3b9164efb8d93cf4318217))
+* **web:** add a reset button to the tamper ladder ([03812f7](https://github.com/raunak-choudhary/tallyproof/commit/03812f7e77ad0df0539a9e76e07a079f63112427))
+* **web:** add the Midnight and Gold palette as a second option ([aa80081](https://github.com/raunak-choudhary/tallyproof/commit/aa800816dc13ff4f2f5125919354f87dd882266d))
+* **web:** explain the static analyst page properly ([5dc5cb8](https://github.com/raunak-choudhary/tallyproof/commit/5dc5cb8e0c745a828bf7f85a0a2d7cb3397bc38b))
+* **web:** keep the tamper reset visible at all times ([21cb2a4](https://github.com/raunak-choudhary/tallyproof/commit/21cb2a42383c4872d3585189fd8a73553230a670))
+
+
+### Fixes
+
+* **web:** underline the inline links on the ask page ([e9e909d](https://github.com/raunak-choudhary/tallyproof/commit/e9e909d8664705186a0a056a2e1f2b05631ef0dd))
+
+
+### Documentation
+
+* give every link readable text ([3c6e966](https://github.com/raunak-choudhary/tallyproof/commit/3c6e966fd6dd414cb8401c4d453343bb3cd21a0d))
+* link the videos and diagrams from the README and the docs site ([066f745](https://github.com/raunak-choudhary/tallyproof/commit/066f745f8cbe96cf4c5702899b7cb6bc154ce528))
+* list the two explainer videos ([1f3b844](https://github.com/raunak-choudhary/tallyproof/commit/1f3b844b540d401e20842f864a03aacc384744eb))
+* restructure the README around the live site ([572b652](https://github.com/raunak-choudhary/tallyproof/commit/572b652f9503d1ff90a7e6193ae3e43b496aacec))
+* step by step local setup in the README ([dba2bca](https://github.com/raunak-choudhary/tallyproof/commit/dba2bcacc7c8d2f02f83a39f66098fcb57181ebf))
+
+
+### Build and release
+
+* publish the media folder with the site ([c64bba7](https://github.com/raunak-choudhary/tallyproof/commit/c64bba7d4e722241d6912f775d24afeea565a5cb))
+
 ## [1.0.0](https://github.com/raunak-choudhary/tallyproof/compare/v0.3.0...v1.0.0) (2026-10-31)
 
 
