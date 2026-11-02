@@ -9,8 +9,10 @@ repos:
     rev: v6.0.0
     hooks:
       - id: trailing-whitespace
-        exclude: \.md$
+        # The interactive diagrams are generated files, kept byte for byte.
+        exclude: (\.md$|^media/(diagrams|source)/)
       - id: end-of-file-fixer
+        exclude: ^media/(diagrams|source)/
       - id: check-yaml
         # mkdocs.yml tags a Python function for Mermaid fences, which a plain YAML
         # loader rejects; `make docs-build` and the Pages build parse it strictly.
@@ -19,8 +21,8 @@ repos:
       - id: check-merge-conflict
       - id: check-added-large-files
         args: ["--maxkb=1024"]
-        # The signed demo bundle is a deliberate published artifact, not an accident.
-        exclude: ^frontend/public/replay/
+        # The signed demo bundle and the published videos are deliberate artifacts, not accidents.
+        exclude: ^(frontend/public/replay/|media/videos/)
       - id: detect-private-key
 
   - repo: https://github.com/gitleaks/gitleaks
