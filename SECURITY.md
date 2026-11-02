@@ -21,4 +21,4 @@ Only the latest commit on `main` and the most recent release tag are supported.
 
 ## Design references
 
-The threat model is in [`docs/threat-model.md`](docs/threat-model.md).
+The [threat model](docs/threat-model.md) describes what is protected, from whom, and how.

@@ -30,4 +30,4 @@ These are the exact commands CI runs.
 
 ## Standards
 
-See `docs/coding-standards.md` and `docs/testing.md`.
+See the [coding standards](docs/coding-standards.md) and the [testing approach](docs/testing.md).
