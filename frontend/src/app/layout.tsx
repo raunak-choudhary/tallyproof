@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 
 import { BuildFooter } from "@/components/BuildFooter";
 import { SiteNav } from "@/components/SiteNav";
+import { APPLY_SAVED_PALETTE } from "@/lib/ui/palette";
 import { APPLY_SAVED_THEME } from "@/lib/ui/theme";
 
 import "./globals.css";
@@ -36,7 +37,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     >
       <head>
         {/* Applies a saved theme before the first paint, so nothing flashes. */}
-        <script dangerouslySetInnerHTML={{ __html: APPLY_SAVED_THEME }} />
+        <script dangerouslySetInnerHTML={{ __html: APPLY_SAVED_THEME + APPLY_SAVED_PALETTE }} />
       </head>
       <body className="flex min-h-dvh flex-col antialiased">
         <a

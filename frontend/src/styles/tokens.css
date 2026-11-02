@@ -117,6 +117,89 @@
   color-scheme: dark;
 }
 
+/* Palette "Midnight and Gold", the second option from the Phase 5 specimen: warm cream
+   paper in the light theme, deep navy in the dark one, with gold as the accent and teal
+   for anything live. Chosen with data-palette="midnight"; both themes are designed. */
+:root[data-palette="midnight"] {
+  --bg: #fbf8f2;
+  --bg-elevated: #ffffff;
+  --bg-sunken: #f1ece1;
+  --fg: #0b1220;
+  --fg-muted: #55607a;
+  --border: #e4dccb;
+  --accent: #0b1220;
+  --accent-fg: #fbf8f2;
+  --accent-2: #0f766e;
+  --gold: #a16207;
+  --ok: #15803d;
+  --fail: #be123c;
+  --warn: #a16207;
+  --info: #55607a;
+  --chart-1: #a16207;
+  --chart-2: #0f766e;
+  --chart-3: #1d4ed8;
+  --chart-4: #be185d;
+  --chart-5: #4d7c0f;
+  --chart-6: #55607a;
+  --chart-grid: #ebe5d8;
+  --shadow-1: 0 1px 2px rgb(11 18 32 / 6%), 0 8px 24px rgb(11 18 32 / 8%);
+  --glow: rgb(161 98 7 / 22%);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root[data-palette="midnight"]:not([data-theme="light"]) {
+    --bg: #0b1220;
+    --bg-elevated: #111a2e;
+    --bg-sunken: #070c17;
+    --fg: #f4f1ea;
+    --fg-muted: #a3acbf;
+    --border: #22304a;
+    --accent: #e8b04b;
+    --accent-fg: #0b1220;
+    --accent-2: #2dd4bf;
+    --gold: #e8b04b;
+    --ok: #4ade80;
+    --fail: #fb7185;
+    --warn: #fbbf24;
+    --info: #a3acbf;
+    --chart-1: #e8b04b;
+    --chart-2: #2dd4bf;
+    --chart-3: #60a5fa;
+    --chart-4: #f472b6;
+    --chart-5: #a3e635;
+    --chart-6: #a3acbf;
+    --chart-grid: #182338;
+    --shadow-1: 0 0 0 1px var(--border);
+    --glow: rgb(232 176 75 / 35%);
+  }
+}
+
+:root[data-palette="midnight"][data-theme="dark"] {
+  --bg: #0b1220;
+  --bg-elevated: #111a2e;
+  --bg-sunken: #070c17;
+  --fg: #f4f1ea;
+  --fg-muted: #a3acbf;
+  --border: #22304a;
+  --accent: #e8b04b;
+  --accent-fg: #0b1220;
+  --accent-2: #2dd4bf;
+  --gold: #e8b04b;
+  --ok: #4ade80;
+  --fail: #fb7185;
+  --warn: #fbbf24;
+  --info: #a3acbf;
+  --chart-1: #e8b04b;
+  --chart-2: #2dd4bf;
+  --chart-3: #60a5fa;
+  --chart-4: #f472b6;
+  --chart-5: #a3e635;
+  --chart-6: #a3acbf;
+  --chart-grid: #182338;
+  --shadow-1: 0 0 0 1px var(--border);
+  --glow: rgb(232 176 75 / 35%);
+}
+
 @media (prefers-reduced-motion: reduce) {
   :root {
     --dur-fast: 0ms;

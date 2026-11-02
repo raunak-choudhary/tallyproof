@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { cn } from "./cn";
 import { isActive } from "./nav";
+import { APPLY_SAVED_PALETTE, isPalette, nextPalette, paletteAttribute } from "./palette";
 import { APPLY_SAVED_THEME, isTheme, nextTheme, rootAttribute } from "./theme";
 
 describe("cn", () => {
@@ -43,6 +44,45 @@ describe("theme", () => {
     expect(run(null)).toBeNull();
     expect(() =>
       new Function("localStorage", "document", APPLY_SAVED_THEME)(
+        {
+          getItem: () => {
+            throw new Error("blocked");
+          },
+        },
+        {},
+      ),
+    ).not.toThrow();
+  });
+});
+
+describe("palette", () => {
+  it("swaps between the two palettes and marks only the second on the root", () => {
+    expect(nextPalette("ink")).toBe("midnight");
+    expect(nextPalette("midnight")).toBe("ink");
+    expect(paletteAttribute("ink")).toBeNull();
+    expect(paletteAttribute("midnight")).toBe("midnight");
+    expect(isPalette("midnight")).toBe(true);
+    expect(isPalette("sepia")).toBe(false);
+  });
+
+  it("applies a saved palette before paint without ever throwing", () => {
+    const run = (stored: string | null) => {
+      const doc = { attr: null as string | null };
+      new Function(
+        "localStorage",
+        "document",
+        APPLY_SAVED_PALETTE.replace(/^\(function\(\)\{|\}\)\(\);$/g, ""),
+      )(
+        { getItem: () => stored },
+        { documentElement: { setAttribute: (_: string, v: string) => (doc.attr = v) } },
+      );
+      return doc.attr;
+    };
+    expect(run("midnight")).toBe("midnight");
+    expect(run("ink")).toBeNull();
+    expect(run("anything")).toBeNull();
+    expect(() =>
+      new Function("localStorage", "document", APPLY_SAVED_PALETTE)(
         {
           getItem: () => {
             throw new Error("blocked");

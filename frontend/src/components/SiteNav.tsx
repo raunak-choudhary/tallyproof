@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useId, useState } from "react";
 
+import { PaletteSwitch } from "@/components/PaletteSwitch";
 import { ThemeSwitch } from "@/components/ThemeSwitch";
 import { isActive, NAV_ITEMS } from "@/lib/ui/nav";
 
@@ -33,7 +34,8 @@ export function SiteNav() {
             </Link>
           ))}
         </nav>
-        <ThemeSwitch className="ml-auto md:ml-0" />
+        <PaletteSwitch className="ml-auto md:ml-0" />
+        <ThemeSwitch />
         <button
           type="button"
           className="inline-flex size-10 items-center justify-center rounded-md border border-border md:hidden"
