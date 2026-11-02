@@ -1,0 +1,73 @@
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+      font-family: var(--font-sans);
+      color: var(--ink);
+    }
+    #hook-block {
+      position: absolute;
+      left: 192px;
+      top: 300px;
+      width: 1400px;
+    }
+    #hook-label {
+      font-family: var(--font-sans);
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--live);
+      margin-bottom: 36px;
+    }
+    #hook-headline {
+      font-family: var(--font-display);
+      font-weight: 400;
+      font-size: 112px;
+      line-height: 1.06;
+      letter-spacing: -0.01em;
+      max-width: 1320px;
+    }
+    #hook-headline .w {
+      display: inline-block;
+      opacity: 0;
+      filter: blur(8px);
+      margin-right: 0.24em;
+    }
+    #hook-headline .em {
+      font-style: italic;
+      color: var(--accent);
+    }
+  </style>
+  <div id="root" data-composition-id="hook" data-width="1920" data-height="1080">
+    <div id="hook-block" class="clip" data-start="0" data-duration="4.0">
+      <div id="hook-label">The problem</div>
+      <h1 id="hook-headline">
+        <span class="w">AI</span><span class="w">gets</span><span class="w">the</span><span class="w">numbers</span><span class="w">wrong,</span><br />
+        <span class="w">and</span><span class="w">cites</span><span class="w">sources</span><br />
+        <span class="w em">it</span><span class="w em">never</span><span class="w em">read.</span>
+      </h1>
+    </div>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    const words = gsap.utils.toArray("#hook-block .w");
+    // Per word: blur in, 0.13 s each, 0.07 s apart, no translate. Then the line is dead still.
+    words.forEach((w, i) => {
+      tl.fromTo(
+        w,
+        { opacity: 0, filter: "blur(8px)" },
+        { opacity: 1, filter: "blur(0px)", duration: 0.13, ease: "power3.out" },
+        0.3 + i * 0.07,
+      );
+    });
+    // Exit: the whole block blurs out in 0.22 s before the cut.
+    tl.to(
+      "#hook-headline, #hook-label",
+      { opacity: 0, filter: "blur(10px)", duration: 0.22, ease: "power3.in" },
+      3.75,
+    );
+    window.__timelines["hook"] = tl;
+  </script>
+</template>

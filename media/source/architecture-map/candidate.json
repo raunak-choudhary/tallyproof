@@ -1,0 +1,625 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Tallyproof: from public spending data to a proof in your browser",
+    "subtitle": "Runtime overview at v1.0.0. Batch on the top row, the streaming ledger in the middle, trust anchors below.",
+    "output": "tallyproof-architecture/tallyproof-architecture.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/raunak-choudhary/tallyproof.git",
+      "provider": "github",
+      "link_mode": "web",
+      "revision": "d0ab42246e872743e53c69a88c76340e581008a4"
+    }
+  },
+  "components": [
+    {
+      "id": "sources",
+      "type": "external",
+      "label": "Public data",
+      "sublabel": "USAspending, Treasury",
+      "pos": [
+        40,
+        40
+      ],
+      "size": [
+        124,
+        60
+      ],
+      "sources": [
+        {
+          "path": "backend/tallyproof_pipeline/acquire.py",
+          "line": 146,
+          "end_line": 185,
+          "label": "download and verify archives"
+        },
+        {
+          "path": "backend/tallyproof_pipeline/treasury.py",
+          "line": 86,
+          "end_line": 107,
+          "label": "fetch a day of cash movements"
+        }
+      ]
+    },
+    {
+      "id": "spark",
+      "type": "backend",
+      "label": "Spark clean",
+      "sublabel": "bronze to silver",
+      "pos": [
+        255,
+        40
+      ],
+      "size": [
+        124,
+        60
+      ],
+      "tag": "Deequ checks",
+      "sources": [
+        {
+          "path": "backend/tallyproof_pipeline/silver.py",
+          "line": 162,
+          "end_line": 214,
+          "label": "transform and drop individuals"
+        },
+        {
+          "path": "backend/tallyproof_pipeline/silver.py",
+          "line": 285,
+          "end_line": 303,
+          "label": "build silver"
+        },
+        {
+          "path": "backend/tallyproof_pipeline/quality.py",
+          "label": "constraint suite"
+        }
+      ]
+    },
+    {
+      "id": "gold",
+      "type": "backend",
+      "label": "Gold builder",
+      "sublabel": "events in arrival order",
+      "pos": [
+        470,
+        40
+      ],
+      "size": [
+        124,
+        60
+      ],
+      "tag": "labeled anomalies",
+      "sources": [
+        {
+          "path": "backend/tallyproof_pipeline/gold.py",
+          "line": 317,
+          "end_line": 400,
+          "label": "build gold"
+        },
+        {
+          "path": "backend/tallyproof_pipeline/overlay.py",
+          "line": 394,
+          "end_line": 403,
+          "label": "inject anomalies"
+        }
+      ]
+    },
+    {
+      "id": "replay",
+      "type": "backend",
+      "label": "Replay",
+      "sublabel": "gold into Kafka",
+      "pos": [
+        685,
+        40
+      ],
+      "size": [
+        124,
+        60
+      ],
+      "sources": [
+        {
+          "path": "backend/tallyproof_pipeline/stream.py",
+          "line": 97,
+          "end_line": 140,
+          "label": "publish"
+        }
+      ]
+    },
+    {
+      "id": "kafka",
+      "type": "messagebus",
+      "label": "Redpanda",
+      "sublabel": "fin.events.raw.v1",
+      "pos": [
+        900,
+        40
+      ],
+      "size": [
+        124,
+        60
+      ],
+      "sources": [
+        {
+          "path": "infra/compose.yaml",
+          "label": "broker service"
+        }
+      ]
+    },
+    {
+      "id": "ingest",
+      "type": "backend",
+      "label": "Ingestion",
+      "sublabel": "schema, dedupe, DLQ",
+      "pos": [
+        1115,
+        40
+      ],
+      "size": [
+        124,
+        60
+      ],
+      "sources": [
+        {
+          "path": "backend/apps/ingestion/consumer.py",
+          "line": 79,
+          "end_line": 202,
+          "label": "Ingestor"
+        },
+        {
+          "path": "backend/apps/ingestion/dedupe.py",
+          "line": 35,
+          "end_line": 80,
+          "label": "Bloom filters"
+        },
+        {
+          "path": "backend/apps/ingestion/dead_letter.py",
+          "line": 1,
+          "end_line": 58,
+          "label": "dead letters"
+        }
+      ]
+    },
+    {
+      "id": "browser",
+      "type": "frontend",
+      "label": "Browser",
+      "sublabel": "verifies every proof",
+      "pos": [
+        40,
+        210
+      ],
+      "size": [
+        124,
+        60
+      ],
+      "tag": "static site",
+      "sources": [
+        {
+          "path": "frontend/src/lib/verify/verifyEvent.ts",
+          "line": 89,
+          "end_line": 276,
+          "label": "six checks"
+        },
+        {
+          "path": "frontend/src/lib/replay/bundle.ts",
+          "line": 36,
+          "end_line": 81,
+          "label": "signed replay bundle"
+        },
+        {
+          "path": "frontend/src/lib/verify/witness.ts",
+          "line": 25,
+          "end_line": 40,
+          "label": "fetch witnessed checkpoint"
+        }
+      ]
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "Django API",
+      "sublabel": "proofs, totals, queries",
+      "pos": [
+        255,
+        210
+      ],
+      "size": [
+        124,
+        60
+      ],
+      "sources": [
+        {
+          "path": "backend/apps/ledger/api/views.py",
+          "line": 74,
+          "end_line": 117,
+          "label": "key and checkpoints"
+        },
+        {
+          "path": "backend/apps/analyst/api.py",
+          "line": 109,
+          "end_line": 151,
+          "label": "POST /api/v1/queries"
+        }
+      ]
+    },
+    {
+      "id": "analyst",
+      "type": "backend",
+      "label": "Analyst",
+      "sublabel": "spec, SQL guard, verifier",
+      "pos": [
+        470,
+        210
+      ],
+      "size": [
+        124,
+        60
+      ],
+      "sources": [
+        {
+          "path": "backend/apps/analyst/service.py",
+          "line": 221,
+          "end_line": 290,
+          "label": "answer a question"
+        },
+        {
+          "path": "backend/apps/analyst/pipeline.py",
+          "line": 372,
+          "end_line": 421,
+          "label": "route, gather, compose, verify"
+        },
+        {
+          "path": "backend/apps/analyst/compiler.py",
+          "line": 146,
+          "end_line": 257,
+          "label": "spec to guarded SQL"
+        }
+      ]
+    },
+    {
+      "id": "ledger",
+      "type": "database",
+      "label": "Ledger",
+      "sublabel": "append-only Postgres",
+      "pos": [
+        685,
+        210
+      ],
+      "size": [
+        124,
+        60
+      ],
+      "sources": [
+        {
+          "path": "backend/apps/ledger/append.py",
+          "line": 73,
+          "end_line": 163,
+          "label": "idempotent append"
+        },
+        {
+          "path": "backend/apps/ledger/models.py",
+          "line": 1,
+          "end_line": 251,
+          "label": "tables and grants"
+        }
+      ]
+    },
+    {
+      "id": "projections",
+      "type": "backend",
+      "label": "Projections",
+      "sublabel": "journal, breaks, relay",
+      "pos": [
+        900,
+        210
+      ],
+      "size": [
+        124,
+        60
+      ],
+      "sources": [
+        {
+          "path": "backend/apps/ledger/projections.py",
+          "line": 77,
+          "end_line": 91,
+          "label": "one round of projections"
+        },
+        {
+          "path": "backend/apps/reconciliation/projection.py",
+          "line": 22,
+          "end_line": 94,
+          "label": "reconciliation rules"
+        },
+        {
+          "path": "backend/apps/ledger/outbox.py",
+          "line": 63,
+          "end_line": 96,
+          "label": "outbox relay"
+        }
+      ]
+    },
+    {
+      "id": "llm",
+      "type": "external",
+      "label": "Model",
+      "sublabel": "Groq, OpenAI API",
+      "pos": [
+        470,
+        380
+      ],
+      "size": [
+        124,
+        60
+      ],
+      "sources": [
+        {
+          "path": "backend/apps/analyst/llm.py",
+          "line": 144,
+          "end_line": 380,
+          "label": "OpenAI-compatible client"
+        }
+      ]
+    },
+    {
+      "id": "checkpointer",
+      "type": "security",
+      "label": "Checkpointer",
+      "sublabel": "Merkle root, Ed25519",
+      "pos": [
+        685,
+        380
+      ],
+      "size": [
+        124,
+        60
+      ],
+      "sources": [
+        {
+          "path": "backend/apps/ledger/checkpointer.py",
+          "line": 96,
+          "end_line": 226,
+          "label": "sign each batch"
+        },
+        {
+          "path": "backend/tallyproof_core/log_tree.py",
+          "line": 27,
+          "end_line": 127,
+          "label": "RFC 9162 log"
+        },
+        {
+          "path": "backend/tallyproof_core/checkpoint.py",
+          "line": 173,
+          "end_line": 211,
+          "label": "signed note"
+        }
+      ]
+    },
+    {
+      "id": "ws",
+      "type": "backend",
+      "label": "WebSocket",
+      "sublabel": "/ws/v1/stream",
+      "pos": [
+        1115,
+        380
+      ],
+      "size": [
+        124,
+        60
+      ],
+      "sources": [
+        {
+          "path": "backend/apps/realtime/consumers.py",
+          "line": 29,
+          "end_line": 88,
+          "label": "stream consumer"
+        },
+        {
+          "path": "backend/apps/realtime/fanout.py",
+          "line": 70,
+          "end_line": 89,
+          "label": "pump and broadcast"
+        }
+      ]
+    },
+    {
+      "id": "witness",
+      "type": "external",
+      "label": "OpenTimestamps",
+      "sublabel": "anchors checkpoints",
+      "pos": [
+        900,
+        380
+      ],
+      "size": [
+        124,
+        60
+      ],
+      "sources": [
+        {
+          "path": "backend/apps/ledger/timestamps.py",
+          "line": 48,
+          "end_line": 87,
+          "label": "stamp a checkpoint"
+        },
+        {
+          "path": "backend/apps/ledger/witness.py",
+          "line": 31,
+          "end_line": 56,
+          "label": "verify against the witness"
+        }
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "security-group",
+      "label": "Signing key: operator only",
+      "wraps": [
+        "ledger",
+        "checkpointer"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "sources-to-spark",
+      "from": "sources",
+      "to": "spark",
+      "label": "CSV, API",
+      "variant": "emphasis"
+    },
+    {
+      "id": "spark-to-gold",
+      "from": "spark",
+      "to": "gold",
+      "label": "Parquet",
+      "variant": "emphasis"
+    },
+    {
+      "id": "gold-to-replay",
+      "from": "gold",
+      "to": "replay",
+      "label": "events",
+      "variant": "emphasis"
+    },
+    {
+      "id": "replay-to-kafka",
+      "from": "replay",
+      "to": "kafka",
+      "label": "produce",
+      "variant": "emphasis"
+    },
+    {
+      "id": "kafka-to-ingest",
+      "from": "kafka",
+      "to": "ingest",
+      "label": "consume",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ingest-to-ledger",
+      "from": "ingest",
+      "to": "ledger",
+      "label": "append",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "right"
+    },
+    {
+      "id": "ledger-to-checkpointer",
+      "from": "ledger",
+      "to": "checkpointer",
+      "label": "new leaves",
+      "variant": "security"
+    },
+    {
+      "id": "checkpointer-to-witness",
+      "from": "checkpointer",
+      "to": "witness",
+      "label": "OTS stamp",
+      "variant": "dashed"
+    },
+    {
+      "id": "ledger-to-projections",
+      "from": "ledger",
+      "to": "projections",
+      "label": "events"
+    },
+    {
+      "id": "projections-to-ws",
+      "from": "projections",
+      "to": "ws",
+      "label": "appended, breaks",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "top"
+    },
+    {
+      "id": "browser-to-api",
+      "from": "browser",
+      "to": "api",
+      "label": "HTTPS",
+      "variant": "emphasis"
+    },
+    {
+      "id": "api-to-analyst",
+      "from": "api",
+      "to": "analyst",
+      "label": "question",
+      "variant": "emphasis"
+    },
+    {
+      "id": "analyst-to-ledger",
+      "from": "analyst",
+      "to": "ledger",
+      "label": "SQL views",
+      "variant": "emphasis"
+    },
+    {
+      "id": "analyst-to-llm",
+      "from": "analyst",
+      "to": "llm",
+      "label": "spec, draft",
+      "variant": "dashed"
+    },
+    {
+      "id": "api-to-ledger",
+      "from": "api",
+      "to": "ledger",
+      "label": "proofs, checkpoints",
+      "variant": "security",
+      "fromSide": "top",
+      "toSide": "top"
+    },
+    {
+      "id": "ws-to-browser",
+      "from": "ws",
+      "to": "browser",
+      "label": "live events over WebSocket",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "bottom",
+      "via": [
+        [
+          1177,
+          490
+        ],
+        [
+          102,
+          490
+        ]
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Batch",
+      "items": [
+        "Spark cleans two fiscal years of USAspending CSV into Parquet and drops awards to individuals; Deequ checks 11 constraints",
+        "Gold conforms rows into events in arrival order and mixes in 225 labeled anomalies of nine types",
+        "The same replay stream also fills an Iceberg lake, where DuckDB re-runs the reconciliation rules as SQL"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Ledger",
+      "items": [
+        "Append is idempotent: a twin delivered twice is refused",
+        "The checkpointer hashes new leaves into an RFC 9162 log, signs the root, and writes the checkpoint back to the ledger",
+        "Projections derive a double-entry journal and reconciliation breaks; the outbox relay publishes both to Redpanda for the WebSocket"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Trust",
+      "items": [
+        "Checkpoint hashes are anchored by OpenTimestamps; the browser fetches the witnessed checkpoint from a second origin",
+        "The browser trusts one public key compiled into the page and that checkpoint, and recomputes everything else",
+        "The model never writes a number: it fills a typed query spec, and the verifier rejects any digit that is not bound to a slot"
+      ]
+    }
+  ]
+}

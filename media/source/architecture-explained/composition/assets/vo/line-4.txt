@@ -1,0 +1,1 @@
+The ledger is append-only Postgres. Every event is hashed into a Merkle log, signed by a checkpointer, and timestamped by OpenTimestamps. Even the operator can't quietly rewrite history.

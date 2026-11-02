@@ -1,0 +1,76 @@
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+      font-family: var(--font-sans);
+      color: var(--ink);
+    }
+    #reveal-block {
+      position: absolute;
+      left: 192px;
+      top: 330px;
+      width: 1536px;
+    }
+    #reveal-name {
+      font-family: var(--font-display);
+      font-weight: 400;
+      font-size: 184px;
+      line-height: 1;
+      letter-spacing: -0.02em;
+      opacity: 0;
+    }
+    #reveal-tag {
+      margin-top: 40px;
+      font-family: var(--font-script);
+      font-weight: 600;
+      font-size: 74px;
+      line-height: 1;
+      color: var(--gold);
+      display: inline-block;
+      opacity: 0;
+    }
+    #reveal-meta {
+      margin-top: 34px;
+      font-family: var(--font-mono);
+      font-size: 28px;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      opacity: 0;
+    }
+  </style>
+  <div id="root" data-composition-id="reveal" data-width="1920" data-height="1080">
+    <div id="reveal-block" class="clip" data-start="0" data-duration="6.2">
+      <div id="reveal-name">Tallyproof</div>
+      <div><div id="reveal-tag">Every number, proven.</div></div>
+      <div id="reveal-meta">append-only · signed · witnessed · verified by you</div>
+    </div>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    tl.fromTo(
+      "#reveal-name",
+      { opacity: 0, filter: "blur(12px)" },
+      { opacity: 1, filter: "blur(0px)", duration: 0.22, ease: "power4.out" },
+      0.12,
+    );
+    tl.fromTo(
+      "#reveal-tag",
+      { opacity: 0, rotation: -1, y: 10 },
+      { opacity: 1, rotation: -1, y: 0, duration: 0.4, ease: "power3.out" },
+      1.0,
+    );
+    tl.fromTo(
+      "#reveal-meta",
+      { opacity: 0 },
+      { opacity: 1, duration: 0.35, ease: "power2.out" },
+      1.8,
+    );
+    tl.to(
+      "#reveal-name, #reveal-tag, #reveal-meta",
+      { opacity: 0, filter: "blur(10px)", duration: 0.2, ease: "power3.in" },
+      5.95,
+    );
+    window.__timelines["reveal"] = tl;
+  </script>
+</template>
