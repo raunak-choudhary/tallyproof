@@ -153,12 +153,14 @@ cd frontend && pnpm install && pnpm dev   # open the site and verify records
 
 ## Videos and diagrams
 
-Two short videos and two interactive diagrams explain the project without reading the code. Click a poster to play the video in your browser.
+Four videos and two interactive diagrams explain the project without reading the code. Click a poster to play the video in your browser.
 
 | | |
 |---|---|
 | <a href="https://raunak-choudhary.github.io/tallyproof/media/videos/tallyproof-product-demo.mp4"><img alt="Poster of the product demo video" src="media/images/tallyproof-product-demo-poster.jpg" width="440"></a> | <a href="https://raunak-choudhary.github.io/tallyproof/media/videos/tallyproof-architecture-explained.mp4"><img alt="Poster of the architecture video" src="media/images/tallyproof-architecture-explained-poster.jpg" width="440"></a> |
 | **[Product demo](https://raunak-choudhary.github.io/tallyproof/media/videos/tallyproof-product-demo.mp4)**, 25 seconds. A record verified in the browser, one cent changed and the check failing, then a real cited answer. Narrated. | **[Architecture explained](https://raunak-choudhary.github.io/tallyproof/media/videos/tallyproof-architecture-explained.mp4)**, 70 seconds. The system map, one group of components at a time, with a narrator explaining what each part does. |
+| <a href="https://raunak-choudhary.github.io/tallyproof/media/videos/tallyproof-data-pipelines-explained.mp4"><img alt="Poster of the data pipelines video" src="media/images/tallyproof-data-pipelines-explained-poster.jpg" width="440"></a> | <a href="https://raunak-choudhary.github.io/tallyproof/media/videos/tallyproof-kafka-explained.mp4"><img alt="Poster of the Kafka video" src="media/images/tallyproof-kafka-explained-poster.jpg" width="440"></a> |
+| **[Data pipelines, explained](https://raunak-choudhary.github.io/tallyproof/media/videos/tallyproof-data-pipelines-explained.mp4)**, 2 min 34 s. What a pipeline is, where the batch and streaming pipelines run here, why, and where the code lives. | **[Kafka, explained](https://raunak-choudhary.github.io/tallyproof/media/videos/tallyproof-kafka-explained.mp4)**, 2 min 18 s. What Kafka is, how the topic and the exactly-once consumer work here, the measured throughput, and why. |
 
 | Diagram | What you get |
 |---|---|

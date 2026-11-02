@@ -1,12 +1,16 @@
 # Videos and diagrams
 
-Two short videos and two interactive diagrams explain Tallyproof without reading the code. All of them are published with the site.
+Four videos and two interactive diagrams explain Tallyproof without reading the code. All of them are published with the site.
 
 ## Videos
 
 **[Product demo](https://raunak-choudhary.github.io/tallyproof/media/videos/tallyproof-product-demo.mp4)**, 25 seconds. A narrated walk through the live site: the problem, the name, a record verified in the browser, one cent changed and the check failing, then a real cited answer.
 
 **[Architecture explained](https://raunak-choudhary.github.io/tallyproof/media/videos/tallyproof-architecture-explained.mp4)**, 70 seconds. The system map lights up one group of components at a time while a narrator explains what each part does: the data pipeline, the append-only ledger and its signed checkpoints, the live projections, the analyst that never types a number, and the browser that checks every proof.
+
+**[Data pipelines, explained](https://raunak-choudhary.github.io/tallyproof/media/videos/tallyproof-data-pipelines-explained.mp4)**, 2 minutes 34 seconds. What a data pipeline is, then where the two pipelines run in Tallyproof: the batch side from the 27 GB download through Spark, Deequ and the gold build to the Kafka replay, and the streaming side from ingestion to the signed ledger, the projections and the Iceberg lake. It closes with why it is built this way and where to look in the code.
+
+**[Kafka, explained](https://raunak-choudhary.github.io/tallyproof/media/videos/tallyproof-kafka-explained.mp4)**, 2 minutes 18 seconds. What Kafka is, how the topic, the producers and the exactly-once consumer work in Tallyproof, the measured throughput, why Kafka is used and what it is deliberately not used for, and where to look in the code.
 
 ## Interactive diagrams
 
