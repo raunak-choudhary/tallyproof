@@ -1,0 +1,399 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Ask the ledger: one question, a cited answer, a proof the browser checks",
+    "subtitle": "POST /api/v1/queries at v1.0.0. The model fills a query spec and drafts sentences; every number is bound to a slot.",
+    "output": "tallyproof-ask-sequence/tallyproof-ask-sequence.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/raunak-choudhary/tallyproof.git",
+      "provider": "github",
+      "link_mode": "web",
+      "revision": "d0ab42246e872743e53c69a88c76340e581008a4"
+    }
+  },
+  "participants": [
+    {
+      "id": "web",
+      "type": "frontend",
+      "label": "Browser",
+      "sublabel": "/ask/ page",
+      "sources": [
+        {
+          "path": "frontend/src/lib/verify/verifyEvent.ts",
+          "line": 89,
+          "end_line": 276,
+          "label": "verify a cited record"
+        },
+        {
+          "path": "frontend/src/lib/verify/checkpoint.ts",
+          "line": 111,
+          "end_line": 113,
+          "label": "verify the signed note"
+        }
+      ]
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "API",
+      "sublabel": "Django, /api/v1",
+      "sources": [
+        {
+          "path": "backend/apps/analyst/api.py",
+          "line": 109,
+          "end_line": 151,
+          "label": "QueryView"
+        },
+        {
+          "path": "backend/apps/ledger/api/proofs.py",
+          "line": 1,
+          "end_line": 74,
+          "label": "inclusion proofs"
+        }
+      ]
+    },
+    {
+      "id": "router",
+      "type": "backend",
+      "label": "Router",
+      "sublabel": "rules, then model",
+      "sources": [
+        {
+          "path": "backend/apps/analyst/router.py",
+          "line": 170,
+          "end_line": 187,
+          "label": "by rules"
+        },
+        {
+          "path": "backend/apps/analyst/router.py",
+          "line": 377,
+          "end_line": 390,
+          "label": "route"
+        }
+      ]
+    },
+    {
+      "id": "model",
+      "type": "external",
+      "label": "Model",
+      "sublabel": "Groq, gpt-oss-120b",
+      "sources": [
+        {
+          "path": "backend/apps/analyst/llm.py",
+          "line": 144,
+          "end_line": 380,
+          "label": "OpenAI-compatible client"
+        }
+      ]
+    },
+    {
+      "id": "compiler",
+      "type": "backend",
+      "label": "Compiler",
+      "sublabel": "spec to guarded SQL",
+      "sources": [
+        {
+          "path": "backend/apps/analyst/compiler.py",
+          "line": 146,
+          "end_line": 257,
+          "label": "compile a spec"
+        },
+        {
+          "path": "backend/apps/analyst/sql_guard.py",
+          "line": 1,
+          "end_line": 389,
+          "label": "sqlglot guard"
+        }
+      ]
+    },
+    {
+      "id": "db",
+      "type": "database",
+      "label": "Ledger views",
+      "sublabel": "Postgres, read-only",
+      "sources": [
+        {
+          "path": "backend/apps/ledger/models.py",
+          "line": 1,
+          "end_line": 251,
+          "label": "ledger tables"
+        },
+        {
+          "path": "backend/apps/ledger/api/proofs.py",
+          "line": 1,
+          "end_line": 74,
+          "label": "proof from leaves"
+        }
+      ]
+    },
+    {
+      "id": "composer",
+      "type": "backend",
+      "label": "Composer",
+      "sublabel": "bound claims, verifier",
+      "sources": [
+        {
+          "path": "backend/apps/analyst/pipeline.py",
+          "line": 181,
+          "end_line": 218,
+          "label": "compose"
+        },
+        {
+          "path": "backend/apps/analyst/pipeline.py",
+          "line": 372,
+          "end_line": 421,
+          "label": "ask"
+        },
+        {
+          "path": "backend/apps/analyst/answer.py",
+          "line": 1,
+          "end_line": 526,
+          "label": "claims and verdicts"
+        }
+      ]
+    }
+  ],
+  "segments": [
+    {
+      "from": 150,
+      "to": 335,
+      "label": "Route"
+    },
+    {
+      "from": 340,
+      "to": 495,
+      "label": "Query"
+    },
+    {
+      "from": 500,
+      "to": 685,
+      "label": "Compose and verify"
+    },
+    {
+      "from": 690,
+      "to": 900,
+      "label": "Prove each citation"
+    }
+  ],
+  "messages": [
+    {
+      "id": "ask",
+      "from": "web",
+      "to": "api",
+      "y": 160,
+      "label": "POST /api/v1/queries",
+      "variant": "emphasis"
+    },
+    {
+      "id": "route",
+      "from": "api",
+      "to": "router",
+      "y": 190,
+      "label": "route the question",
+      "variant": "default",
+      "note": "Rules first: a regex match on a known question shape skips the model."
+    },
+    {
+      "id": "spec-request",
+      "from": "router",
+      "to": "model",
+      "y": 290,
+      "label": "question, catalog, spec schema",
+      "variant": "default"
+    },
+    {
+      "id": "spec-json",
+      "from": "model",
+      "to": "router",
+      "y": 320,
+      "label": "query spec as JSON",
+      "variant": "return"
+    },
+    {
+      "id": "spec",
+      "from": "router",
+      "to": "compiler",
+      "y": 350,
+      "label": "QuerySpec",
+      "variant": "default"
+    },
+    {
+      "id": "sql",
+      "from": "compiler",
+      "to": "db",
+      "y": 380,
+      "label": "one guarded SELECT at a pinned tree size",
+      "variant": "emphasis",
+      "note": "sqlglot allows one SELECT over whitelisted views; the spec chose every column."
+    },
+    {
+      "id": "rows",
+      "from": "db",
+      "to": "compiler",
+      "y": 480,
+      "label": "rows",
+      "variant": "return"
+    },
+    {
+      "id": "evidence",
+      "from": "compiler",
+      "to": "composer",
+      "y": 510,
+      "label": "evidence with slot IDs",
+      "variant": "default"
+    },
+    {
+      "id": "draft-request",
+      "from": "composer",
+      "to": "model",
+      "y": 540,
+      "label": "draft sentences over the slots",
+      "variant": "default"
+    },
+    {
+      "id": "draft",
+      "from": "model",
+      "to": "composer",
+      "y": 570,
+      "label": "draft",
+      "variant": "return",
+      "note": "Any digit that is not a slot reference is rejected; one repair, else refuse."
+    },
+    {
+      "id": "answer",
+      "from": "composer",
+      "to": "api",
+      "y": 670,
+      "label": "verified answer, citations",
+      "variant": "return"
+    },
+    {
+      "id": "answer-out",
+      "from": "api",
+      "to": "web",
+      "y": 700,
+      "label": "201 answer with proof URLs",
+      "variant": "return"
+    },
+    {
+      "id": "proof-request",
+      "from": "web",
+      "to": "api",
+      "y": 730,
+      "label": "GET /proofs/{event_id}?tree_size",
+      "variant": "security"
+    },
+    {
+      "id": "leaves",
+      "from": "api",
+      "to": "db",
+      "y": 760,
+      "label": "leaves and checkpoint",
+      "variant": "default"
+    },
+    {
+      "id": "path",
+      "from": "db",
+      "to": "api",
+      "y": 790,
+      "label": "audit path, signed note",
+      "variant": "return"
+    },
+    {
+      "id": "proof",
+      "from": "api",
+      "to": "web",
+      "y": 820,
+      "label": "inclusion proof",
+      "variant": "return",
+      "note": "The browser recomputes the leaf hash, climbs the path, checks the signature and the witnessed checkpoint."
+    }
+  ],
+  "activations": [
+    {
+      "participant": "web",
+      "from": 155,
+      "to": 845,
+      "type": "frontend"
+    },
+    {
+      "participant": "api",
+      "from": 160,
+      "to": 835,
+      "type": "backend"
+    },
+    {
+      "participant": "router",
+      "from": 190,
+      "to": 355,
+      "type": "backend"
+    },
+    {
+      "participant": "model",
+      "from": 285,
+      "to": 325,
+      "type": "external"
+    },
+    {
+      "participant": "compiler",
+      "from": 345,
+      "to": 515,
+      "type": "backend"
+    },
+    {
+      "participant": "db",
+      "from": 375,
+      "to": 485,
+      "type": "database"
+    },
+    {
+      "participant": "composer",
+      "from": 505,
+      "to": 675,
+      "type": "backend"
+    },
+    {
+      "participant": "model",
+      "from": 535,
+      "to": 575,
+      "type": "external"
+    },
+    {
+      "participant": "db",
+      "from": 755,
+      "to": 795,
+      "type": "database"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "violet",
+      "title": "Where the numbers come from",
+      "items": [
+        "The model fills a typed query spec; the server compiles it to SQL",
+        "Results drop into slots; sentences reference slots, never digits",
+        "Shapes: aggregate, list, lookup, absence; lookups answer up to 10 rows"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "What makes it checkable",
+      "items": [
+        "Every answer is pinned to one checkpoint, so its citations stay provable",
+        "Each cited record carries an RFC 9162 inclusion proof",
+        "On the static site the same answers replay from a signed bundle"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Refusals",
+      "items": [
+        "Forecasts, people, and anything outside the ledger are refused by reason",
+        "An unknown filter value is refused and the real values are named",
+        "In the full run no answer cited a record that failed verification"
+      ]
+    }
+  ]
+}

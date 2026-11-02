@@ -1,0 +1,1 @@
+It starts with public data. Contract records from USAspending and the Treasury are cleaned with Spark, stripped of personal data, and built into a million ledger events.

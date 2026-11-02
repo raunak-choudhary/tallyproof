@@ -1,0 +1,1 @@
+This is Tallyproof: a streaming ledger of real federal spending, where every number an A I gives you can be proven in your browser.

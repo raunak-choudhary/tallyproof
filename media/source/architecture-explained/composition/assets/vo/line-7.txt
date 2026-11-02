@@ -1,0 +1,1 @@
+Your browser recomputes the hashes, checks the signature, and verifies the proof against the witnessed checkpoint. Change one cent, and it fails.

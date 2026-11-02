@@ -1,0 +1,1 @@
+Ask a question, and the analyst fills in a typed query. The model never types a number. Every figure comes from SQL over the ledger.

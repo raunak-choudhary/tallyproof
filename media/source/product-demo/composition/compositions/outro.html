@@ -1,0 +1,66 @@
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+      font-family: var(--font-sans);
+      color: var(--ink);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #outro-block {
+      text-align: center;
+    }
+    #outro-name {
+      font-family: var(--font-display);
+      font-weight: 400;
+      font-size: 96px;
+      line-height: 1;
+      letter-spacing: -0.02em;
+      opacity: 0;
+    }
+    #outro-tag {
+      margin-top: 30px;
+      font-family: var(--font-script);
+      font-weight: 600;
+      font-size: 86px;
+      line-height: 1;
+      color: var(--gold);
+      display: inline-block;
+      opacity: 0;
+    }
+    #outro-url {
+      margin-top: 44px;
+      font-family: var(--font-mono);
+      font-size: 30px;
+      letter-spacing: 0.04em;
+      color: var(--muted);
+      opacity: 0;
+    }
+  </style>
+  <div id="root" data-composition-id="outro" data-width="1920" data-height="1080">
+    <div id="outro-block" class="clip" data-start="0" data-duration="2.4">
+      <div id="outro-name">Tallyproof</div>
+      <div><div id="outro-tag">Every number, proven.</div></div>
+      <div id="outro-url">raunak-choudhary.github.io/tallyproof</div>
+    </div>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    tl.fromTo(
+      "#outro-name",
+      { opacity: 0, filter: "blur(10px)" },
+      { opacity: 1, filter: "blur(0px)", duration: 0.2, ease: "power4.out" },
+      0.1,
+    );
+    tl.fromTo(
+      "#outro-tag",
+      { opacity: 0, rotation: -1, y: 10 },
+      { opacity: 1, rotation: -1, y: 0, duration: 0.4, ease: "power3.out" },
+      0.35,
+    );
+    tl.fromTo("#outro-url", { opacity: 0 }, { opacity: 1, duration: 0.35, ease: "power2.out" }, 0.6);
+    window.__timelines["outro"] = tl;
+  </script>
+</template>

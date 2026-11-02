@@ -1,0 +1,132 @@
+<!doctype html>
+<html
+  lang="en"
+  data-composition-variables='[
+    {"id":"color-ground","type":"color","label":"Background","default":"#0a0b10"},
+    {"id":"color-ink","type":"color","label":"Text","default":"#f2f3f7"},
+    {"id":"color-muted","type":"color","label":"Muted text","default":"#9ba1b4"},
+    {"id":"color-accent","type":"color","label":"Accent","default":"#8b6cff"},
+    {"id":"color-live","type":"color","label":"Live cyan","default":"#22d3ee"},
+    {"id":"color-gold","type":"color","label":"Tally gold","default":"#f5b82e"},
+    {"id":"font-display","type":"string","label":"Display font","default":"Fraunces"}
+  ]'
+>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
+    <style>
+      @font-face {
+        font-family: "Fraunces";
+        font-style: normal;
+        font-weight: 300 900;
+        src: url("assets/fonts/fraunces-normal.woff2") format("woff2");
+      }
+      @font-face {
+        font-family: "Fraunces";
+        font-style: italic;
+        font-weight: 300 900;
+        src: url("assets/fonts/fraunces-italic.woff2") format("woff2");
+      }
+      @font-face {
+        font-family: "Manrope";
+        font-style: normal;
+        font-weight: 200 800;
+        src: url("assets/fonts/manrope-normal.woff2") format("woff2");
+      }
+      @font-face {
+        font-family: "Caveat";
+        font-style: normal;
+        font-weight: 400 700;
+        src: url("assets/fonts/caveat-normal.woff2") format("woff2");
+      }
+      :root {
+        --ground: var(--color-ground, #0a0b10);
+        --ink: var(--color-ink, #f2f3f7);
+        --muted: var(--color-muted, #9ba1b4);
+        --accent: var(--color-accent, #8b6cff);
+        --live: var(--color-live, #22d3ee);
+        --gold: var(--color-gold, #f5b82e);
+        --elevated: #12141c;
+        --border: #232735;
+        --font-display: var(--font-display, "Fraunces"), Georgia, serif;
+        --font-sans: "Manrope", "Inter", sans-serif;
+        --font-mono: "JetBrains Mono", "IBM Plex Mono", monospace;
+        --font-script: "Caveat", cursive;
+      }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: var(--ground);
+      }
+      #ground {
+        position: absolute;
+        inset: 0;
+        background: var(--ground);
+      }
+      #glow {
+        position: absolute;
+        inset: 0;
+        background:
+          radial-gradient(900px 480px at 85% -10%, rgba(139, 108, 255, 0.22), transparent 60%),
+          radial-gradient(600px 300px at 0% 110%, rgba(34, 211, 238, 0.1), transparent 70%);
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="main"
+      data-start="0"
+      data-duration="25"
+      data-width="1920"
+      data-height="1080"
+    >
+      <div id="ground"></div>
+      <div id="glow"></div>
+
+      <div id="hook" data-composition-id="hook" data-composition-src="compositions/hook.html" data-start="0" data-duration="4.0" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+      <div id="reveal" data-composition-id="reveal" data-composition-src="compositions/reveal.html" data-start="4.0" data-duration="6.2" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+      <div id="verify" data-composition-id="verify" data-composition-src="compositions/verify.html" data-start="10.2" data-duration="8.4" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+      <div id="ask" data-composition-id="ask" data-composition-src="compositions/ask.html" data-start="18.6" data-duration="4.0" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+      <div id="outro" data-composition-id="outro" data-composition-src="compositions/outro.html" data-start="22.6" data-duration="2.4" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+
+      <!-- Music: Sascha Ende, ende.app (CC BY 4.0). Bed at 0.30, fading under the end card. -->
+      <audio id="music" class="clip" data-start="0" data-duration="25" data-track-index="10" data-volume="0.15" data-fade-in="0.4" data-fade-out="1.4" src="assets/music/happy-beats-business-moves-vol-12-by-ende-dot-app.mp3"></audio>
+      <!-- Narration: Kokoro af_heart, American English, one clip per scene -->
+      <audio id="vo-1" class="clip" data-start="0.35" data-duration="3.42" data-track-index="3" data-volume="1" src="assets/vo/line-1.wav"></audio>
+      <audio id="vo-2" class="clip" data-start="4.25" data-duration="5.74" data-track-index="3" data-volume="1" src="assets/vo/line-2.wav"></audio>
+      <audio id="vo-3" class="clip" data-start="10.4" data-duration="6.64" data-track-index="3" data-volume="1" src="assets/vo/line-3.wav"></audio>
+      <audio id="vo-4" class="clip" data-start="18.7" data-duration="3.16" data-track-index="3" data-volume="1" src="assets/vo/line-4.wav"></audio>
+      <audio id="vo-5" class="clip" data-start="22.7" data-duration="2.01" data-track-index="3" data-volume="1" src="assets/vo/line-5.wav"></audio>
+      <!-- Soft impact as the name lands -->
+      <audio id="sfx-name" class="clip" data-start="4.12" data-duration="0.19" data-track-index="11" data-volume="0.55" src="assets/sfx/impact/impactSoft_medium_001.ogg"></audio>
+      <!-- Key ticks under the retyped amount (times filled from the recording marks) -->
+      <audio id="key-1" class="clip" data-start="15.81" data-duration="0.2" data-track-index="12" data-volume="0.4" src="assets/sfx/keyboard/keypress-001.wav"></audio>
+      <audio id="key-2" class="clip" data-start="15.96" data-duration="0.2" data-track-index="13" data-volume="0.4" src="assets/sfx/keyboard/keypress-005.wav"></audio>
+      <audio id="key-3" class="clip" data-start="16.10" data-duration="0.2" data-track-index="12" data-volume="0.4" src="assets/sfx/keyboard/keypress-009.wav"></audio>
+      <audio id="key-4" class="clip" data-start="16.25" data-duration="0.2" data-track-index="13" data-volume="0.4" src="assets/sfx/keyboard/keypress-013.wav"></audio>
+      <audio id="key-5" class="clip" data-start="16.39" data-duration="0.2" data-track-index="12" data-volume="0.4" src="assets/sfx/keyboard/keypress-017.wav"></audio>
+      <audio id="key-6" class="clip" data-start="16.54" data-duration="0.2" data-track-index="13" data-volume="0.4" src="assets/sfx/keyboard/keypress-001.wav"></audio>
+      <audio id="key-7" class="clip" data-start="16.68" data-duration="0.2" data-track-index="12" data-volume="0.4" src="assets/sfx/keyboard/keypress-009.wav"></audio>
+      <!-- Bell when tampering is detected -->
+      <audio id="sfx-fail" class="clip" data-start="17.4" data-duration="1.2" data-track-index="11" data-volume="0.45" src="assets/sfx/impact/impactBell_heavy_000.ogg"></audio>
+      <!-- Soft impact as the answer lands (strong cue 18.56) -->
+      <audio id="sfx-answer" class="clip" data-start="19.9" data-duration="0.14" data-track-index="11" data-volume="0.5" src="assets/sfx/impact/impactSoft_medium_003.ogg"></audio>
+      <!-- The mark -->
+      <audio id="sfx-mark" class="clip" data-start="23.3" data-duration="1.48" data-track-index="11" data-volume="0.5" src="assets/sfx/impact/impactBell_heavy_000.ogg"></audio>
+    </div>
+    <script>
+      const tl = gsap.timeline({ paused: true });
+      window.__timelines["main"] = tl;
+      tl.seek(0);
+    </script>
+  </body>
+</html>
