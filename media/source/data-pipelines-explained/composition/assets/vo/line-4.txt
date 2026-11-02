@@ -1,0 +1,1 @@
+Before anything moves on, Deequ checks eleven constraints on all thirteen million rows: complete and unique keys, dates inside the fiscal years, amounts within bounds. If one fails, the build stops.

@@ -1,0 +1,39 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; font-family: var(--font-sans); color: var(--ink); }
+    #where-label { position: absolute; left: 120px; top: 64px; font-weight: 600; font-size: 28px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--live); opacity: 0; }
+    #where-name { position: absolute; right: 120px; top: 56px; font-family: var(--font-display); font-weight: 400; font-size: 40px; color: var(--ink); opacity: 0; }
+    #where-heading { position: absolute; left: 120px; top: 150px; font-family: var(--font-display); font-weight: 400; font-size: 64px; letter-spacing: -0.01em; opacity: 0; }
+    #where-list { position: absolute; left: 120px; top: 290px; width: 1680px; display: flex; flex-direction: column; gap: 18px; }
+    .row { display: flex; align-items: baseline; gap: 36px; padding: 18px 28px; border: 2px solid var(--border); border-radius: 14px; background: var(--elevated); opacity: 0; }
+    .row .path { font-family: var(--font-mono); font-size: 30px; color: var(--live); white-space: nowrap; min-width: 760px; }
+    .row .what { font-size: 30px; color: var(--muted); }
+  </style>
+  <div id="root" data-composition-id="where" data-width="1920" data-height="1080">
+    <div id="where-block" class="clip" data-start="0" data-duration="13.63" data-hold>
+      <div id="where-label">Where to look in the code</div>
+      <div id="where-name">Tallyproof</div>
+      <div id="where-heading">Kafka in the repository</div>
+      <div id="where-list">
+      <div class="row" id="where-row-0"><div class="path">backend/apps/ingestion/consumer.py</div><div class="what">the consumer loop and the staged, idempotent append</div></div>
+      <div class="row" id="where-row-1"><div class="path">backend/apps/ingestion/dedupe.py, offsets.py</div><div class="what">Bloom filter and the fenced offsets stored with the data</div></div>
+      <div class="row" id="where-row-2"><div class="path">backend/apps/ingestion/dead_letter.py, schemas.py</div><div class="what">dead-letter topic and the JSON Schema registry</div></div>
+      <div class="row" id="where-row-3"><div class="path">backend/tallyproof_pipeline/stream.py</div><div class="what">the replay producer</div></div>
+      <div class="row" id="where-row-4"><div class="path">infra/compose.yaml, infra/redpanda</div><div class="what">the Redpanda broker, console, and topic setup</div></div>
+      </div>
+    </div>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    tl.fromTo("#where-label", { opacity: 0, y: 6 }, { opacity: 1, y: 0, duration: 0.3 }, 0);
+    tl.fromTo("#where-name", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 0);
+    tl.fromTo("#where-heading", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" }, 0.1);
+    tl.fromTo("#where-row-0", { opacity: 0, x: -14 }, { opacity: 1, x: 0, duration: 0.35, ease: "power2.out" }, 0.60);
+    tl.fromTo("#where-row-1", { opacity: 0, x: -14 }, { opacity: 1, x: 0, duration: 0.35, ease: "power2.out" }, 1.15);
+    tl.fromTo("#where-row-2", { opacity: 0, x: -14 }, { opacity: 1, x: 0, duration: 0.35, ease: "power2.out" }, 1.70);
+    tl.fromTo("#where-row-3", { opacity: 0, x: -14 }, { opacity: 1, x: 0, duration: 0.35, ease: "power2.out" }, 2.25);
+    tl.fromTo("#where-row-4", { opacity: 0, x: -14 }, { opacity: 1, x: 0, duration: 0.35, ease: "power2.out" }, 2.80);
+    tl.to("#where-block", { opacity: 0, duration: 0.3, ease: "power3.in" }, 13.33);
+    window.__timelines["where"] = tl;
+  </script>
+</template>

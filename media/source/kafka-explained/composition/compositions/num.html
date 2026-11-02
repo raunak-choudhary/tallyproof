@@ -1,0 +1,30 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; font-family: var(--font-sans); color: var(--ink); }
+    #num-label { position: absolute; left: 120px; top: 64px; font-weight: 600; font-size: 28px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--live); opacity: 0; }
+    #num-name { position: absolute; right: 120px; top: 56px; font-family: var(--font-display); font-weight: 400; font-size: 40px; color: var(--ink); opacity: 0; }
+    .card { position: absolute; top: 330px; min-height: 420px; padding: 40px 36px; border: 2px solid var(--border); border-radius: 20px; background: var(--elevated); opacity: 0; }
+    .card .big { font-family: var(--font-display); font-weight: 500; font-size: 56px; line-height: 1.08; letter-spacing: -0.01em; color: var(--ink); }
+    .card .big em { font-style: normal; color: var(--gold); }
+    .card .small { margin-top: 26px; font-size: 30px; line-height: 1.35; color: var(--muted); }
+  </style>
+  <div id="root" data-composition-id="num" data-width="1920" data-height="1080">
+    <div id="num-block" class="clip" data-start="0" data-duration="17.18" data-hold>
+      <div id="num-label">Measured on the laptop</div>
+      <div id="num-name">Tallyproof</div>
+      <div class="card" id="num-card-0" style="left:120px; width:536px"><div class="big"><em>20,000</em> events in 4.0 s</div><div class="small">Published to Kafka using 72 MB, all landing with gap-free leaf indexes.</div></div>
+      <div class="card" id="num-card-1" style="left:680px; width:536px"><div class="big">About <em>3,000</em> events a second</div><div class="small">Into the ledger, flat from one to three consumers: every append takes the same lock.</div></div>
+      <div class="card" id="num-card-2" style="left:1240px; width:536px"><div class="big">Replay again: <em>nothing</em> appended</div><div class="small">Every duplicate refused by the unique key, and counted.</div></div>
+    </div>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    tl.fromTo("#num-label", { opacity: 0, y: 6 }, { opacity: 1, y: 0, duration: 0.3 }, 0);
+    tl.fromTo("#num-name", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 0);
+    tl.fromTo("#num-card-0", { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.45, ease: "power3.out" }, 0.5);
+    tl.fromTo("#num-card-1", { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.45, ease: "power3.out" }, 5.5);
+    tl.fromTo("#num-card-2", { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.45, ease: "power3.out" }, 11.0);
+    tl.to("#num-block", { opacity: 0, duration: 0.3, ease: "power3.in" }, 16.88);
+    window.__timelines["num"] = tl;
+  </script>
+</template>

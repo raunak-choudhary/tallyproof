@@ -1,0 +1,282 @@
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+      font-family: var(--font-sans);
+      color: var(--ink);
+    }
+    #map-label {
+      position: absolute;
+      left: 120px;
+      top: 64px;
+      font-weight: 600;
+      font-size: 28px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--live);
+      opacity: 0;
+    }
+    #map-name {
+      position: absolute;
+      right: 120px;
+      top: 56px;
+      font-family: var(--font-display);
+      font-weight: 400;
+      font-size: 40px;
+      letter-spacing: -0.01em;
+      color: var(--ink);
+      opacity: 0;
+    }
+    #wires {
+      position: absolute;
+      inset: 0;
+      width: 1920px;
+      height: 1080px;
+    }
+    .wire {
+      fill: none;
+      stroke: #2e3344;
+      stroke-width: 3;
+      stroke-linejoin: round;
+      stroke-linecap: round;
+      opacity: 0;
+    }
+    .wire-flow {
+      fill: none;
+      stroke: var(--live);
+      stroke-width: 3;
+      stroke-linejoin: round;
+      stroke-linecap: round;
+      stroke-dasharray: 14 12;
+      opacity: 0;
+    }
+    .arrow {
+      fill: #2e3344;
+      opacity: 0;
+    }
+    .box {
+      position: absolute;
+      width: 260px;
+      height: 104px;
+      padding: 17px 16px 0;
+      border: 2px solid var(--border);
+      border-radius: 14px;
+      background: var(--elevated);
+      opacity: 0;
+    }
+    .box .name {
+      font-weight: 700;
+      font-size: 30px;
+      line-height: 1.1;
+      color: var(--ink);
+    }
+    .box .sub {
+      margin-top: 6px;
+      font-family: var(--font-sans);
+      font-weight: 500;
+      font-size: 28px;
+      line-height: 1.1;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+    .box.external {
+      border-style: dashed;
+    }
+    #boundary {
+      position: absolute;
+      left: 972px;
+      top: 402px;
+      width: 296px;
+      height: 390px;
+      border: 2px dashed var(--gold);
+      border-radius: 20px;
+      opacity: 0;
+    }
+    #boundary-label {
+      position: absolute;
+      left: 972px;
+      top: 798px;
+      font-family: var(--font-sans);
+      font-weight: 600;
+      font-size: 28px;
+      color: var(--gold);
+      opacity: 0;
+    }
+    .wire-label {
+      position: absolute;
+      font-family: var(--font-mono);
+      font-size: 28px;
+      color: var(--muted);
+      opacity: 0;
+    }
+    .cap {
+      position: absolute;
+      left: 160px;
+      right: 160px;
+      top: 900px;
+      text-align: center;
+      font-weight: 500;
+      font-size: 38px;
+      line-height: 1.3;
+      color: var(--ink);
+      opacity: 0;
+    }
+    .cap em {
+      font-style: normal;
+      color: var(--live);
+    }
+  </style>
+  <div id="root" data-composition-id="map" data-width="1920" data-height="1080">
+    <div id="map-block" class="clip" data-start="0" data-duration="84.53" data-hold>
+      <div id="map-label">Where the pipelines run in Tallyproof</div>
+      <div id="map-name">Tallyproof</div>
+      <svg id="wires" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg"></svg>
+      <div id="boundary"></div>
+      <div id="boundary-label">signing key: operator only</div>
+      <div id="boxes"></div>
+      <div id="labels"></div>
+
+      <div class="cap" id="cap-1">Spark reads about 27 GB of CSV one member at a time, types every column, removes duplicates and personal data. <em>13.3 million rows in, 13.1 million out</em>, as 1.2 GB of Parquet.</div>
+      <div class="cap" id="cap-2">Deequ checks <em>11 constraints on all 13.1 million rows</em> in 30 seconds. One failure stops the build.</div>
+      <div class="cap" id="cap-3">Gold: <em>1,000,000 contract events and 704,400 payments</em> in arrival order, 225 labeled anomalies mixed in. Replayed into Kafka at a controlled pace.</div>
+      <div class="cap" id="cap-4">Streaming: validate, append <em>exactly once</em>, sign, project, push live. The same stream lands in an Iceberg lake, where DuckDB re-runs the rules as SQL.</div>
+    </div>
+  </div>
+  <script>
+    // Layout: six columns, three rows, the same arrangement as the source-cited Archify map.
+    const COLS = [120, 410, 700, 990, 1280, 1570];
+    const ROWS = [170, 420, 670];
+    const W = 260, H = 104;
+    const comps = [
+      ["sources", 0, 0, "Public data", "USAspending", "external"],
+      ["spark", 1, 0, "Spark clean", "scrubs, checks", ""],
+      ["gold", 2, 0, "Gold builder", "ledger events", ""],
+      ["replay", 3, 0, "Replay", "gold to Kafka", ""],
+      ["kafka", 4, 0, "Redpanda", "Kafka topic", ""],
+      ["ingest", 5, 0, "Ingestion", "exactly once", ""],
+      ["browser", 0, 1, "Browser", "verifies proofs", ""],
+      ["api", 1, 1, "Django API", "proofs, queries", ""],
+      ["analyst", 2, 1, "Analyst", "typed queries", ""],
+      ["ledger", 3, 1, "Ledger", "append-only", ""],
+      ["projections", 4, 1, "Projections", "journal, breaks", ""],
+      ["llm", 2, 2, "Model", "Groq, no digits", "external"],
+      ["checkpointer", 3, 2, "Checkpointer", "signs the log", ""],
+      ["witness", 4, 2, "Witness", "OpenTimestamps", "external"],
+      ["ws", 5, 2, "WebSocket", "live stream", ""],
+    ];
+    const pos = {};
+    const boxes = document.getElementById("boxes");
+    for (const [id, c, r, name, sub, kind] of comps) {
+      const x = COLS[c], y = ROWS[r];
+      pos[id] = { x, y, cx: x + W / 2, cy: y + H / 2, r: x + W, b: y + H };
+      const el = document.createElement("div");
+      el.className = "box " + kind;
+      el.id = "box-" + id;
+      el.style.left = x + "px";
+      el.style.top = y + "px";
+      el.innerHTML = '<div class="name">' + name + '</div><div class="sub">' + sub + "</div>";
+      boxes.appendChild(el);
+    }
+
+    // Wires: [id, from, to, kind, lane]. Horizontal neighbours join edge to edge; the rest are elbows.
+    const P = pos;
+    const wires = {
+      "sources-spark": `M${P.sources.r},${P.sources.cy} L${P.spark.x},${P.spark.cy}`,
+      "spark-gold": `M${P.spark.r},${P.spark.cy} L${P.gold.x},${P.gold.cy}`,
+      "gold-replay": `M${P.gold.r},${P.gold.cy} L${P.replay.x},${P.replay.cy}`,
+      "replay-kafka": `M${P.replay.r},${P.replay.cy} L${P.kafka.x},${P.kafka.cy}`,
+      "kafka-ingest": `M${P.kafka.r},${P.kafka.cy} L${P.ingest.x},${P.ingest.cy}`,
+      "ingest-ledger": `M${P.ingest.cx},${P.ingest.b} L${P.ingest.cx},345 L${P.ledger.cx + 30},345 L${P.ledger.cx + 30},${P.ledger.y}`,
+      "ledger-checkpointer": `M${P.ledger.cx},${P.ledger.b} L${P.checkpointer.cx},${P.checkpointer.y}`,
+      "checkpointer-witness": `M${P.checkpointer.r},${P.checkpointer.cy} L${P.witness.x},${P.witness.cy}`,
+      "ledger-projections": `M${P.ledger.r},${P.ledger.cy} L${P.projections.x},${P.projections.cy}`,
+      "projections-ws": `M${P.projections.cx},${P.projections.b} L${P.projections.cx},${P.ws.cy} L${P.ws.x},${P.ws.cy}`,
+      "ws-browser": `M${P.ws.cx},${P.ws.b} L${P.ws.cx},836 L${P.browser.cx},836 L${P.browser.cx},${P.browser.b}`,
+      "browser-api": `M${P.browser.r},${P.browser.cy} L${P.api.x},${P.api.cy}`,
+      "api-analyst": `M${P.api.r},${P.api.cy} L${P.analyst.x},${P.analyst.cy}`,
+      "analyst-ledger": `M${P.analyst.r},${P.analyst.cy} L${P.ledger.x},${P.ledger.cy}`,
+      "analyst-llm": `M${P.analyst.cx},${P.analyst.b} L${P.llm.cx},${P.llm.y}`,
+      "api-ledger": `M${P.api.cx},${P.api.y} L${P.api.cx},385 L${P.ledger.cx - 30},385 L${P.ledger.cx - 30},${P.ledger.y}`,
+    };
+    const svg = document.getElementById("wires");
+    const NS = "http://www.w3.org/2000/svg";
+    function arrowAt(d) {
+      // Arrowhead at the end of the path, pointing along the last segment.
+      const pts = d.replace(/[ML]/g, " ").trim().split(/\s+/).map((p) => p.split(",").map(Number));
+      const [x1, y1] = pts[pts.length - 2], [x2, y2] = pts[pts.length - 1];
+      const ang = Math.atan2(y2 - y1, x2 - x1);
+      const L = 14, Wd = 7;
+      const bx = x2 - L * Math.cos(ang), by = y2 - L * Math.sin(ang);
+      const nx = -Math.sin(ang) * Wd, ny = Math.cos(ang) * Wd;
+      return `${x2},${y2} ${bx + nx},${by + ny} ${bx - nx},${by - ny}`;
+    }
+    for (const [id, d] of Object.entries(wires)) {
+      const base = document.createElementNS(NS, "path");
+      base.setAttribute("d", d); base.setAttribute("class", "wire"); base.id = "wire-" + id;
+      svg.appendChild(base);
+      const flow = document.createElementNS(NS, "path");
+      flow.setAttribute("d", d); flow.setAttribute("class", "wire-flow"); flow.id = "flow-" + id;
+      svg.appendChild(flow);
+      const head = document.createElementNS(NS, "polygon");
+      head.setAttribute("points", arrowAt(d)); head.setAttribute("class", "arrow"); head.id = "arrow-" + id;
+      svg.appendChild(head);
+    }
+    const labels = document.getElementById("labels");
+    for (const [id, text, x, y] of [
+      ["ingest-ledger", "append", 1380, 300],
+      ["api-ledger", "proofs, checkpoints", 640, 340],
+      ["ws-browser", "live events", 880, 846],
+    ]) {
+      const el = document.createElement("div");
+      el.className = "wire-label"; el.id = "label-" + id; el.textContent = text;
+      el.style.left = x + "px"; el.style.top = y + "px";
+      labels.appendChild(el);
+    }
+
+    // Timeline. Local time 0 is 8.6 s in the film; each step starts 0.3 s before its narration.
+    const tl = gsap.timeline({ paused: true });
+    const DIM = 0.3, SEEN = 0.72;
+    const all = comps.map((c) => "#box-" + c[0]).join(", ");
+    const allWires = Object.keys(wires).map((k) => "#wire-" + k).join(", ");
+    const allArrows = Object.keys(wires).map((k) => "#arrow-" + k).join(", ");
+
+    tl.fromTo("#map-label", { opacity: 0, y: 6 }, { opacity: 1, y: 0, duration: 0.3 }, 0.0);
+    tl.fromTo("#map-name", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 0.0);
+    tl.fromTo(all, { opacity: 0, y: 10 }, { opacity: DIM, y: 0, duration: 0.35, stagger: 0.02, ease: "power2.out" }, 0.05);
+    tl.fromTo(allWires, { opacity: 0 }, { opacity: 0.8, duration: 0.5 }, 0.5);
+    tl.fromTo(allArrows, { opacity: 0 }, { opacity: 0.8, duration: 0.5 }, 0.5);
+    tl.fromTo("#boundary", { opacity: 0 }, { opacity: 0.35, duration: 0.4 }, 0.7);
+
+    const steps = [
+      { at: 0.5, dur: 27.1, boxes: ["sources", "spark"], wires: ["sources-spark"], cap: "#cap-1" },
+      { at: 28.13, dur: 13.3, boxes: ["spark"], wires: [], cap: "#cap-2" },
+      { at: 41.96, dur: 17.0, boxes: ["gold", "replay", "kafka"], wires: ["spark-gold", "gold-replay", "replay-kafka"], cap: "#cap-3" },
+      { at: 59.46, dur: 24.6, boxes: ["ingest", "ledger", "checkpointer", "projections", "ws"], wires: ["kafka-ingest", "ingest-ledger", "ledger-checkpointer", "ledger-projections", "projections-ws", "ws-browser"], labels: ["ingest-ledger"], cap: "#cap-4" },
+    ];
+    let prev = null;
+    for (const s of steps) {
+      const sel = s.boxes.map((b) => "#box-" + b).join(", ");
+      if (prev) {
+        tl.to(prev.boxes.map((b) => "#box-" + b).join(", "), { opacity: SEEN, borderColor: "#232735", boxShadow: "0 0 0 rgba(139,108,255,0)", duration: 0.4 }, s.at);
+        if (prev.wires.length) tl.to(prev.wires.map((w) => "#flow-" + w).join(", "), { opacity: 0, duration: 0.3 }, s.at);
+        tl.to(prev.cap, { opacity: 0, y: -8, duration: 0.3 }, s.at - 0.1);
+        if (prev.labels) tl.to(prev.labels.map((l) => "#label-" + l).join(", "), { opacity: 0, duration: 0.3 }, s.at);
+        if (prev.boundary) tl.to("#boundary, #boundary-label", { opacity: 0.35, duration: 0.4 }, s.at);
+      }
+      tl.fromTo(sel, { opacity: DIM, borderColor: "#232735", boxShadow: "0 0 0 rgba(139,108,255,0)" },
+        { opacity: 1, borderColor: "#8b6cff", boxShadow: "0 0 36px rgba(139,108,255,0.35)", duration: 0.5, ease: "power2.out", immediateRender: false }, s.at);
+      const flows = s.wires.map((w) => "#flow-" + w).join(", ");
+      if (flows) tl.fromTo(flows, { opacity: 0, strokeDashoffset: 0 }, { opacity: 1, duration: 0.4, immediateRender: false }, s.at + 0.1);
+      if (flows) tl.fromTo(flows, { strokeDashoffset: 0 }, { strokeDashoffset: -26 * Math.round(s.dur * 6), duration: s.dur, ease: "none", immediateRender: false }, s.at + 0.1);
+      if (s.labels) tl.fromTo(s.labels.map((l) => "#label-" + l).join(", "), { opacity: 0 }, { opacity: 1, duration: 0.3, immediateRender: false }, s.at + 0.3);
+      if (s.boundary) tl.fromTo("#boundary, #boundary-label", { opacity: 0.35 }, { opacity: 1, duration: 0.4, immediateRender: false }, s.at + 0.2);
+      tl.fromTo(s.cap, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.35, ease: "power2.out", immediateRender: false }, s.at + 0.15);
+      prev = s;
+    }
+    // The last step closes with the browser verified: lift everything to full for the final beat.
+    tl.to(all, { opacity: 1, duration: 0.5 }, 83.33);
+    tl.to("#map-block", { opacity: 0, duration: 0.3, ease: "power3.in" }, 84.23);
+    window.__timelines["map"] = tl;
+  </script>
+</template>

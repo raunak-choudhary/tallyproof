@@ -1,0 +1,30 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; font-family: var(--font-sans); color: var(--ink); }
+    #why-label { position: absolute; left: 120px; top: 64px; font-weight: 600; font-size: 28px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--live); opacity: 0; }
+    #why-name { position: absolute; right: 120px; top: 56px; font-family: var(--font-display); font-weight: 400; font-size: 40px; color: var(--ink); opacity: 0; }
+    .card { position: absolute; top: 330px; min-height: 420px; padding: 40px 36px; border: 2px solid var(--border); border-radius: 20px; background: var(--elevated); opacity: 0; }
+    .card .big { font-family: var(--font-display); font-weight: 500; font-size: 56px; line-height: 1.08; letter-spacing: -0.01em; color: var(--ink); }
+    .card .big em { font-style: normal; color: var(--gold); }
+    .card .small { margin-top: 26px; font-size: 30px; line-height: 1.35; color: var(--muted); }
+  </style>
+  <div id="root" data-composition-id="why" data-width="1920" data-height="1080">
+    <div id="why-block" class="clip" data-start="0" data-duration="28.11" data-hold>
+      <div id="why-label">Why Kafka, and what it is not used for</div>
+      <div id="why-name">Tallyproof</div>
+      <div class="card" id="why-card-0" style="left:120px; width:536px"><div class="big"><em>Decouples</em> producers from a single-writer ledger</div><div class="small">Buffers bursts, and makes every run replayable from the log.</div></div>
+      <div class="card" id="why-card-1" style="left:680px; width:536px"><div class="big">Derived views read the <em>ledger</em>, not Kafka</div><div class="small">Journal and reconciliation project the signed log in leaf order: exactly-once output, no extra machinery.</div></div>
+      <div class="card" id="why-card-2" style="left:1240px; width:536px"><div class="big">Kafka carries what <em>leaves</em> the database</div><div class="small">Appended events, breaks, and checkpoints, for the live stream and outside consumers.</div></div>
+    </div>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    tl.fromTo("#why-label", { opacity: 0, y: 6 }, { opacity: 1, y: 0, duration: 0.3 }, 0);
+    tl.fromTo("#why-name", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 0);
+    tl.fromTo("#why-card-0", { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.45, ease: "power3.out" }, 0.5);
+    tl.fromTo("#why-card-1", { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.45, ease: "power3.out" }, 9.0);
+    tl.fromTo("#why-card-2", { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.45, ease: "power3.out" }, 19.0);
+    tl.to("#why-block", { opacity: 0, duration: 0.3, ease: "power3.in" }, 27.81);
+    window.__timelines["why"] = tl;
+  </script>
+</template>

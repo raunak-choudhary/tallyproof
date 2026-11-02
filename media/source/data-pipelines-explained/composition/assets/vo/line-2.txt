@@ -1,0 +1,1 @@
+A data pipeline is a chain of steps that moves data from where it is produced to where it is used, cleaning and reshaping it along the way. Batch pipelines run on a schedule over large files. Streaming pipelines handle events one at a time, as they arrive. Tallyproof has both.

@@ -1,0 +1,57 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; font-family: var(--font-sans); color: var(--ink); }
+    #c-label { position: absolute; left: 120px; top: 64px; font-weight: 600; font-size: 28px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--live); opacity: 0; }
+    #c-name { position: absolute; right: 120px; top: 56px; font-family: var(--font-display); font-weight: 400; font-size: 40px; opacity: 0; }
+    #c-head { position: absolute; left: 120px; top: 170px; width: 1680px; font-family: var(--font-display); font-weight: 400; font-size: 64px; line-height: 1.1; letter-spacing: -0.01em; opacity: 0; }
+    #rail { position: absolute; left: 200px; top: 500px; width: 1520px; height: 3px; background: #2e3344; opacity: 0; }
+    .stage { position: absolute; z-index: 2; top: 440px; width: 200px; height: 120px; border: 2px solid var(--border); border-radius: 16px; background: var(--elevated); display: flex; align-items: center; justify-content: center; opacity: 0; }
+    .stage .n { font-weight: 700; font-size: 34px; }
+    .dot { position: absolute; z-index: 1; top: 491px; left: 200px; width: 20px; height: 20px; border-radius: 50%; background: var(--live); box-shadow: 0 0 18px rgba(34, 211, 238, 0.7); opacity: 0; }
+    .line { position: absolute; left: 200px; width: 1520px; font-size: 38px; line-height: 1.3; font-weight: 500; opacity: 0; }
+    .line em { font-style: normal; color: var(--gold); }
+    #l-batch { top: 660px; }
+    #l-stream { top: 740px; }
+    #l-both { top: 860px; color: var(--live); }
+  </style>
+  <div id="root" data-composition-id="concept" data-width="1920" data-height="1080">
+    <div id="c-block" class="clip" data-start="0" data-duration="18.84" data-hold>
+      <div id="c-label">What is a data pipeline</div>
+      <div id="c-name">Tallyproof</div>
+      <div id="c-head">A chain of steps that moves data from where it is produced to where it is used, cleaning and reshaping it on the way.</div>
+      <div id="rail"></div>
+      <div class="stage" id="st-0" style="left:200px"><div class="n">Source</div></div>
+      <div class="stage" id="st-1" style="left:530px"><div class="n">Clean</div></div>
+      <div class="stage" id="st-2" style="left:860px"><div class="n">Check</div></div>
+      <div class="stage" id="st-3" style="left:1190px"><div class="n">Shape</div></div>
+      <div class="stage" id="st-4" style="left:1520px"><div class="n">Use</div></div>
+      <div class="dot" id="dot-0"></div>
+      <div class="dot" id="dot-1"></div>
+      <div class="dot" id="dot-2"></div>
+      <div class="dot" id="dot-3"></div>
+      <div class="dot" id="dot-4"></div>
+      <div class="dot" id="dot-5"></div>
+
+      <div class="line" id="l-batch"><em>Batch:</em> runs on a schedule over large files.</div>
+      <div class="line" id="l-stream"><em>Streaming:</em> handles events one at a time, as they arrive.</div>
+      <div class="line" id="l-both">Tallyproof has both.</div>
+    </div>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    tl.fromTo("#c-label", { opacity: 0, y: 6 }, { opacity: 1, y: 0, duration: 0.3 }, 0);
+    tl.fromTo("#c-name", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 0);
+    tl.fromTo("#c-head", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 0.2);
+    tl.fromTo("#rail", { opacity: 0 }, { opacity: 1, duration: 0.4 }, 1.2);
+    tl.fromTo(".stage", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.4, stagger: 0.18, ease: "power2.out" }, 1.4);
+    // dots travel the rail for the rest of the scene, staggered so one is always moving
+    for (let i = 0; i < 6; i++) {
+      tl.fromTo("#dot-" + i, { opacity: 0, x: 0 }, { opacity: 1, x: 1500, duration: 4.2, ease: "none", repeat: 3, repeatDelay: 0.6, immediateRender: false }, 2.4 + i * 0.8);
+    }
+    tl.fromTo("#l-batch", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" }, 8.6);
+    tl.fromTo("#l-stream", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" }, 11.8);
+    tl.fromTo("#l-both", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" }, 15.8);
+    tl.to("#c-block", { opacity: 0, duration: 0.3, ease: "power3.in" }, 18.54);
+    window.__timelines["concept"] = tl;
+  </script>
+</template>

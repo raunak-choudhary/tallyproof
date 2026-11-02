@@ -1,0 +1,83 @@
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+      font-family: var(--font-sans);
+      color: var(--ink);
+    }
+    #title-block {
+      position: absolute;
+      left: 192px;
+      top: 300px;
+      width: 1536px;
+    }
+    #title-label {
+      font-family: var(--font-sans);
+      font-weight: 600;
+      font-size: 28px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--live);
+      opacity: 0;
+    }
+    #title-name {
+      margin-top: 26px;
+      font-family: var(--font-display);
+      font-weight: 400;
+      font-size: 184px;
+      line-height: 1;
+      letter-spacing: -0.02em;
+      opacity: 1;
+    }
+    #title-tag {
+      margin-top: 40px;
+      font-family: var(--font-script);
+      font-weight: 600;
+      font-size: 74px;
+      line-height: 1;
+      color: var(--gold);
+      display: inline-block;
+      opacity: 0;
+    }
+    #title-meta {
+      margin-top: 34px;
+      font-family: var(--font-mono);
+      font-size: 28px;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      opacity: 0;
+    }
+  </style>
+  <div id="root" data-composition-id="title" data-width="1920" data-height="1080">
+    <div id="title-block" class="clip" data-start="0" data-duration="4.86" data-hold>
+      <div id="title-label">Kafka, explained</div>
+      <div id="title-name">Tallyproof</div>
+      <div><div id="title-tag">Every number, proven.</div></div>
+      <div id="title-meta">real federal spending · append-only · signed · witnessed · verified by you</div>
+    </div>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    tl.fromTo("#title-label", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.3, ease: "power2.out" }, 0.05);
+    tl.fromTo(
+      "#title-name",
+      { opacity: 1, filter: "blur(14px)" },
+      { opacity: 1, filter: "blur(0px)", duration: 0.45, ease: "power3.out" },
+      0,
+    );
+    tl.fromTo(
+      "#title-tag",
+      { opacity: 0, rotation: -1, y: 10 },
+      { opacity: 1, rotation: -1, y: 0, duration: 0.4, ease: "power3.out" },
+      0.8,
+    );
+    tl.fromTo("#title-meta", { opacity: 0 }, { opacity: 1, duration: 0.35, ease: "power2.out" }, 1.1);
+    tl.to(
+      "#title-label, #title-name, #title-tag, #title-meta",
+      { opacity: 0, filter: "blur(10px)", duration: 0.25, ease: "power3.in" },
+      4.56,
+    );
+    window.__timelines["title"] = tl;
+  </script>
+</template>

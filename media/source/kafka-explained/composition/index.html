@@ -1,0 +1,126 @@
+<!doctype html>
+<html
+  lang="en"
+  data-composition-variables='[
+    {"id":"color-ground","type":"color","label":"Background","default":"#0a0b10"},
+    {"id":"color-ink","type":"color","label":"Text","default":"#f2f3f7"},
+    {"id":"color-muted","type":"color","label":"Muted text","default":"#9ba1b4"},
+    {"id":"color-accent","type":"color","label":"Accent","default":"#8b6cff"},
+    {"id":"color-live","type":"color","label":"Live cyan","default":"#22d3ee"},
+    {"id":"color-gold","type":"color","label":"Tally gold","default":"#f5b82e"},
+    {"id":"font-display","type":"string","label":"Display font","default":"Fraunces"}
+  ]'
+>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
+    <style>
+      @font-face {
+        font-family: "Fraunces";
+        font-style: normal;
+        font-weight: 300 900;
+        src: url("assets/fonts/fraunces-normal.woff2") format("woff2");
+      }
+      @font-face {
+        font-family: "Fraunces";
+        font-style: italic;
+        font-weight: 300 900;
+        src: url("assets/fonts/fraunces-italic.woff2") format("woff2");
+      }
+      @font-face {
+        font-family: "Manrope";
+        font-style: normal;
+        font-weight: 200 800;
+        src: url("assets/fonts/manrope-normal.woff2") format("woff2");
+      }
+      @font-face {
+        font-family: "Caveat";
+        font-style: normal;
+        font-weight: 400 700;
+        src: url("assets/fonts/caveat-normal.woff2") format("woff2");
+      }
+      :root {
+        --ground: var(--color-ground, #0a0b10);
+        --ink: var(--color-ink, #f2f3f7);
+        --muted: var(--color-muted, #9ba1b4);
+        --accent: var(--color-accent, #8b6cff);
+        --live: var(--color-live, #22d3ee);
+        --gold: var(--color-gold, #f5b82e);
+        --ok: #3ddc84;
+        --fail: #ff6b6b;
+        --elevated: #12141c;
+        --border: #232735;
+        --font-display: var(--font-display, "Fraunces"), Georgia, serif;
+        --font-sans: "Manrope", "Inter", sans-serif;
+        --font-mono: "JetBrains Mono", "IBM Plex Mono", monospace;
+        --font-script: "Caveat", cursive;
+      }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: var(--ground);
+      }
+      #ground {
+        position: absolute;
+        inset: 0;
+        background: var(--ground);
+      }
+      #glow {
+        position: absolute;
+        inset: 0;
+        background:
+          radial-gradient(900px 480px at 85% -10%, rgba(139, 108, 255, 0.2), transparent 60%),
+          radial-gradient(600px 300px at 0% 110%, rgba(34, 211, 238, 0.09), transparent 70%);
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="main"
+      data-start="0"
+      data-duration="137.92"
+      data-width="1920"
+      data-height="1080"
+    >
+      <div id="ground"></div>
+      <div id="glow"></div>
+
+      <div id="title" data-composition-id="title" data-composition-src="compositions/title.html" data-start="0" data-duration="4.86" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+      <div id="concept" data-composition-id="concept" data-composition-src="compositions/concept.html" data-start="4.86" data-duration="24.1" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+      <div id="map" data-composition-id="map" data-composition-src="compositions/map.html" data-start="28.96" data-duration="45.51" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+      <div id="num" data-composition-id="num" data-composition-src="compositions/num.html" data-start="74.47" data-duration="17.18" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+      <div id="why" data-composition-id="why" data-composition-src="compositions/why.html" data-start="91.65" data-duration="28.11" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+      <div id="where" data-composition-id="where" data-composition-src="compositions/where.html" data-start="119.76" data-duration="13.63" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+      <div id="outro" data-composition-id="outro" data-composition-src="compositions/outro.html" data-start="133.39" data-duration="4.53" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+
+      <!-- Music: Sascha Ende, ende.app (CC BY 4.0). Quiet bed under the narration. -->
+      <audio id="music" class="clip" data-start="0" data-duration="117.36" data-track-index="10" data-volume="0.11" data-fade-in="0.5" data-fade-out="2.0" src="assets/music/happy-beats-business-moves-vol-12-by-ende-dot-app.mp3"></audio>
+      <audio id="music-2" class="clip" data-start="115.36" data-duration="22.56" data-track-index="14" data-volume="0.11" data-fade-in="2.0" data-fade-out="1.8" src="assets/music/happy-beats-business-moves-vol-12-by-ende-dot-app.mp3"></audio>
+      <!-- Narration: Kokoro am_michael, American English, one clip per paragraph -->
+      <audio id="vo-1" class="clip" data-start="0.4" data-duration="3.96" data-track-index="3" data-volume="1" src="assets/vo/line-1.wav"></audio>
+      <audio id="vo-2" class="clip" data-start="5.16" data-duration="23.30" data-track-index="3" data-volume="1" src="assets/vo/line-2.wav"></audio>
+      <audio id="vo-3" class="clip" data-start="29.46" data-duration="18.07" data-track-index="3" data-volume="1" src="assets/vo/line-3.wav"></audio>
+      <audio id="vo-4" class="clip" data-start="48.03" data-duration="25.94" data-track-index="3" data-volume="1" src="assets/vo/line-4.wav"></audio>
+      <audio id="vo-5" class="clip" data-start="74.97" data-duration="16.18" data-track-index="3" data-volume="1" src="assets/vo/line-5.wav"></audio>
+      <audio id="vo-6" class="clip" data-start="92.15" data-duration="27.11" data-track-index="3" data-volume="1" src="assets/vo/line-6.wav"></audio>
+      <audio id="vo-7" class="clip" data-start="120.26" data-duration="12.63" data-track-index="3" data-volume="1" src="assets/vo/line-7.wav"></audio>
+      <audio id="vo-8" class="clip" data-start="133.79" data-duration="3.33" data-track-index="3" data-volume="1" src="assets/vo/line-8.wav"></audio>
+      <audio id="sfx-name" class="clip" data-start="0.25" data-duration="0.19" data-track-index="11" data-volume="0.5" src="assets/sfx/impact/impactSoft_medium_001.ogg"></audio>
+      <audio id="sfx-mark" class="clip" data-start="133.69" data-duration="1.48" data-track-index="11" data-volume="0.45" src="assets/sfx/impact/impactBell_heavy_000.ogg"></audio>
+    </div>
+    <script>
+      const tl = gsap.timeline({ paused: true });
+      window.__timelines["main"] = tl;
+      tl.seek(0);
+    </script>
+  </body>
+</html>
