@@ -77,7 +77,7 @@ export function DemoAnswers() {
             server, not in a page. A model key alone would not be enough, because the numbers never
             come from the model. The live mode is complete; it runs wherever you start the stack,
             and the{" "}
-            <Link href="/evals/" className="text-accent underline-offset-4 hover:underline">
+            <Link href="/evals/" className="text-accent underline underline-offset-4">
               evaluation page
             </Link>{" "}
             shows it scored on all 218 questions.
@@ -92,15 +92,12 @@ export function DemoAnswers() {
             answers it the same way, with proofs you verify here. See{" "}
             <a
               href={mediaPath("videos/tallyproof-product-demo.mp4")}
-              className="text-accent underline-offset-4 hover:underline"
+              className="text-accent underline underline-offset-4"
             >
               the product demo
             </a>{" "}
             for the analyst answering a question and the browser checking its citations, and{" "}
-            <a
-              href={`${docsPath()}runbook/`}
-              className="text-accent underline-offset-4 hover:underline"
-            >
+            <a href={`${docsPath()}runbook/`} className="text-accent underline underline-offset-4">
               the runbook
             </a>{" "}
             for the exact setup.
