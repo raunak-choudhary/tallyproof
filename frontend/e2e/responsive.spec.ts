@@ -102,6 +102,20 @@ test("the navigation folds into a menu on phones and opens from it", async ({ pa
   await expect(menu.getByRole("link", { name: "Ask" })).toBeVisible();
 });
 
+test("the palette switch persists and applies before paint", async ({ page }) => {
+  await page.goto("/");
+  const toggle = page.getByRole("button", { name: /Switch palette/ });
+  const root = page.locator("html");
+  await expect(async () => {
+    await toggle.click(); // ink -> midnight
+    await expect(root).toHaveAttribute("data-palette", "midnight", { timeout: 500 });
+  }).toPass();
+  await page.reload();
+  await expect(root).toHaveAttribute("data-palette", "midnight");
+  await toggle.click(); // midnight -> ink
+  await expect(root).not.toHaveAttribute("data-palette", /.+/);
+});
+
 test("the theme switch persists and applies before paint", async ({ page }) => {
   await page.goto("/");
   const toggle = page.getByRole("button", { name: /Switch theme/ });
