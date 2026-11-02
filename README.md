@@ -122,33 +122,102 @@ Run 2026-10-31 at commit `4b952b9`, router `openai/gpt-oss-120b`, answer `openai
 
 ## Running it locally
 
-Everything runs from the command line on macOS or Linux, with no Docker Desktop. You'll need Python 3.12, Node 22 with pnpm, and Java 17 for Spark; the [runbook](docs/runbook.md) has the exact setup and how to remove everything afterwards.
+Everything runs from the command line on macOS or Linux, with no Docker Desktop. The [runbook](docs/runbook.md) is the full reference; this is the short path.
 
-To see the live pipeline, the fastest path is one command. It starts Redpanda and Postgres in a small VM, runs the API, the Kafka consumer, and the checkpointer, streams real events, and verifies one against the signing key:
+### 1. Install the tools
+
+| Tool | Why | macOS install |
+|---|---|---|
+| Python 3.12 | Backend and data pipeline | `brew install python@3.12` |
+| Node 22 and pnpm | The web app | `brew install node pnpm` |
+| Colima with the Docker CLI and Compose | Runs Postgres, Redpanda and Redis in a small VM | `brew install colima docker docker-compose` |
+| OpenJDK 17 | Only for the Spark data build | `brew install openjdk@17` (kept off the system PATH; the Makefile finds it) |
+
+The reference machine is an Apple M3 with 8 GB of RAM, so every job is sized to fit. On Linux, install the same tools with your package manager and use Docker directly instead of Colima.
+
+### 2. Clone and create the environments
 
 ```bash
-make venv && make keygen KEY=dev   # put the printed key in .env as CHECKPOINT_PUBLIC_KEY
-make demo            # about 20 seconds once the containers are pulled
-make verify-event    # check another random event from the terminal
-make web-live        # the same check in the browser, at http://localhost:3000/live/
-make demo-stop       # stop everything
+git clone https://github.com/raunak-choudhary/tallyproof.git
+cd tallyproof
+make venv                   # backend/.venv with every Python dependency pinned
+make doctor                 # shows the Python, Java and Node the project will use
+cd frontend && pnpm install --frozen-lockfile && cd ..
 ```
 
-The full batch build, from download to the signed browser bundle:
+Never install Python packages outside `backend/.venv`; the Makefile always uses that environment.
+
+### 3. Configure
 
 ```bash
-make venv            # Python environment with pinned dependencies
-make check           # lint, strict type checks, and the unit and Spark tests
-make test-integration  # tests against real Postgres and Redpanda containers
-make data-fetch      # download FY2024 and FY2025 contract data (about 4 GB)
-make data-outlays    # download a quarter of outlay data (about 1 GB, built on request)
-make data-build      # Spark: clean it and remove personal data
-make data-build-outlays  # Spark: turn outlays into monthly payments
-make data-quality    # Deequ checks on the cleaned data
-make data-gold       # build a million ledger events with labeled anomalies
-make keygen KEY=rel  # create a signing key (kept out of git)
-make replay          # sign a 2,000-event bundle for the browser
-cd frontend && pnpm install && pnpm dev   # open the site and verify records
+cp .env.example .env
+cp frontend/.env.example frontend/.env.local
+```
+
+Open `.env` and fill in the blanks. Every variable is explained in the [configuration reference](docs/configuration.md); these are the ones that must be set:
+
+| Variable | What to put there |
+|---|---|
+| `DJANGO_SECRET_KEY` | Any long random string: `python -c "import secrets; print(secrets.token_urlsafe(50))"` |
+| `POSTGRES_SUPERUSER_PASSWORD`, `DB_OWNER_PASSWORD`, `DB_APP_PASSWORD`, `DB_ANALYST_PASSWORD` | Four passwords, one per database role; generate each the same way |
+| `DB_URL`, `DB_OWNER_URL`, `DB_ANALYST_URL` | Connection strings built from those passwords, in the form shown in the file |
+| `CHECKPOINT_PUBLIC_KEY` | Printed by `make keygen KEY=dev` in the next step |
+| `LLM_PROVIDER`, `LLM_BASE_URL`, `LLM_API_KEY`, `LLM_ANSWER_MODEL` | Only to ask the analyst live. The free Groq tier works: provider `openai_compatible`, base URL `https://api.groq.com/openai/v1`, model `openai/gpt-oss-120b`. Leave the provider as `fake` otherwise |
+
+`.env` is ignored by git and must stay that way. The keys and passwords never go anywhere else.
+
+### 4. Create the signing key
+
+```bash
+make keygen KEY=dev         # prints the public key: paste it into .env as CHECKPOINT_PUBLIC_KEY
+```
+
+The private half stays in `secrets/`, which git ignores. The checkpointer is the only process that reads it.
+
+### 5. Run the live pipeline
+
+```bash
+make demo                   # one command: VM, containers, migrations, workers, real events, one verified proof
+make verify-event           # check another random event from the terminal
+make web-live               # the site against the local API, at http://localhost:3000
+make demo-stop              # stop the workers and the containers, keeping their data
+```
+
+The first run pulls the Postgres and Redpanda images and creates a Colima VM sized at 2 CPUs and 3 GB; after that the demo takes about 20 seconds. To run the pieces by hand instead, `make up` starts the containers, `make migrate` applies the schema, and `make ingest`, `make checkpointer` and `make project` are the workers.
+
+With a model key in `.env`, the Ask page on `localhost:3000` answers new questions, each one cited and provable. Without one, the site shows the ten saved answers exactly as the public demo does.
+
+### 6. Check your setup
+
+```bash
+make check                  # lint, strict type checks, unit and Spark tests
+make test-integration       # tests against the real Postgres and Redpanda containers
+make web-check              # the web app's lint, types, unit tests and audit
+make docs                   # the documentation site at http://127.0.0.1:8100
+```
+
+### 7. Optional: the full data build
+
+The repository ships a signed 2,000-event sample, so nothing above needs the real download. To rebuild everything from the public sources (about 4 GB downloaded, an hour of Spark, and the container VM stopped while Spark runs):
+
+```bash
+colima stop tallyproof
+make data-fetch             # FY2024 and FY2025 contract archives, verified against their hashes
+make data-outlays           # one quarter of outlay data
+make data-build             # Spark: clean into silver and remove personal data
+make data-build-outlays     # Spark: outlays into monthly payments
+make data-quality           # Deequ constraints on silver
+make data-gold              # a million ledger events with labeled anomalies
+make keygen KEY=rel         # a separate release signing key
+make replay                 # sign a 2,000-event bundle for the browser
+```
+
+### Removing it
+
+```bash
+make down && colima delete tallyproof       # containers, volumes and the VM
+rm -rf backend/.venv frontend/node_modules data var
+brew uninstall openjdk@17                   # the only system package the project adds
 ```
 
 ## Videos and diagrams
