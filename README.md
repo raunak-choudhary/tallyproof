@@ -1,10 +1,33 @@
-# Tallyproof
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/logo-dark.svg">
+    <img alt="Tallyproof mark: four tally strokes crossed by a fifth that ends in a check" src="docs/images/logo-light.svg" width="160">
+  </picture>
+</p>
 
-## Every number, proven.
+<h1 align="center">Tallyproof</h1>
 
-Tallyproof is a streaming ledger for public spending data with an AI analyst on top. Every number the analyst gives you is pulled from the ledger by a query, and every claim links to the exact source record, along with a cryptographic proof that the record hasn't changed since it arrived. You can check that proof in your own browser.
+<h3 align="center">Every number, proven.</h3>
 
-**Live URL:** <https://raunak-choudhary.github.io/tallyproof/>
+<p align="center">
+  A <strong>streaming ledger of real federal spending</strong> with an <strong>AI analyst</strong> on top. Every number the analyst gives you is bound to a <strong>signed record</strong>, every claim cites its source, and <strong>your browser checks the proof</strong>.
+</p>
+
+<p align="center">
+  <strong>Live URL:</strong> <a href="https://raunak-choudhary.github.io/tallyproof/">https://raunak-choudhary.github.io/tallyproof/</a>
+</p>
+
+<p align="center">
+  <a href="https://raunak-choudhary.github.io/tallyproof/media/videos/tallyproof-product-demo.mp4">Watch the demo</a> ·
+  <a href="https://raunak-choudhary.github.io/tallyproof/docs/">Read the documentation</a> ·
+  <a href="https://github.com/raunak-choudhary/tallyproof/releases/latest">Latest release</a>
+</p>
+
+<p align="center">
+  <img alt="Licence: MIT" src="https://img.shields.io/badge/licence-MIT-8b6cff">
+  <img alt="Release" src="https://img.shields.io/github/v/release/raunak-choudhary/tallyproof?color=f5b82e&label=release">
+  <img alt="Last commit" src="https://img.shields.io/github/last-commit/raunak-choudhary/tallyproof?color=22d3ee">
+</p>
 
 The live site is a static replay of 2,000 real FY2025 contract records. Open one, press Verify, then change its amount and watch the check fail. Nothing runs on a server: your browser recomputes every hash, checks the signature against a key built into the page, and checks the log against a timestamped checkpoint it fetches from GitHub. The site also walks through how the proofs work, lets you run four attacks on a record, and shows every published evaluation run.
 
@@ -22,9 +45,11 @@ The live site is a static replay of 2,000 real FY2025 contract records. Open one
 8. [Running it locally](#running-it-locally)
 9. [Videos and diagrams](#videos-and-diagrams)
 10. [Documentation](#documentation)
-11. [Credits](#credits)
-12. [License](#license)
-13. [Built by](#built-by)
+11. [Contributing](#contributing)
+12. [Security](#security)
+13. [Credits](#credits)
+14. [License](#license)
+15. [Built by](#built-by)
 
 ## Status
 
@@ -262,13 +287,21 @@ The documents below are also published as the [Tallyproof documentation site](ht
 | Why each major decision went the way it did | [Architecture decision records](docs/adr/README.md) |
 | Where every outside claim comes from | [Sources](docs/references.md) |
 
+## Contributing
+
+The project is complete at version 1.1.0, and fixes are welcome. Every change starts from an issue, lives on its own branch, passes the same CI that gates every pull request, and lands by rebase merge so the history stays readable. The [contributing guide](CONTRIBUTING.md) has the setup, the branch and commit conventions, and the checks to run before pushing.
+
+## Security
+
+The data is public spending with personal details removed, and the repository holds no secrets: keys live only in `.env`, a secret scanner runs before every commit and over the history in CI, and GitHub's push protection is on. If you find a way to make a tampered record verify, escape the analyst's SQL guard, or change a cited value through a prompt, please use GitHub's private vulnerability reporting as described in the [security policy](SECURITY.md).
+
 ## Credits
 
 The diagrams were built with [Archify](https://github.com/tt-a1i/archify), which refuses to draw a component it cannot trace to the code. The videos were planned with the [Brag](https://github.com/latent-spaces/brag) workflow and rendered with [Hyperframes](https://github.com/HeyGen/hyperframes); the narration is Kokoro-82M, run locally. The music is "Happy Beats / Business Moves Vol. 12" by Sascha Ende ([ende.app](https://ende.app), CC BY 4.0), and the sound effects are CC0 from Kenney and unicae_games. The data is from USAspending.gov, the U.S. Treasury, and the Federal Acquisition Regulation, all public.
 
 ## License
 
-MIT. See the [license text](LICENSE).
+Released under the [MIT License](LICENSE). Use it, change it, build on it; keep the copyright notice.
 
 ## Built by
 
