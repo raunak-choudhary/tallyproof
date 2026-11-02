@@ -8,8 +8,10 @@ Videos, interactive diagrams and images that explain Tallyproof. Everything here
 |---|---|---|
 | [Product demo](https://raunak-choudhary.github.io/tallyproof/media/videos/tallyproof-product-demo.mp4) (`videos/tallyproof-product-demo.mp4`) | A narrated walk through the live site: the problem, the name, a record verified in the browser, one cent changed and the check failing, then a real cited answer. American English voice. | 25 seconds |
 | [Architecture explained](https://raunak-choudhary.github.io/tallyproof/media/videos/tallyproof-architecture-explained.mp4) (`videos/tallyproof-architecture-explained.mp4`) | The system map, one group of components at a time, with a narrator explaining what each part does and why the proofs hold. American English voice. | 70 seconds |
+| [Data pipelines, explained](https://raunak-choudhary.github.io/tallyproof/media/videos/tallyproof-data-pipelines-explained.mp4) (`videos/tallyproof-data-pipelines-explained.mp4`) | What a data pipeline is, then Tallyproof's batch pipeline (download, Spark, Deequ, gold, replay) and streaming pipeline, with the real row counts, why it is built this way, and where the code lives. | 2 min 34 s |
+| [Kafka, explained](https://raunak-choudhary.github.io/tallyproof/media/videos/tallyproof-kafka-explained.mp4) (`videos/tallyproof-kafka-explained.mp4`) | What Kafka is, how Tallyproof's topic, producers and the exactly-once consumer work, the measured throughput, why Kafka is used and what it is deliberately not used for, and where the code lives. | 2 min 18 s |
 
-Posters for both are in `images/`, for platforms that ask for a thumbnail.
+Posters for all four are in `images/`, for platforms that ask for a thumbnail.
 
 ## Interactive diagrams
 
@@ -33,7 +35,7 @@ node archify/archify/bin/archify.mjs finalize architecture \
   --repo-root . --quality showcase
 ```
 
-The videos were planned with the [Brag](https://github.com/latent-spaces/brag) workflow and rendered with [Hyperframes](https://github.com/HeyGen/hyperframes) 0.8.229, which turns an HTML composition into an MP4. The compositions are in `source/product-demo/` and `source/architecture-explained/`. The narration is generated locally with Kokoro-82M through the Hyperframes `tts` command; the text of every line is beside its composition. To render one:
+The videos were planned with the [Brag](https://github.com/latent-spaces/brag) workflow and rendered with [Hyperframes](https://github.com/HeyGen/hyperframes) 0.8.229, which turns an HTML composition into an MP4. The compositions are in `source/product-demo/`, `source/architecture-explained/`, `source/data-pipelines-explained/` and `source/kafka-explained/`. The narration is generated locally with Kokoro-82M through the Hyperframes `tts` command; the text of every line is beside its composition. To render one:
 
 ```bash
 cd media/source/architecture-explained/composition
