@@ -20,9 +20,11 @@ The live site is a static replay of 2,000 real FY2025 contract records. Open one
 6. [Answer quality](#answer-quality)
 7. [How it differs from existing work](#how-it-differs-from-existing-work)
 8. [Running it locally](#running-it-locally)
-9. [Documentation](#documentation)
-10. [License](#license)
-11. [Built by](#built-by)
+9. [Videos and diagrams](#videos-and-diagrams)
+10. [Documentation](#documentation)
+11. [Credits](#credits)
+12. [License](#license)
+13. [Built by](#built-by)
 
 ## Status
 
@@ -149,6 +151,22 @@ make replay          # sign a 2,000-event bundle for the browser
 cd frontend && pnpm install && pnpm dev   # open the site and verify records
 ```
 
+## Videos and diagrams
+
+Two short videos and two interactive diagrams explain the project without reading the code. Click a poster to play the video in your browser.
+
+| | |
+|---|---|
+| <a href="https://raunak-choudhary.github.io/tallyproof/media/videos/tallyproof-product-demo.mp4"><img alt="Poster of the product demo video" src="media/images/tallyproof-product-demo-poster.jpg" width="440"></a> | <a href="https://raunak-choudhary.github.io/tallyproof/media/videos/tallyproof-architecture-explained.mp4"><img alt="Poster of the architecture video" src="media/images/tallyproof-architecture-explained-poster.jpg" width="440"></a> |
+| **[Product demo](https://raunak-choudhary.github.io/tallyproof/media/videos/tallyproof-product-demo.mp4)**, 25 seconds. A record verified in the browser, one cent changed and the check failing, then a real cited answer. Narrated. | **[Architecture explained](https://raunak-choudhary.github.io/tallyproof/media/videos/tallyproof-architecture-explained.mp4)**, 70 seconds. The system map, one group of components at a time, with a narrator explaining what each part does. |
+
+| Diagram | What you get |
+|---|---|
+| [Architecture map](https://raunak-choudhary.github.io/tallyproof/media/diagrams/tallyproof-architecture-map.html) | The fifteen runtime components. Every box links to the file and lines that implement it. Dark and light themes, animated flows. |
+| [From a question to a proof](https://raunak-choudhary.github.io/tallyproof/media/diagrams/tallyproof-question-to-proof-sequence.html) | One question to the analyst, step by step, down to the inclusion proof the browser checks. |
+
+The files, their sources, and instructions to rebuild them are in the [media folder](media/).
+
 ## Documentation
 
 The documents below are also published as the [Tallyproof documentation site](https://raunak-choudhary.github.io/tallyproof/docs/), with API reference pages generated from the code.
@@ -172,6 +190,10 @@ The documents below are also published as the [Tallyproof documentation site](ht
 | The same mapping written as Terraform, never applied | [Terraform sketch](infra/terraform/aws/) |
 | Why each major decision went the way it did | [Architecture decision records](docs/adr/README.md) |
 | Where every outside claim comes from | [Sources](docs/references.md) |
+
+## Credits
+
+The diagrams were built with [Archify](https://github.com/tt-a1i/archify), which refuses to draw a component it cannot trace to the code. The videos were planned with the [Brag](https://github.com/latent-spaces/brag) workflow and rendered with [Hyperframes](https://github.com/HeyGen/hyperframes); the narration is Kokoro-82M, run locally. The music is "Happy Beats / Business Moves Vol. 12" by Sascha Ende ([ende.app](https://ende.app), CC BY 4.0), and the sound effects are CC0 from Kenney and unicae_games. The data is from USAspending.gov, the U.S. Treasury, and the Federal Acquisition Regulation, all public.
 
 ## License
 

@@ -63,6 +63,7 @@ validation:
 
 nav:
   - Overview: index.md
+  - Videos and diagrams: media.md
   - Design:
       - Architecture and tamper detection: architecture.md
       - Backend design: backend-design.md

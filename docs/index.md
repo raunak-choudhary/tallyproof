@@ -8,6 +8,7 @@ These pages are the project's documentation. The code is on [GitHub](https://git
 
 | If you want to know | Read |
 |---|---|
+| What it does, in a 25 second demo and a one minute architecture walk-through | [Videos and diagrams](media.md) |
 | How records become proofs, and how tampering is caught | [Architecture](architecture.md) |
 | Schemas, Kafka topics, database, and API | [Backend design](backend-design.md) |
 | How answer quality is measured | [Evaluation](evaluation.md) |
