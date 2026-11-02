@@ -20,3 +20,11 @@ export function buildInfo(
 export function docsPath(basePath: string | undefined = process.env.NEXT_PUBLIC_BASE_PATH): string {
   return `${(basePath ?? "").replace(/\/+$/, "")}/docs/`;
 }
+
+/** Where the published videos and diagrams live: beside the demo, under the same base path. */
+export function mediaPath(
+  file: string,
+  basePath: string | undefined = process.env.NEXT_PUBLIC_BASE_PATH,
+): string {
+  return `${(basePath ?? "").replace(/\/+$/, "")}/media/${file}`;
+}
