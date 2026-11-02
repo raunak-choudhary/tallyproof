@@ -166,6 +166,11 @@ for (const theme of ["light", "dark"] as const) {
         await expect(page.getByText(/every check on the record passes/).first()).toBeVisible();
         await expect(page.getByText(/Consistent with the checkpoint witnessed at/)).toBeVisible();
         await snap(page, info);
+        // Reset restores the signed record, so another attack starts from a clean state.
+        await page.getByRole("button", { name: "Reset the record" }).click();
+        await expect(page.getByRole("heading", { name: /^Level 4:/ })).toHaveCount(0);
+        await runs.nth(0).click();
+        await expect(page.getByText(/^Tampering detected/)).toBeVisible();
       });
 
       test("the ledger draws the replayed log", async ({ page }, info) => {

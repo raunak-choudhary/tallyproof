@@ -162,6 +162,17 @@ export function TamperPage() {
             ? ` An outside witness timestamped the checkpoint at ${target.witnessed.treeSize.toLocaleString("en-US")} records; the record sits before it.`
             : ""}
         </p>
+        {outcome && (
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <Button variant="ghost" size="sm" onClick={() => setOutcome(null)}>
+              Reset the record
+            </Button>
+            <span className="text-xs text-fg-muted">
+              The attack only ever touched a copy in your browser. Resetting restores the signed
+              record, so you can run another attack.
+            </span>
+          </div>
+        )}
       </section>
 
       <ol className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -191,9 +202,14 @@ export function TamperPage() {
           className="grid gap-6 rounded-[var(--radius-lg)] border border-border bg-bg-elevated p-4 md:grid-cols-[3fr_2fr]"
         >
           <div className="min-w-0">
-            <h2 className="text-sm font-medium">
-              Level {outcome.level}: {ATTACKS[outcome.level - 1]?.title}
-            </h2>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h2 className="text-sm font-medium">
+                Level {outcome.level}: {ATTACKS[outcome.level - 1]?.title}
+              </h2>
+              <Button variant="ghost" size="sm" onClick={() => setOutcome(null)}>
+                Reset
+              </Button>
+            </div>
             <div className="mt-3">
               {outcome.level === 4 ? (
                 <div>
