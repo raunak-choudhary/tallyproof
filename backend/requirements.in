@@ -11,7 +11,7 @@ defusedxml>=0.7.1,<0.8      # safe parsing of the eCFR policy XML
 pyspark==4.1.3              # batch processing; held at 4.1 because PyDeequ supports 4.1, not 4.2
 pydeequ==1.7.0              # Amazon Deequ data quality checks inside Spark
 
-django>=5.2.18,<5.3            # web framework, long-term support release (ADR-0004)
+django>=6.1.2,<6.2            # web framework, long-term support release (ADR-0004)
 djangorestframework>=3.18,<4   # REST API
 drf-spectacular>=0.30,<0.31    # OpenAPI schema generated from the code
 django-cors-headers>=4.9,<5    # restricts the API to the web app's origin
