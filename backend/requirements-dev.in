@@ -6,9 +6,9 @@
 pip-tools>=7.6,<8       # compiles and syncs the pinned requirement files
 pytest>=9.1,<10         # test runner
 pytest-cov>=7,<8        # coverage reporting
-hypothesis>=6.170,<7    # property-based tests for the Merkle and Bloom code
+hypothesis>=6.170.14,<7    # property-based tests for the Merkle and Bloom code
 ruff==0.17.3            # linter and formatter, pinned exactly because rule sets change between releases
-mypy>=2.4,<3            # strict type checking
+mypy>=2.4.1,<3            # strict type checking
 pre-commit>=4.7,<5      # git hooks
 pip-audit>=2.9,<3       # known-vulnerability scan of pinned dependencies
 pytest-django>=4.14,<5                       # Django test integration
