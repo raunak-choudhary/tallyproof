@@ -6,14 +6,14 @@
 pip-tools>=7.6,<8       # compiles and syncs the pinned requirement files
 pytest>=9.1,<10         # test runner
 pytest-cov>=7,<8        # coverage reporting
-hypothesis>=6.170,<7    # property-based tests for the Merkle and Bloom code
-ruff==0.17.3            # linter and formatter, pinned exactly because rule sets change between releases
-mypy>=2.4,<3            # strict type checking
+hypothesis>=6.170.15,<7    # property-based tests for the Merkle and Bloom code
+ruff==0.17.4            # linter and formatter, pinned exactly because rule sets change between releases
+mypy>=2.4.1,<3            # strict type checking
 pre-commit>=4.7,<5      # git hooks
 pip-audit>=2.9,<3       # known-vulnerability scan of pinned dependencies
 pytest-django>=4.14,<5                       # Django test integration
 testcontainers[kafka,postgres]>=4.15,<5      # real Redpanda and Postgres in integration tests
 django-stubs[compatible-mypy]>=6.1,<7        # type information for Django under strict mypy
-djangorestframework-stubs>=3.16,<4           # type information for Django REST Framework
+djangorestframework-stubs>=3.18.2,<4           # type information for Django REST Framework
 types-channels>=4.3.0.20260518      # type information for Channels
 types-defusedxml>=0.7.0.20250822   # type information for defusedxml
