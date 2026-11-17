@@ -2,6 +2,6 @@
 # only these. Compile with `make deps`; requirements-dev.in includes this file.
 -c requirements.txt
 mkdocs>=1.6,<2                  # static site generator for docs/
-mkdocs-material>=9.8,<10        # theme, search, and Mermaid diagrams
+mkdocs-material>=9.8.1,<10        # theme, search, and Mermaid diagrams
 mkdocstrings>=1.0,<2            # API reference pages from docstrings
-mkdocstrings-python>=2.0,<3     # the Python handler, read statically with griffe
+mkdocstrings-python>=2.0.11,<3     # the Python handler, read statically with griffe
