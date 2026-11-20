@@ -4,6 +4,25 @@ This file is maintained by [release-please](https://github.com/googleapis/releas
 
 Version 0.1.0 is the minimum viable product. It covers a streaming ledger of real federal spending events in an append-only Postgres log, RFC 9162 Merkle proofs against Ed25519-signed checkpoints that are timestamped externally, verification of any record in the browser, double-entry journal and reconciliation projections that find planted anomalies, and an analyst whose every number is bound to records the reader can prove, measured against an exact oracle.
 
+## [1.1.2](https://github.com/raunak-choudhary/tallyproof/compare/v1.1.1...v1.1.2) (2026-11-20)
+
+
+### Fixes
+
+* **deps:** upgrade next to 16.4.6 for the use cache disclosure advisories ([f906ff0](https://github.com/raunak-choudhary/tallyproof/commit/f906ff0a452060307e2e7bcbfe66c92f65cce49e))
+* **deps:** upgrade opentelemetry to 1.45.2 for the traceparent parsing advisory ([5f6daf4](https://github.com/raunak-choudhary/tallyproof/commit/5f6daf42f488981b43dfde383dee89ad1feff638))
+
+
+### Documentation
+
+* ship the OFL licence with the video fonts and link the CC BY 4.0 music licence ([b686f18](https://github.com/raunak-choudhary/tallyproof/commit/b686f187f7a23f54f0650d498f2f82b0bb5e9193))
+
+
+### Build and release
+
+* **deps:** bump duckdb from 1.5.6 to 2.0.0 in /backend ([aa1ae9a](https://github.com/raunak-choudhary/tallyproof/commit/aa1ae9a934cc01abace85d2d616eb018bfabcab6))
+* **deps:** bump the npm-minor-and-patch group across 1 directory with 11 updates ([e9d67bc](https://github.com/raunak-choudhary/tallyproof/commit/e9d67bc0d7edb66637458d854ad8139661830363))
+
 ## [1.1.1](https://github.com/raunak-choudhary/tallyproof/compare/v1.1.0...v1.1.1) (2026-11-02)
 
 
