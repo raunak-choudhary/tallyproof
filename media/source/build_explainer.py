@@ -658,7 +658,7 @@ def write(spec: dict, comp: Path, lens: list[float]) -> None:
     total = spec["total"]
     body = (
         "\n".join(scene_divs) + "\n\n"
-        "      <!-- Music: Sascha Ende, ende.app (CC BY 4.0). Quiet bed under the narration. -->\n"
+        "      <!-- Music: Sascha Ende, ende.app (CC BY 4.0, https://creativecommons.org/licenses/by/4.0/). Quiet bed under the narration. -->\n"
         + music_html(total)
         + "      <!-- Narration: Kokoro am_michael, American English, one clip per paragraph -->\n"
         + "\n".join(vo)

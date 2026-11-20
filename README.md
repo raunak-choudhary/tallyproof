@@ -297,7 +297,7 @@ The data is public spending with personal details removed, and the repository ho
 
 ## Credits
 
-The diagrams were built with [Archify](https://github.com/tt-a1i/archify), which refuses to draw a component it cannot trace to the code. The videos were planned with the [Brag](https://github.com/latent-spaces/brag) workflow and rendered with [Hyperframes](https://github.com/HeyGen/hyperframes); the narration is Kokoro-82M, run locally. The music is "Happy Beats / Business Moves Vol. 12" by Sascha Ende ([ende.app](https://ende.app), CC BY 4.0), and the sound effects are CC0 from Kenney and unicae_games. The data is from USAspending.gov, the U.S. Treasury, and the Federal Acquisition Regulation, all public.
+The diagrams were built with [Archify](https://github.com/tt-a1i/archify), which refuses to draw a component it cannot trace to the code. The videos were planned with the [Brag](https://github.com/latent-spaces/brag) workflow and rendered with [Hyperframes](https://github.com/HeyGen/hyperframes); the narration is Kokoro-82M, run locally. The music is "Happy Beats / Business Moves Vol. 12" by Sascha Ende ([ende.app](https://ende.app), [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)), and the sound effects are CC0 from Kenney and unicae_games. The data is from USAspending.gov, the U.S. Treasury, and the Federal Acquisition Regulation, all public.
 
 ## License
 

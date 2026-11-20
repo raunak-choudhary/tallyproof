@@ -51,8 +51,8 @@ The music and sound effects are not in this repository; the composition names th
 
 ## Credits
 
-- Music: "Happy Beats / Business Moves Vol. 12" by Sascha Ende, [ende.app](https://ende.app), licensed CC BY 4.0.
+- Music: "Happy Beats / Business Moves Vol. 12" by Sascha Ende, [ende.app](https://ende.app), licensed [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 - Sound effects: [Kenney](https://kenney.nl) (CC0) and the Keyboard Soundpack #1 by unicae_games (CC0).
 - Voices: Kokoro-82M, run locally.
-- Fonts: Fraunces, Manrope and Caveat (SIL Open Font License) from Google Fonts; JetBrains Mono.
+- Fonts: Fraunces, Manrope and Caveat (SIL Open Font License 1.1) from Google Fonts, with the licence text in each composition's `assets/fonts/OFL.txt`; JetBrains Mono.
 - Tools: Archify (Apache-2.0), Brag (MIT), Hyperframes (MIT), Playwright.
